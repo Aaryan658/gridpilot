@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Activity, ChevronLeft, ChevronRight, Cpu, Gauge, Map, Play, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useSchedule } from '../../hooks/useSchedule'
 
 const nav = [
   { to: '/', label: 'Depot Dashboard', icon: Gauge },
@@ -13,6 +14,7 @@ const nav = [
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
   const location = useLocation()
+  const { execute, loading } = useSchedule()
 
   return (
     <aside
@@ -74,10 +76,10 @@ export default function Sidebar() {
               <span className="absolute right-1 top-1 h-3 w-3 rounded-full bg-[#00d4aa]" />
             </span>
           </div>
-          <button className="relative flex h-10 w-full items-center justify-center overflow-hidden rounded-[10px] bg-gradient-to-br from-[#7c5cbf] to-[#5a3f9e] text-sm font-semibold shadow-[0_4px_16px_rgba(124,92,191,0.4)] active:scale-[0.96]">
+          <button onClick={() => execute()} disabled={loading} className="relative flex h-10 w-full items-center justify-center overflow-hidden rounded-[10px] bg-gradient-to-br from-[#7c5cbf] to-[#5a3f9e] text-sm font-semibold shadow-[0_4px_16px_rgba(124,92,191,0.4)] active:scale-[0.96] disabled:opacity-70 disabled:cursor-wait">
             <span className="absolute inset-y-0 w-1/2 -skew-x-12 bg-white/10" style={{ animation: 'shimmer 2.4s linear infinite' }} />
-            <Play size={15} className="mr-2" />
-            Run Schedule
+            <Play size={15} className={`mr-2 ${loading ? 'animate-pulse' : ''}`} />
+            {loading ? 'Solving...' : 'Run Schedule'}
           </button>
           <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
             <span className="h-2 w-2 rounded-full bg-[#4ecdc4]" style={{ animation: 'pulseRing 2s infinite' }} />

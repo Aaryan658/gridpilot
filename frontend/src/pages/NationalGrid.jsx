@@ -7,7 +7,7 @@ import { useDashboardData } from '../hooks/useDashboardData'
 
 export default function NationalGrid() {
   const { data, demoMode } = useDashboardData()
-  const forecast = mergeForecast(data.national.forecast_all_regions)
+  const forecast = mergeForecast(data.national?.forecast_all_regions || data.national)
   return (
     <div>
       <Header title="FirstFlight" subtitle="National Grid Intelligence · Backend signals powering GridPilot" demoMode={demoMode} />
@@ -18,8 +18,8 @@ export default function NationalGrid() {
               <div className="text-sm font-semibold">{region}</div>
               <StatusBadge label={index === 0 ? 'NEUTRAL' : 'STABLE'} />
             </div>
-            <div className="mt-4 text-2xl font-semibold">{(68 - index * 7).toLocaleString('en-IN')} GW</div>
-            <div className="mt-1 text-xs text-[var(--text-secondary)]">Carbon {(0.82 - index * 0.06).toFixed(2)} kg/kWh</div>
+            <div className="mt-4 text-2xl font-semibold">{(data.national?.forecast_all_regions?.[region]?.[0]?.predicted_mw ? Math.round(data.national.forecast_all_regions[region][0].predicted_mw / 1000) : (68 - index * 7)).toLocaleString('en-IN')} GW</div>
+            <div className="mt-1 text-xs text-[var(--text-secondary)]">Score {data.national?.grid_stability_score || 91.4}</div>
           </div>
         ))}
       </div>

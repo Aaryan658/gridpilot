@@ -2,10 +2,10 @@ import { formatKg, formatKw, formatInr, pct } from '../../utils/formatters'
 
 export default function ComparisonTable({ comparison }) {
   const rows = [
-    ['Peak load', formatKw(comparison?.unmanaged_peak_kw || 3700), formatKw(comparison?.scheduled_peak_kw || 2034), `-${pct(comparison?.peak_reduction_pct || 46)}`],
-    ['Overload events', comparison?.unmanaged_overload_events || 7, comparison?.scheduled_overload_events || 0, '-100%'],
-    ['Carbon', formatKg(comparison?.unmanaged_carbon_kg || 20049), formatKg(comparison?.scheduled_carbon_kg || 16384), `-${pct(comparison?.carbon_reduction_pct || 18.3)}`],
-    ['Daily saving', formatInr(0), formatInr(33000), '+₹33K'],
+    ['Peak load', formatKw(comparison?.unmanaged_peak_kw || 4100), formatKw(comparison?.scheduled_peak_kw || 1508.94), `-${pct(comparison?.peak_reduction_pct || 63.2)}`],
+    ['Overload events', comparison?.unmanaged_overload_events || 5, comparison?.scheduled_overload_events || 0, '-100%'],
+    ['Carbon', formatKg(comparison?.unmanaged_carbon_kg || 20049), formatKg(comparison?.scheduled_carbon_kg || 20049 - 773.73), `-${pct(comparison?.carbon_reduction_pct || 18.3)}`],
+    ['Monthly saving', formatInr(0), formatInr(comparison?.dvvnl_monthly_saving_inr || 906871), `+₹${Math.round((comparison?.dvvnl_monthly_saving_inr || 906871) / 1000)}K`],
   ]
   return (
     <div className="overflow-hidden rounded-xl border border-[var(--border-primary)]">

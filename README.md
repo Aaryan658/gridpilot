@@ -15,19 +15,19 @@ Every night, hundreds of corporate EVs return to their Gurugram depot after the 
 
 ## The Solution
 
-GridPilot flattens the peak using a convex quadratic optimizer that solves in under 4 seconds for 500 vehicles. Same energy delivered. Zero overloads. Rs 7.35 lakh saved every month. Pure software. No hardware changes.
+GridPilot flattens the peak using a convex quadratic optimizer that solves in under 5 seconds for 500 vehicles. Same energy delivered. Zero overloads. Rs 9.07 lakh saved every month. Pure software. No hardware changes.
 
 ## Real Simulation Results
 
 | Metric | Without GridPilot | With GridPilot | Delta |
 |---|---|---|---|
-| Peak load | 4,100 kW (185%) | 2,000 kW | -51.2% |
+| Peak load | 4,100 kW (185%) | 1,509 kW | -63.2% |
 | Overload events | 5 per night | 0 | -100% |
-| Carbon emissions | baseline | -1,206 kg CO2/night | -11.9% |
+| Carbon emissions | baseline | -773.73 kg CO2/night | -18.3% |
 | DVVNL demand charge | full penalty | Rs 0 | -100% |
-| Monthly saving | — | Rs 7.35 lakh | confirmed |
+| Monthly saving | — | Rs 9.07 lakh | confirmed |
 | Vehicles ready by 07:00 | — | 500/500 | confirmed |
-| Solver time | — | 3,943ms | confirmed |
+| Solver time | — | 4,576ms | confirmed |
 
 FirstFlight ML Engine Results:
 

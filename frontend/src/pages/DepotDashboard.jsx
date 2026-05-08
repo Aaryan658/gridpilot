@@ -44,16 +44,16 @@ export default function DepotDashboard() {
         <KPICard 
           icon={TrendingDown} 
           accent="#4ecdc4" 
-          value={depot.schedule_summary?.comparison?.peak_reduction_pct || 46} 
+          value={depot.schedule_summary?.comparison?.peak_reduction_pct || 63.2} 
           unit="%" 
           label="Peak Load Reduced" 
-          sub={`${(depot.schedule_summary?.comparison?.unmanaged_peak_kw || 3700).toLocaleString()} -> ${(depot.schedule_summary?.comparison?.scheduled_peak_kw || 2034).toLocaleString()} kW`} 
+          sub={`${(depot.schedule_summary?.comparison?.unmanaged_peak_kw || 4100).toLocaleString()} -> ${(depot.schedule_summary?.comparison?.scheduled_peak_kw || 1508.94).toLocaleString()} kW`} 
           index={0} 
         />
         <KPICard 
           icon={Leaf} 
           accent="#00d4aa" 
-          value={depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 3665} 
+          value={depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 773.73} 
           unit=" kg" 
           label="CO2 Saved Tonight" 
           sub={`${((depot.schedule_summary?.comparison?.carbon_reduction_pct || 18.3)).toFixed(1)}% footprint reduction`} 
@@ -62,10 +62,10 @@ export default function DepotDashboard() {
         <KPICard 
           icon={TrendingUp} 
           accent="#f9ca24" 
-          value={depot.v2g_status?.monthly_dvvnl_saving_inr / 30 || 33000} 
+          value={(depot.schedule_summary?.comparison?.dvvnl_monthly_saving_inr / 12 / 30) || 2519.08} 
           prefix="₹" 
           label="Saved Today" 
-          sub={`₹${((depot.v2g_status?.monthly_dvvnl_saving_inr || 1000000) / 100000).toFixed(1)} lakh/month potential`} 
+          sub={`₹${((depot.schedule_summary?.comparison?.dvvnl_monthly_saving_inr || 906871) / 100000).toFixed(2)} lakh/month potential`} 
           index={2} 
         />
       </div>
@@ -73,7 +73,7 @@ export default function DepotDashboard() {
         <MainLoadChart data={data.loadProfile} />
       </div>
       <div className="mt-4">
-        <CarbonStrip hours={data.carbonHours} />
+        <CarbonStrip hours={depot.carbon_signal?.forecast_48h || data.carbonHours || []} />
       </div>
       <div className="mt-4 grid grid-cols-[55fr_45fr] gap-4 max-2xl:grid-cols-1">
         <FleetTable rows={data.fleetRows} />

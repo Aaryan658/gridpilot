@@ -13,13 +13,13 @@ export default function CarbonStrip({ hours }) {
         <div className="absolute -top-5 left-[75%] text-[11px] text-[#c0392b]">GridPilot avoids</div>
         {hours.slice(0, 24).map((hour, index) => (
           <div
-            key={`${hour.hour}-${index}`}
+            key={`${hour.hour || index}-${index}`}
             className="group relative flex-1 cursor-pointer rounded transition-transform hover:scale-110"
-            style={{ background: `${signalColor(hour.signal)}b3` }}
+            style={{ background: hour.signal === 'CLEAN' ? '#27ae60b3' : hour.signal === 'NEUTRAL' ? '#f39c12b3' : '#c0392bb3' }}
           >
             {index === currentHour && <span className="absolute inset-y-[-6px] left-1/2 w-[2px] -translate-x-1/2 bg-[#00d4aa] opacity-90 animate-pulse" />}
-            <div className="pointer-events-none absolute bottom-12 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-[var(--border-primary)] bg-[#1e2d40] px-3 py-2 text-xs group-hover:block">
-              {hour.hour} IST - {hour.intensity} kg CO2/kWh - {hour.signal}
+            <div className="pointer-events-none absolute bottom-12 left-1/2 z-20 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-[var(--border-primary)] bg-[#1e2d40] px-3 py-2 text-xs group-hover:block shadow-lg">
+              {hour.hour || (hour.timestamp ? hour.timestamp.slice(11, 16) : '')} IST - {hour.intensity || hour.predicted_intensity} kg CO2/kWh - {hour.signal}
             </div>
           </div>
         ))}

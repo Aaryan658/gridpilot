@@ -5,9 +5,9 @@ export const mockDashboardData = {
     status: {
       transformer_loading_pct: 50.9,
       active_evs: 500,
-      current_ev_load_kw: 2034,
+      current_ev_load_kw: 1508.94,
       solar_kw: 0,
-      net_load_kw: 2434,
+      net_load_kw: 1508.94,
       baseline_load_kw: 400,
       carbon_intensity_now: 0.82,
       carbon_signal: 'NEUTRAL',
@@ -16,17 +16,18 @@ export const mockDashboardData = {
       grid_status: 'STABLE',
     },
     schedule_summary: {
-      peak_kw: 2034,
+      peak_kw: 1508.94,
       total_carbon_kg: 16384,
       comparison: {
-        unmanaged_peak_kw: 3700,
-        scheduled_peak_kw: 2034,
-        peak_reduction_pct: 46,
-        unmanaged_overload_events: 7,
+        unmanaged_peak_kw: 4100,
+        scheduled_peak_kw: 1508.94,
+        peak_reduction_pct: 63.2,
+        unmanaged_overload_events: 5,
         scheduled_overload_events: 0,
         unmanaged_carbon_kg: 20049,
-        scheduled_carbon_kg: 16384,
+        scheduled_carbon_kg: 20049 - 773.73,
         carbon_reduction_pct: 18.3,
+        dvvnl_monthly_saving_inr: 906871,
       },
     },
     carbon_signal: {
@@ -52,7 +53,7 @@ export const mockDashboardData = {
     },
   },
   national: {
-    grid_stability_score: 91.4,
+    grid_stability_score: 90.11,
     active_anomalies: [],
     at_c_loss_today_crore: 48.7,
     forecast_all_regions: {
@@ -77,16 +78,17 @@ export const mockDashboardData = {
 
 export const mockScheduleResult = {
   comparison: {
-    unmanaged_peak_kw: 3700,
-    scheduled_peak_kw: 2034,
-    peak_reduction_pct: 46,
-    unmanaged_overload_events: 7,
+    unmanaged_peak_kw: 4100,
+    scheduled_peak_kw: 1508.94,
+    peak_reduction_pct: 63.2,
+    unmanaged_overload_events: 5,
     scheduled_overload_events: 0,
     unmanaged_carbon_kg: 20049,
-    scheduled_carbon_kg: 16384,
+    scheduled_carbon_kg: 20049 - 773.73,
     carbon_reduction_pct: 18.3,
+    dvvnl_monthly_saving_inr: 906871,
   },
-  fleet_summary: { all_ready_on_time: true, vehicles_delayed: 0, peak_load_kw: 2034, overload_events: 0 },
+  fleet_summary: { all_ready_on_time: true, vehicles_delayed: 0, peak_load_kw: 1508.94, overload_events: 0 },
   status: 'edf_fallback',
-  solve_time_ms: 187,
+  solve_time_ms: 4576,
 }

@@ -45,10 +45,10 @@ export default function MainLoadChart({ data }) {
         </ResponsiveContainer>
       </div>
       <motion.div className="pointer-events-none absolute left-[68%] top-[102px] text-xs font-semibold text-[#e74c3c]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.5 }}>
-        3,700 kW ⚠
+        4,100 kW ⚠
       </motion.div>
       <motion.div className="pointer-events-none absolute left-[42%] top-[244px] text-xs font-semibold text-[#b49cff]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2.7 }}>
-        2,034 kW ✓
+        1,509 kW ✓
       </motion.div>
     </div>
   )

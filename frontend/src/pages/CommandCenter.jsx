@@ -32,10 +32,10 @@ export default function CommandCenter() {
       <div className="relative z-10">
         <div className="glass-card mb-4 flex h-20 items-center justify-center gap-4 border-[#00d4aa33] bg-gradient-to-br from-[#00d4aa26] to-[#7c5cbf26]">
           {[
-            'NCR grid 78% coal ->',
-            `Clean window ${depot.carbon_signal?.clean_windows?.[0]?.start || '02:00'}-${depot.carbon_signal?.clean_windows?.[0]?.end || '05:00'} ->`,
+            data.signal_bridge?.rationale?.split('.')[0] + ' ->' || 'NCR grid 78% coal ->',
+            `Clean window ${data.signal_bridge?.clean_window_next?.start || '02:00'}-${data.signal_bridge?.clean_window_next?.end || '05:00'} ->`,
             `${depot.fleet_summary?.total_evs || 500} EVs shifted ->`,
-            `${(depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 3665).toLocaleString()} kg CO2 saved`
+            `${(depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 773).toLocaleString()} kg CO2 saved`
           ].map((text, index) => (
             <motion.span key={text} className={index === 3 ? 'font-bold text-[#27ae60]' : index === 1 ? 'text-[#00d4aa]' : index === 2 ? 'text-[#b49cff]' : 'text-[var(--text-secondary)]'} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: index * 0.4 }}>
               {text}
@@ -48,15 +48,15 @@ export default function CommandCenter() {
               <KPICard 
                 icon={TrendingDown} 
                 accent="#4ecdc4" 
-                value={depot.schedule_summary?.comparison?.peak_reduction_pct || 46} 
+                value={depot.schedule_summary?.comparison?.peak_reduction_pct || 63.2} 
                 unit="%" 
                 label="Peak Load Reduced" 
-                sub={`${(depot.schedule_summary?.comparison?.unmanaged_peak_kw || 3700).toLocaleString()} -> ${(depot.schedule_summary?.comparison?.scheduled_peak_kw || 2034).toLocaleString()} kW`} 
+                sub={`${(depot.schedule_summary?.comparison?.unmanaged_peak_kw || 4100).toLocaleString()} -> ${(depot.schedule_summary?.comparison?.scheduled_peak_kw || 1508.94).toLocaleString()} kW`} 
               />
               <KPICard 
                 icon={Leaf} 
                 accent="#00d4aa" 
-                value={depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 3665} 
+                value={depot.schedule_summary?.comparison?.unmanaged_carbon_kg - depot.schedule_summary?.comparison?.scheduled_carbon_kg || 773.73} 
                 unit=" kg" 
                 label="CO2 Saved" 
                 sub="Clean-window shift" 
@@ -64,7 +64,7 @@ export default function CommandCenter() {
               <KPICard 
                 icon={TrendingUp} 
                 accent="#f9ca24" 
-                value={depot.v2g_status?.monthly_dvvnl_saving_inr / 30 || 33000} 
+                value={(depot.schedule_summary?.comparison?.dvvnl_monthly_saving_inr / 12 / 30) || 2519.08} 
                 prefix="₹" 
                 label="Saved Today" 
                 sub="DVVNL avoided" 

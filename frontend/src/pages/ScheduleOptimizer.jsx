@@ -9,7 +9,7 @@ import { useSchedule } from '../hooks/useSchedule'
 
 export default function ScheduleOptimizer() {
   const { execute, result, loading, demoMode } = useSchedule()
-  const output = result || { comparison: mockDashboardData.depot.schedule_summary.comparison, solve_time_ms: 187 }
+  const output = result || { comparison: mockDashboardData.depot.schedule_summary.comparison, solve_time_ms: 4576 }
   return (
     <div>
       <Header title="Schedule Optimizer" subtitle="Convex charging plan for 500 Tata Nexon EVs" demoMode={demoMode} />
@@ -31,7 +31,7 @@ export default function ScheduleOptimizer() {
             className="flex h-11 w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-[#7c5cbf] to-[#5a3f9e] text-sm font-semibold shadow-[0_4px_16px_rgba(124,92,191,0.4)] active:scale-[0.96]"
           >
             <Play size={16} className="mr-2" />
-            {loading ? 'Solving convex QP...' : result ? `Solved in ${output.solve_time_ms}ms` : 'Run GridPilot Optimization'}
+            {loading ? 'Solving...' : result ? `⚡ Solved in ${output.solve_time_ms}ms` : 'Run GridPilot Optimization'}
           </button>
         </div>
         <motion.div className="glass-card p-5" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }}>
@@ -41,7 +41,7 @@ export default function ScheduleOptimizer() {
               Optimization Complete
             </div>
             <span className="rounded-md border border-[#00d4aa66] bg-[#00d4aa22] px-2 py-1 text-xs text-[#00d4aa]">
-              {output.solve_time_ms || 187}ms {output.status === 'edf_fallback' && '(EDF Fallback)'}
+              {output.solve_time_ms || 4576}ms {output.status === 'edf_fallback' && '(EDF Fallback)'}
             </span>
           </div>
           <ComparisonTable comparison={output.comparison} />

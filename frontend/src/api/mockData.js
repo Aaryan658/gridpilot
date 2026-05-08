@@ -1,5 +1,9 @@
 import { buildCarbonHours, buildFleetRows, buildLoadProfile } from '../utils/dataGenerators'
 
+// ── Real simulation values from the live GridPilot API ─────────────────────
+// These match the confirmed physics-based output for 500 Tata Nexon EVs,
+// Gurugram Corporate Fleet Depot, DVVNL HT-2 tariff.
+
 export const mockDashboardData = {
   depot: {
     status: {
@@ -9,7 +13,7 @@ export const mockDashboardData = {
       solar_kw: 0,
       net_load_kw: 1508.94,
       baseline_load_kw: 400,
-      carbon_intensity_now: 0.82,
+      carbon_intensity_now: 0.84,
       carbon_signal: 'NEUTRAL',
       ev_action: 'CHARGE_SCHEDULED',
       dvvnl_penalty_risk: false,
@@ -17,7 +21,9 @@ export const mockDashboardData = {
     },
     schedule_summary: {
       peak_kw: 1508.94,
-      total_carbon_kg: 16384,
+      total_carbon_kg: 20049 - 773.73,
+      all_ready_on_time: true,
+      overload_events: 0,
       comparison: {
         unmanaged_peak_kw: 4100,
         scheduled_peak_kw: 1508.94,
@@ -31,12 +37,12 @@ export const mockDashboardData = {
       },
     },
     carbon_signal: {
-      carbon_intensity_now: 0.82,
+      carbon_intensity_now: 0.84,
       ev_action_now: 'CHARGE_SCHEDULED',
-      carbon_forecast_48h: buildCarbonHours(),
+      forecast_48h: buildCarbonHours(),
       clean_windows: [{ start: '02:00', end: '05:00', avg_intensity: 0.73, label: 'CLEAN' }],
       rationale:
-        'NCR grid running 78% coal tonight. Cleanest window: 02:00-05:00 at 0.73 kg CO2/kWh. GridPilot shifting maximum charging to clean window. Estimated saving: 3,665 kg CO2 vs unmanaged.',
+        'NCR grid running 78% coal tonight. Cleanest window: 02:00–05:00 at 0.73 kg CO₂/kWh. GridPilot shifting maximum charging to clean window. Estimated saving: 773.73 kg CO₂ vs unmanaged.',
     },
     fleet_summary: {
       total_evs: 500,
@@ -56,18 +62,21 @@ export const mockDashboardData = {
     grid_stability_score: 90.11,
     active_anomalies: [],
     at_c_loss_today_crore: 48.7,
+    optimization_snapshot: {
+      recommendation: 'Shift 2,000 MW across national corridors to balance SR deficit. Clean window 02:00–05:00 optimal for EV fleet charging.',
+    },
     forecast_all_regions: {
-      NR: buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 68000 + d.hour * 95 })),
-      SR: buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 52000 + d.hour * 65 })),
-      ER: buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 26000 + d.hour * 35 })),
-      WR: buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 65000 + d.hour * 80 })),
+      NR:  buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 68000 + d.hour * 95 })),
+      SR:  buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 52000 + d.hour * 65 })),
+      ER:  buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 26000 + d.hour * 35 })),
+      WR:  buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 65000 + d.hour * 80 })),
       NER: buildLoadProfile().map((d) => ({ timestamp: d.time, predicted_mw: 4200 + d.hour * 8 })),
     },
   },
   signal_bridge: {
     current_signal: 'NEUTRAL',
     rationale:
-      'FirstFlight converts national demand and Haryana carbon intensity into GridPilot charging limits for the Gurugram fleet.',
+      'NCR grid 78% coal tonight. FirstFlight converts national demand and Haryana carbon intensity into GridPilot charging limits.',
     clean_window_next: { start: '02:00', end: '05:00', avg_intensity: 0.73, label: 'CLEAN' },
     recommended_action: 'CHARGE_SCHEDULED',
   },
@@ -88,7 +97,13 @@ export const mockScheduleResult = {
     carbon_reduction_pct: 18.3,
     dvvnl_monthly_saving_inr: 906871,
   },
-  fleet_summary: { all_ready_on_time: true, vehicles_delayed: 0, peak_load_kw: 1508.94, overload_events: 0 },
+  fleet_summary: {
+    all_ready_on_time: true,
+    vehicles_delayed: 0,
+    peak_load_kw: 1508.94,
+    overload_events: 0,
+  },
   status: 'edf_fallback',
   solve_time_ms: 4576,
+  solveTimeMs: 4576,
 }

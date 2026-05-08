@@ -54,3 +54,18 @@ logs/
 .pytest_cache/
 htmlcov/
 .coverage
+
+# Agent and Log Files
+api_server.err
+api_server.out
+clones/
+.agent/
+.agents/
+.claude/
+.continue/
+.junie/
+.qoder/
+.python_packages/
+skills-lock.json
+*.err
+*.out

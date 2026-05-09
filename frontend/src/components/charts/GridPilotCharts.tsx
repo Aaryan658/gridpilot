@@ -7,6 +7,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { fetchDashboardData, MOCK_DATA } from "@/lib/api";
 
 const LOAD_DATA = [
   {t:"20:00",u:1200,m:1200,s:0},
@@ -129,37 +130,82 @@ function CustomLegend() {
   );
 }
 
-const KPI_CARDS = [
-  {
-    value: "63.2%",
-    label: "Peak Load Reduced",
-    sub: "4,100 → 1,509 kW",
-    accent: "#4ECDC4",
-  },
-  {
-    value: "774 kg",
-    label: "CO₂ Saved/Night",
-    sub: "vs unmanaged charging",
-    accent: "#00D4AA",
-  },
-  {
-    value: "₹9.07L",
-    label: "DVVNL Saving/Month",
-    sub: "demand charge reduction",
-    accent: "#F9CA24",
-  },
-  {
-    value: "500/500",
-    label: "Vehicles Ready",
-    sub: "by 07:00 IST deadline",
-    accent: "#27AE60",
-  },
-];
-
 export default function GridPilotCharts() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   const currentHour = new Date().getHours();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [apiData, setApiData] = useState<any>(null);
+  const [apiOnline, setApiOnline] = useState(false);
+
+  useEffect(() => {
+    fetchDashboardData().then(data => {
+      if (data) {
+        setApiData(data);
+        setApiOnline(true);
+      }
+    });
+  }, []);
+
+  // Derive KPI values from API or mock
+  const kpis = apiData
+    ? {
+        peak_reduction_pct:
+          apiData.depot?.schedule_summary
+          ?.comparison?.peak_reduction_pct
+          ?? MOCK_DATA.kpis.peak_reduction_pct,
+        unmanaged_peak_kw:
+          apiData.depot?.schedule_summary
+          ?.comparison?.unmanaged_peak_kw
+          ?? MOCK_DATA.kpis.unmanaged_peak_kw,
+        managed_peak_kw:
+          apiData.depot?.schedule_summary
+          ?.comparison?.scheduled_peak_kw
+          ?? MOCK_DATA.kpis.managed_peak_kw,
+        dvvnl_monthly_saving_inr:
+          apiData.depot?.schedule_summary
+          ?.comparison?.dvvnl_monthly_saving_inr
+          ?? MOCK_DATA.kpis.dvvnl_monthly_saving_inr,
+        carbon_saved_kg: (
+          (apiData.depot?.schedule_summary
+          ?.comparison?.unmanaged_carbon_kg ?? 0) -
+          (apiData.depot?.schedule_summary
+          ?.comparison?.scheduled_carbon_kg ?? 0)
+        ) || MOCK_DATA.kpis.carbon_saved_kg,
+        all_ready:
+          apiData.depot?.schedule_summary
+          ?.all_ready_on_time
+          ?? MOCK_DATA.kpis.all_ready,
+      }
+    : MOCK_DATA.kpis;
+
+  const KPI_CARDS = [
+    {
+      value: `${kpis.peak_reduction_pct.toFixed(1)}%`,
+      label: "Peak Load Reduced",
+      sub: `${kpis.unmanaged_peak_kw.toLocaleString()} → ${Math.round(kpis.managed_peak_kw).toLocaleString()} kW`,
+      accent: "#4ECDC4",
+    },
+    {
+      value: `${Math.round(kpis.carbon_saved_kg)} kg`,
+      label: "CO₂ Saved/Night",
+      sub: "vs unmanaged charging",
+      accent: "#00D4AA",
+    },
+    {
+      value: `₹${(kpis.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L`,
+      label: "DVVNL Saving/Month",
+      sub: "demand charge reduction",
+      accent: "#F9CA24",
+    },
+    {
+      value: kpis.all_ready ? "500/500" : "453/500",
+      label: "Vehicles Ready",
+      sub: "by 07:00 IST deadline",
+      accent: "#27AE60",
+    },
+  ];
 
   return (
     <div className="w-full flex flex-col gap-6">
@@ -248,13 +294,34 @@ export default function GridPilotCharts() {
               STABLE
             </span>
           </div>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            marginLeft: 8,
+          }}>
+            <span style={{
+              width: 6, height: 6,
+              borderRadius: "50%",
+              background: apiOnline
+                ? "#27AE60" : "#F9CA24",
+            }} />
+            <span style={{
+              fontSize: 9,
+              color: apiOnline ? "#27AE60" : "#F9CA24",
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.08em",
+            }}>
+              {apiOnline ? "LIVE" : "DEMO"}
+            </span>
+          </div>
         </div>
 
         {/* SVG filters */}
         <svg width="0" height="0" style={{ position: "absolute" }}>
           <defs>
             <filter id="managedGlow" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+              <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blur"/>
               <feColorMatrix
                 in="blur" type="matrix"
                 values="0.49 0 0 0 0  0.36 0 0 0 0  0.75 0 0 0 0  0 0 0 3 0"
@@ -271,11 +338,11 @@ export default function GridPilotCharts() {
           </defs>
         </svg>
 
-        <div style={{ height: 360 }}>
+        <div style={{ height: 360, minWidth: 0, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
               data={LOAD_DATA}
-              margin={{ top: 8, right: 100, bottom: 4, left: 0 }}
+              margin={{ top: 8, right: 160, bottom: 4, left: 10 }}
             >
               <CartesianGrid
                 stroke="rgba(37,55,69,0.6)"
@@ -284,7 +351,17 @@ export default function GridPilotCharts() {
               />
 
               {/* Overload zone */}
-              <ReferenceArea y1={4000} y2={5500} fill="rgba(231,76,60,0.05)" />
+              <ReferenceArea
+                y1={4000} y2={4600}
+                fill="rgba(231,76,60,0.07)"
+                label={{
+                  value: "⚠ Overload Zone",
+                  position: "center",
+                  fill: "rgba(231,76,60,0.5)",
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              />
 
               {/* Clean window */}
               <ReferenceArea
@@ -292,8 +369,8 @@ export default function GridPilotCharts() {
                 fill="rgba(39,174,96,0.05)"
                 label={{
                   value: "🌙 Clean Window",
-                  position: "insideTop",
-                  fill: "rgba(39,174,96,0.5)",
+                  position: "insideTopLeft",
+                  fill: "rgba(39,174,96,0.6)",
                   fontSize: 10,
                   offset: 8,
                 }}
@@ -307,11 +384,12 @@ export default function GridPilotCharts() {
                 strokeWidth={1}
                 strokeDasharray="10 6"
                 label={{
-                  value: "Transformer Limit  4,000 kW",
-                  position: "right",
-                  fill: "rgba(255,107,53,0.7)",
+                  value: "4,000 kW limit",
+                  position: "insideTopRight",
+                  fill: "rgba(255,107,53,0.85)",
                   fontSize: 10,
-                  offset: 8,
+                  fontWeight: 600,
+                  offset: -4,
                 }}
               />
 
@@ -323,11 +401,11 @@ export default function GridPilotCharts() {
                 strokeWidth={1}
                 strokeDasharray="5 5"
                 label={{
-                  value: "DVVNL Penalty  4,500 kW",
-                  position: "right",
-                  fill: "rgba(249,202,36,0.5)",
+                  value: "4,500 kW penalty",
+                  position: "insideTopRight",
+                  fill: "rgba(249,202,36,0.7)",
                   fontSize: 10,
-                  offset: 8,
+                  offset: -20,
                 }}
               />
 
@@ -341,9 +419,9 @@ export default function GridPilotCharts() {
                 tick={{ fill: "#4A5C6A", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
-                domain={[0, 5200]}
+                domain={[0, 4600]}
                 tickFormatter={(v: number) => v >= 1000 ? (v / 1000).toFixed(0) + "k" : String(v)}
-                tickCount={6}
+                tickCount={5}
               />
 
               <Tooltip content={<CustomTooltip />} />
@@ -364,7 +442,7 @@ export default function GridPilotCharts() {
               <Line
                 dataKey="u"
                 stroke="#E74C3C"
-                strokeWidth={2}
+                strokeWidth={2.5}
                 dot={false}
                 name="Without GridPilot"
                 animationDuration={1800}
@@ -375,7 +453,7 @@ export default function GridPilotCharts() {
               <Line
                 dataKey="m"
                 stroke="#7C5CBF"
-                strokeWidth={2.5}
+                strokeWidth={3}
                 dot={false}
                 name="With GridPilot"
                 animationDuration={2000}

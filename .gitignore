@@ -33,7 +33,8 @@ gridpilot/saved/
 models/saved/
 *.joblib
 
-# Node / Frontend
+# Frontend build
+frontend/.next/
 frontend/node_modules/
 frontend/dist/
 frontend/.vite/
@@ -46,19 +47,19 @@ frontend/.vite/
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# Runtime
 logs/
+*.log
+gridpilot.db
+api_server.err
+api_server.out
 
 # Test artifacts
 .pytest_cache/
 htmlcov/
 .coverage
 
-# Agent and Log Files
-api_server.err
-api_server.out
-clones/
+# Agent artifacts
 .agent/
 .agents/
 .claude/
@@ -67,5 +68,8 @@ clones/
 .qoder/
 .python_packages/
 skills-lock.json
+GRIDPILOT_SPEC.MD
+AGENTS.MD
+clones/
 *.err
 *.out

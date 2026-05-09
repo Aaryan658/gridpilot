@@ -101,6 +101,10 @@ export default function HeroSection() {
             justify-center gap-4 mb-20"
         >
           <button
+            onClick={() => {
+              document.getElementById("live-demo")
+                ?.scrollIntoView({ behavior: "smooth" })
+            }}
             className="relative px-8 py-3.5 text-sm font-semibold
               rounded-full text-white overflow-hidden
               transition-all hover:-translate-y-0.5"
@@ -112,14 +116,17 @@ export default function HeroSection() {
           >
             View Live Demo ↗
           </button>
-          <button
+          <a
+            href="https://github.com/Aaryan658/gridpilot"
+            target="_blank"
+            rel="noopener noreferrer"
             className="px-8 py-3.5 text-sm font-semibold
               rounded-full border text-white transition-all
-              hover:bg-[#11212D]"
+              hover:bg-[#11212D] no-underline"
             style={{ borderColor: "rgba(74,92,106,0.5)" }}
           >
             Read the Paper ↓
-          </button>
+          </a>
         </motion.div>
 
         {/* Stats row */}

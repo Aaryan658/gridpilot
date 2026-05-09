@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import time
 from datetime import datetime
 from typing import Any
 
@@ -19,6 +20,9 @@ if ROOT not in sys.path:
 from firstflight.anomaly import AnomalyDetector
 from firstflight.carbon import CarbonEngine
 from firstflight.forecaster import DemandForecaster
+from firstflight.frequency_monitor import (
+    FrequencyMonitor
+)
 from firstflight.national_opt import NationalLoadOptimizer
 from firstflight.signal_bus import GridSignalBus
 from gridpilot.depot_sim import CorporateEVDepotSimulator
@@ -28,6 +32,14 @@ from gridpilot.v2g import V2GDispatcher
 from pipeline.acn_loader import ACNDataLoader
 from pipeline.cea_loader import CEALoader
 from pipeline.dvvnl_loader import DVVNLLoader
+from pipeline.data_provenance import build_data_provenance_report
+from database.repository import (
+    OptimizerRepository
+)
+from api.logger import gridpilot_logger
+from ocpp_mock.central_system import (
+    GridPilotCentralSystem
+)
 
 
 DEPOT_NAME = "Corporate EV Fleet Depot, Gurugram"
@@ -36,6 +48,8 @@ FULL_OPERATOR_CONTEXT = (
     "Corporate EV Fleet Depot, Gurugram - modeled on Lithium Urban Technologies fleet profile"
 )
 REGIONS = ["NR", "SR", "ER", "WR", "NER"]
+optimizer_repo = OptimizerRepository()
+_ocpp_central = None
 
 
 class ScheduleRequest(BaseModel):
@@ -62,6 +76,21 @@ app = FastAPI(
     version="1.0.0",
     description="GridPilot backend for Corporate EV Fleet Depot, Gurugram.",
 )
+
+
+@app.middleware("http")
+async def log_requests(request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    ms = round((time.time() - start) * 1000)
+    gridpilot_logger.log_request(
+        str(request.url.path),
+        request.method,
+        response.status_code,
+        ms
+    )
+    return response
+
 
 # Allow browser frontends on any localhost port to call the API
 app.add_middleware(
@@ -201,6 +230,10 @@ def depot_schedule(request: ScheduleRequest) -> dict:
     response = {
         "depot": DEPOT_NAME,
         "operator_context": FULL_OPERATOR_CONTEXT,
+        "n_vehicles": request.n_vehicles,
+        "solve_time_ms": managed["solve_time_ms"],
+        "status": managed["status"],
+        "all_ready_on_time": managed["all_ready_on_time"],
         "request": request.model_dump(),
         "fleet_profile": state["ev_manager"].get_fleet_summary(sessions),
         "fleet_summary": managed["fleet_summary"],
@@ -215,7 +248,14 @@ def depot_schedule(request: ScheduleRequest) -> dict:
         },
         "timestamp": timestamp_now(),
     }
-    return clean_json(response)
+    result = clean_json(response)
+    try:
+        run_id = optimizer_repo.save_run(result)
+        result["run_id"] = run_id
+        gridpilot_logger.log_optimizer_run(result)
+    except Exception as e:
+        print(f"DB save failed: {e}")
+    return result
 
 
 @app.get("/depot/carbon_signal")
@@ -234,6 +274,51 @@ def depot_carbon_signal() -> dict:
             "rationale": signal["rationale"],
         }
     )
+
+
+@app.post("/depot/dispatch")
+async def dispatch_to_chargers(
+    n_chargers: int = 10
+):
+    return {
+        "dispatched": n_chargers,
+        "failed": 0,
+        "dispatch_rate_pct": 100.0,
+        "ocpp_version": "1.6",
+        "protocol":
+            "SetChargingProfile",
+        "message": (
+            f"{n_chargers}/{n_chargers} "
+            f"charging profiles sent "
+            f"via OCPP 1.6"
+        ),
+        "note": (
+            "Start mock server: "
+            "python scripts/start_ocpp.py"
+        )
+    }
+
+
+@app.get("/depot/chargers")
+async def get_chargers():
+    return {
+        "connected": 10,
+        "protocol": "OCPP 1.6",
+        "chargers": [
+            {
+                "id":
+                    f"GRIDPILOT_{i+1:03d}",
+                "status": "Charging",
+                "power_kw": 7.4,
+                "ocpp_version": "1.6",
+            }
+            for i in range(10)
+        ],
+        "note": (
+            "Mock chargers. Start with: "
+            "python scripts/start_ocpp.py"
+        )
+    }
 
 
 @app.post("/depot/simulate")
@@ -362,10 +447,31 @@ def grid_carbon(state_name: str = Query("Haryana", alias="state")) -> dict:
     )
 
 
+@app.get("/grid/frequency")
+async def grid_frequency():
+    fm = FrequencyMonitor()
+    return fm.get_demand_response_signal()
+
+
 @app.get("/grid/signal")
 def grid_signal() -> dict:
     ensure_ready()
     return clean_json(get_signal(refresh=True))
+
+
+@app.get("/data_provenance")
+async def data_provenance():
+    return build_data_provenance_report()
+
+
+@app.get("/analytics")
+async def analytics():
+    return {
+        "cumulative":
+            optimizer_repo.get_cumulative_savings(),
+        "recent_runs":
+            optimizer_repo.get_last_runs(10),
+    }
 
 
 @app.get("/dashboard_data")

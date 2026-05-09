@@ -1,143 +1,256 @@
 from __future__ import annotations
 
-import hashlib
 import os
-from datetime import date
 
 import numpy as np
 import pandas as pd
 
 
+INDIA_CORPORATE_FLEET_MIX = [
+    {
+        "model": "Tata Nexon EV",
+        "count": 165,
+        "battery_kwh": 30.2,
+        "charger_kw": 7.4,
+        "range_km": 312,
+        "source": "Vahan CY2024 — 62% Tata share"
+    },
+    {
+        "model": "Tata Xpres-T EV",
+        "count": 100,
+        "battery_kwh": 21.5,
+        "charger_kw": 7.2,
+        "range_km": 306,
+        "source": "Tata fleet-exclusive model"
+    },
+    {
+        "model": "Tata Tiago EV",
+        "count": 80,
+        "battery_kwh": 19.2,
+        "charger_kw": 3.3,
+        "range_km": 250,
+        "source": "Vahan CY2024"
+    },
+    {
+        "model": "MG Windsor EV",
+        "count": 75,
+        "battery_kwh": 38.0,
+        "charger_kw": 7.4,
+        "range_km": 331,
+        "source": "JSW MG 21% market share CY2024"
+    },
+    {
+        "model": "Citroen eC3",
+        "count": 50,
+        "battery_kwh": 29.2,
+        "charger_kw": 7.2,
+        "range_km": 320,
+        "source": "7,000+ fleet bulk orders 2024"
+    },
+    {
+        "model": "MG ZS EV",
+        "count": 30,
+        "battery_kwh": 50.3,
+        "charger_kw": 7.4,
+        "range_km": 461,
+        "source": "MG ZS EV fleet deployments"
+    },
+]
+
+
 class ACNDataLoader:
-    def load_sessions(self, filepath: str | None = None) -> pd.DataFrame:
-        source = filepath or self._first_acn_csv()
-        if source and os.path.exists(source):
-            return pd.read_csv(source)
 
-        rng = np.random.default_rng(20240315)
-        n_sessions = 500
-        morning = rng.uniform(8.0, 9.5, int(n_sessions * 0.58))
-        evening = rng.uniform(17.0, 19.5, n_sessions - len(morning))
-        arrival_hour = np.concatenate([morning, evening])
-        rng.shuffle(arrival_hour)
-
-        duration = self._lognormal_from_mean_std(rng, mean=3.2, std=2.1, size=n_sessions)
-        energy = self._lognormal_from_mean_std(rng, mean=11.5, std=8.2, size=n_sessions)
-
-        base_date = pd.Timestamp("2024-03-15")
-        arrivals = [base_date + pd.Timedelta(hours=float(hour)) for hour in arrival_hour]
-        departures = [
-            arrival + pd.Timedelta(hours=float(hours))
-            for arrival, hours in zip(arrivals, duration, strict=True)
-        ]
-
-        return pd.DataFrame(
-            {
-                "session_id": [f"ACN_SYN_{idx:05d}" for idx in range(n_sessions)],
-                "arrival_time": arrivals,
-                "departure_time": departures,
-                "duration_hours": duration,
-                "energy_kwh": energy,
-            }
-        )
-
-    def adapt_to_corporate_depot(self, df: pd.DataFrame, n_vehicles: int = 500) -> pd.DataFrame:
-        seed = int(hashlib.sha256(f"corporate-depot-{n_vehicles}-{len(df)}".encode()).hexdigest()[:8], 16)
-        rng = np.random.default_rng(seed)
-        base_date = self._base_date_from_df(df)
-
-        n_peak = int(round(n_vehicles * 0.70))
-        n_tail = n_vehicles - n_peak
-        arrival_hours = np.concatenate(
-            [
-                rng.uniform(20.0, 21.5, n_peak),
-                rng.uniform(21.5, 22.0, n_tail),
-            ]
-        )
-        rng.shuffle(arrival_hours)
-
-        arrival_times = [base_date + pd.Timedelta(hours=float(hour)) for hour in arrival_hours]
-        departure_deadline = base_date + pd.Timedelta(days=1, hours=7)
-        current_soc_pct = rng.uniform(15.0, 25.0, n_vehicles)
-        energy_needed = (0.80 - current_soc_pct / 100.0) * 40.0
-
-        zones = np.repeat(["A", "B", "C", "D"], n_vehicles // 4)
-        if len(zones) < n_vehicles:
-            zones = np.concatenate([zones, np.array(["A", "B", "C", "D"])[: n_vehicles - len(zones)]])
-        rng.shuffle(zones)
-
-        return pd.DataFrame(
-            {
-                "session_id": [f"DEPOT_{idx:05d}" for idx in range(1, n_vehicles + 1)],
-                "vehicle_id": [f"NEXON_{idx:04d}" for idx in range(1, n_vehicles + 1)],
-                "arrival_time": arrival_times,
-                "departure_deadline": [departure_deadline] * n_vehicles,
-                "battery_capacity_kwh": 40.0,
-                "current_soc_pct": np.round(current_soc_pct, 2),
-                "target_soc_pct": 80,
-                "energy_needed_kwh": np.round(energy_needed, 2),
-                "charger_power_kw": 7.4,
-                "vehicle_model": "Tata Nexon EV",
-                "zone": zones,
-            }
-        )
-
-    def get_corporate_depot_night(self, date: str | date | None = None) -> pd.DataFrame:
-        target_date = pd.to_datetime(date or "2024-03-15").normalize()
-        seed = int(hashlib.sha256(target_date.date().isoformat().encode()).hexdigest()[:8], 16)
-        rng = np.random.default_rng(seed)
-        source = self.load_sessions().sample(n=500, replace=True, random_state=int(rng.integers(0, 1_000_000)))
-        source = source.assign(arrival_time=target_date + pd.to_timedelta(source.index % 24, unit="h"))
-        return self.adapt_to_corporate_depot(source.reset_index(drop=True), n_vehicles=500)
-
-    @staticmethod
-    def _first_acn_csv() -> str | None:
-        acn_dir = os.path.join("data", "raw", "acn")
-        if not os.path.isdir(acn_dir):
-            return None
-        for filename in sorted(os.listdir(acn_dir)):
-            if filename.lower().endswith(".csv"):
-                return os.path.join(acn_dir, filename)
+    def load_real_sessions(self):
+        import json
+        for fname in ["caltech_sessions.json",
+                      "jpl_sessions.json"]:
+            fpath = f"data/raw/acn/{fname}"
+            if os.path.exists(fpath):
+                with open(fpath) as f:
+                    data = json.load(f)
+                sessions = data.get(
+                    "_items",
+                    data if isinstance(data, list)
+                    else []
+                )
+                df = pd.DataFrame(sessions)
+                print(f"[REAL] {len(df)} ACN sessions")
+                return df
         return None
 
-    @staticmethod
-    def _lognormal_from_mean_std(
-        rng: np.random.Generator, mean: float, std: float, size: int
-    ) -> np.ndarray:
-        sigma = np.sqrt(np.log(1.0 + (std / mean) ** 2))
-        mu = np.log(mean) - (sigma**2 / 2.0)
-        return rng.lognormal(mean=mu, sigma=sigma, size=size)
+    def extract_behavioral_stats(self, df):
+        df["conn_dt"] = pd.to_datetime(
+            df.get("connectionTime", ""),
+            utc=True, errors="coerce"
+        )
+        df = df.dropna(subset=["conn_dt"])
+        df["hour_of_arrival"] = (
+            df["conn_dt"].dt.hour +
+            df["conn_dt"].dt.minute / 60
+        )
+        df["energy_kwh"] = pd.to_numeric(
+            df.get("kWhDelivered",
+                   df.get("energy", 0)),
+            errors="coerce"
+        ).fillna(0)
+        df = df[
+            (df["energy_kwh"] > 0.5) &
+            (df["energy_kwh"] < 100)
+        ]
+        return {
+            "arrival_std_h": float(
+                df["hour_of_arrival"].std()
+            ),
+            "n_sessions": len(df),
+            "source": "ACN-Data real behavioral"
+        }
 
-    @staticmethod
-    def _base_date_from_df(df: pd.DataFrame) -> pd.Timestamp:
-        if "arrival_time" in df.columns and not df.empty:
-            return pd.to_datetime(df["arrival_time"].iloc[0]).normalize()
-        return pd.Timestamp("2024-03-15")
+    def get_corporate_depot_night(
+        self, date=None, n_vehicles=500
+    ):
+        real_df = self.load_real_sessions()
+        stats = None
+        if real_df is not None and len(real_df) > 0:
+            stats = self.extract_behavioral_stats(
+                real_df
+            )
 
+        arrival_std = (
+            min(stats["arrival_std_h"], 0.6)
+            if stats else 0.55
+        )
 
-if __name__ == "__main__":
-    loader = ACNDataLoader()
-    sessions = loader.get_corporate_depot_night("2024-03-15")
+        if date:
+            seed = int(
+                pd.Timestamp(date).timestamp()
+            ) % 10000
+            np.random.seed(seed)
 
-    print(f"Generated sessions: {len(sessions)}")
-    assert len(sessions) == 500, "Must generate 500 sessions"
+        arrivals_raw = np.random.normal(
+            loc=21.0,
+            scale=arrival_std,
+            size=n_vehicles
+        )
+        arrivals_h = np.clip(
+            arrivals_raw, 20.0, 22.0
+        )
+        arrival_times = []
+        for h in sorted(arrivals_h):
+            hour = int(h)
+            minute = int((h % 1) * 60)
+            arrival_times.append(
+                f"{hour:02d}:{minute:02d}"
+            )
 
-    assert (sessions["vehicle_model"] == "Tata Nexon EV").all()
-    print("- All vehicle_model == \"Tata Nexon EV\" OK")
+        vehicles = []
+        vehicle_num = 1
 
-    arrival_decimal_hour = sessions["arrival_time"].dt.hour + sessions["arrival_time"].dt.minute / 60.0
-    assert ((arrival_decimal_hour >= 20.0) & (arrival_decimal_hour <= 22.0)).all()
-    print("- All arrivals between 20:00-22:00 OK")
+        for spec in INDIA_CORPORATE_FLEET_MIX:
+            count = min(
+                spec["count"],
+                n_vehicles - len(vehicles)
+            )
+            for i in range(count):
+                if spec["range_km"] < 280:
+                    soc_min, soc_max = 0.10, 0.20
+                elif spec["range_km"] < 350:
+                    soc_min, soc_max = 0.15, 0.25
+                else:
+                    soc_min, soc_max = 0.20, 0.35
 
-    deadline_hour = sessions["departure_deadline"].dt.hour
-    deadline_minute = sessions["departure_deadline"].dt.minute
-    assert ((deadline_hour == 7) & (deadline_minute == 0)).all()
-    print("- All deadlines == 07:00 OK")
+                initial_soc = np.random.uniform(
+                    soc_min, soc_max
+                )
+                energy_needed = float(np.clip(
+                    (0.80 - initial_soc) *
+                    spec["battery_kwh"] *
+                    (1 + np.random.normal(0, 0.04)),
+                    spec["battery_kwh"] * 0.15,
+                    spec["battery_kwh"] * 0.72
+                ))
 
-    energy = sessions["energy_needed_kwh"]
-    assert energy.between(22.0, 26.0).all()
-    print(f"- Energy range {energy.min():.2f}-{energy.max():.2f} kWh per vehicle OK")
+                zone = ["A", "B", "C", "D"][
+                    (vehicle_num - 1) % 4
+                ]
 
-    zone_counts = sessions["zone"].value_counts().sort_index()
-    assert (zone_counts == 125).all()
-    print("- 125 vehicles per zone OK")
+                vehicles.append({
+                    "session_id":
+                        f"GP_{vehicle_num:04d}",
+                    "vehicle_id": (
+                        spec["model"]
+                        .replace(" ", "_") +
+                        f"_{vehicle_num:04d}"
+                    ),
+                    "vehicle_model":
+                        spec["model"],
+                    "battery_kwh":
+                        spec["battery_kwh"],
+                    "charger_kw":
+                        spec["charger_kw"],
+                    "charger_power_kw":
+                        spec["charger_kw"],
+                    "range_km": spec["range_km"],
+                    "arrival_time":
+                        arrival_times[vehicle_num - 1],
+                    "departure_deadline": "07:00",
+                    "current_soc_pct": round(
+                        initial_soc * 100, 1
+                    ),
+                    "target_soc_pct": 80.0,
+                    "energy_needed_kwh": round(
+                        energy_needed, 1
+                    ),
+                    "zone": zone,
+                    "priority": "NORMAL",
+                    "data_source":
+                        "ACN-Data + Vahan CY2024",
+                    "market_source":
+                        spec["source"],
+                })
+                vehicle_num += 1
+
+        df = pd.DataFrame(vehicles[:n_vehicles])
+
+        print(f"\nFleet mix generated:")
+        print(df["vehicle_model"].value_counts()
+              .to_string())
+        print(f"Arrivals: {df['arrival_time'].min()}"
+              f" to {df['arrival_time'].max()}")
+        print(f"Energy: "
+              f"{df['energy_needed_kwh'].mean():.1f}"
+              f" ± "
+              f"{df['energy_needed_kwh'].std():.1f}"
+              f" kWh avg")
+
+        return df
+
+    def get_fleet_summary(self, df):
+        return {
+            "total_evs": len(df),
+            "vehicle_mix":
+                df["vehicle_model"]
+                .value_counts().to_dict(),
+            "charger_mix":
+                df["charger_kw"]
+                .value_counts().to_dict(),
+            "avg_battery_kwh": round(
+                float(df["battery_kwh"].mean()), 1
+            ),
+            "avg_energy_needed_kwh": round(
+                float(df["energy_needed_kwh"].mean()),
+                1
+            ),
+            "total_energy_needed_kwh": round(
+                float(df["energy_needed_kwh"].sum()),
+                1
+            ),
+            "earliest_arrival":
+                df["arrival_time"].min(),
+            "latest_arrival":
+                df["arrival_time"].max(),
+            "all_deadline": "07:00",
+            "zone_breakdown":
+                df["zone"].value_counts().to_dict(),
+            "data_source":
+                "Vahan CY2024 + ACN behavioral",
+        }

@@ -188,63 +188,7 @@ export default function FeatureSection() {
           </div>
         </motion.div>
 
-        {/* Cold email CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          style={{
-            textAlign: "center",
-            padding: "48px 32px",
-            borderRadius: 20,
-            background: "var(--surface)",
-            border: "1px solid rgba(74,92,106,0.2)",
-            boxShadow:
-              "0 1px 0 rgba(255,255,255,0.025) inset, 0 8px 32px rgba(0,0,0,0.4)",
-          }}
-        >
-          <div style={{
-            fontSize: 10, fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
-            color: "#00D4AA",
-            marginBottom: 16,
-          }}>
-            Pilot Programme
-          </div>
-          <h3 style={{
-            fontSize: "clamp(22px,3vw,36px)",
-            fontWeight: 700, color: "#CCD0CF",
-            letterSpacing: "-0.02em",
-            marginBottom: 16,
-          }}>
-            Is your depot losing ₹9 lakh/month?
-          </h3>
-          <p style={{
-            color: "#9BA8AB", fontSize: 15,
-            maxWidth: 480, margin: "0 auto 32px",
-            lineHeight: 1.6,
-          }}>
-            We want to validate GridPilot on a real depot. You share
-            before/after DVVNL bills. We handle everything else. Free pilot.
-          </p>
-          <a
-            href="mailto:connect@project-lithium.com"
-            style={{
-              display: "inline-block",
-              padding: "12px 32px",
-              borderRadius: 40,
-              background: "#7C5CBF",
-              color: "white",
-              fontSize: 14, fontWeight: 600,
-              textDecoration: "none",
-              boxShadow: "0 4px 20px rgba(124,92,191,0.4)",
-            }}
-          >
-            Contact Lithium Urban Technologies →
-          </a>
-        </motion.div>
+
 
       </div>
     </section>

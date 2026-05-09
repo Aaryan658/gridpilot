@@ -26,7 +26,22 @@ export default function Home() {
         }}>
           ⚡ GridPilot
         </span>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <a
+            href="/dashboard"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#9BA8AB",
+              textDecoration: "none",
+              padding: "6px 14px",
+              borderRadius: 20,
+              border: "1px solid rgba(74,92,106,0.3)",
+              transition: "all 0.15s",
+            }}
+          >
+            Live Dashboard →
+          </a>
           <span style={{
             fontSize: 10, color: "#00D4AA",
             padding: "3px 10px",
@@ -45,7 +60,7 @@ export default function Home() {
       <main className="min-h-screen bg-background">
         <HeroSection />
 
-        <section style={{
+        <section id="live-demo" style={{
           width: "100%",
           padding: "80px 32px",
           background: "var(--bg)",

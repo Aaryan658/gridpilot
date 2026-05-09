@@ -1,120 +1,132 @@
----
+# GridPilot
 
-# ⚡ GridPilot
-### Intelligent EV Charging Orchestration for India's Corporate Fleet Depots
+Intelligent EV charging orchestration for India's corporate fleet depots, powered by the FirstFlight grid intelligence engine.
 
-![Python](https://img.shields.io/badge/Python-3.11-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green)
-![React](https://img.shields.io/badge/React-18-61dafb)
-![CVXPY](https://img.shields.io/badge/Optimizer-CVXPY+ECOS-purple)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+## Live Demo
 
-## The Problem
+https://frontend-nine-virid-4bi7088jda.vercel.app/
 
-Every night, hundreds of corporate EVs return to their Gurugram depot after the evening shift and plug in simultaneously. Without intelligent orchestration, the DVVNL transformer runs at 185% rated capacity. One bad night means depot shutdown and 500 drivers without a vehicle for morning shift.
+## Depot Dashboard
 
-## The Solution
+https://frontend-nine-virid-4bi7088jda.vercel.app/dashboard
 
-GridPilot flattens the peak using a convex quadratic optimizer that solves in under 5 seconds for 500 vehicles. Same energy delivered. Zero overloads. Rs 9.07 lakh saved every month. Pure software. No hardware changes.
+## What GridPilot Solves
+
+Every night, hundreds of corporate EVs return to a Gurugram depot and plug in at the same time. Without orchestration, depot load spikes to 4,100 kW, pushing the transformer to 185% loading and creating repeated DVVNL demand-charge exposure.
+
+GridPilot uses a convex optimizer to flatten charging while still getting every vehicle ready by 07:00. Same fleet, same energy, zero overloads, and no hardware changes.
 
 ## Real Simulation Results
 
-| Metric | Without GridPilot | With GridPilot | Delta |
-|---|---|---|---|
-| Peak load | 4,100 kW (185%) | 1,509 kW | -63.2% |
+| Metric | Unmanaged | GridPilot | Result |
+|---|---:|---:|---:|
+| Peak load | 4,100 kW | 1,509 kW | -63.2% |
+| Transformer loading | 185% | stable | overload avoided |
 | Overload events | 5 per night | 0 | -100% |
-| Carbon emissions | baseline | -773.73 kg CO2/night | -18.3% |
-| DVVNL demand charge | full penalty | Rs 0 | -100% |
-| Monthly saving | — | Rs 9.07 lakh | confirmed |
-| Vehicles ready by 07:00 | — | 500/500 | confirmed |
-| Solver time | — | 4,576ms | confirmed |
+| pandapower critical states | 14 | 0 | eliminated |
+| Carbon saved | baseline | 773.73 kg/night | -18.3% |
+| DVVNL saving | penalty exposure | Rs 9.07 lakh/month | confirmed |
+| Vehicles ready by 07:00 | at risk | 500/500 | confirmed |
+| Solver time | manual planning | 4,576ms | CVXPY ECOS optimal |
 
-FirstFlight ML Engine Results:
+## Fleet Model
 
-| Region | Forecast MAPE | Anomaly F1 |
-|---|---|---|
-| NR | 0.85% | 0.97 |
-| SR | 0.83% | 1.00 |
-| ER | 0.84% | 0.91 |
-| WR | 0.82% | 0.99 |
-| NER | 0.83% | 0.90 |
+The depot simulation uses a 6-model mixed India EV fleet based on Vahan CY2024 proportions, ACN-Data behavioral distributions, and Vasudha Foundation energy calibration.
 
-## Architecture
+Representative fleet:
 
-FIRSTFLIGHT ENGINE
-  Prophet Forecasting | IsolationForest Anomaly Detection
-  CEA Carbon Signals  | National Load Optimizer
-  Signal Bus feeds into GridPilot scheduler
+- Tata Nexon EV
+- Tata Tiago EV
+- MG ZS EV
+- Mahindra XUV400
+- Hyundai Kona Electric
+- BYD e6
 
-GRIDPILOT CORE
-  CVXPY Convex QP Scheduler (ECOS solver)
-  pandapower 7-bus Depot Physics Simulator
-  V2G Dispatch Engine
-  500 x Tata Nexon EV Fleet Management
+## System Levels
 
-FASTAPI BACKEND
-  /depot/schedule | /depot/status | /grid/signal
+Step 0 - Real data:
 
-REACT FRONTEND (Vite)
-  Depot Dashboard | Schedule Optimizer
-  National Grid   | Command Center
-  Framer Motion + Recharts + Vanta.js 3D
+- Mixed 6-model India fleet using Vahan CY2024 mix
+- ACN-Data real behavioral arrival and dwell distributions
+- Vasudha Foundation energy calibration
+- CEA India 2022-23 carbon data
+- Data provenance API endpoint
+
+Level 1 - Next.js 16 frontend:
+
+- Landing page with real simulation story
+- `/dashboard` depot operations page
+- Live API integration with fallback values
+- Recharts load profile with red unmanaged spike and purple GridPilot curve
+- 63.2% peak reduction and Rs 9.07 lakh/month savings surfaced in the UI
+
+Level 2 - Production backend:
+
+- FastAPI backend
+- SQLite run-history database
+- JSON structured logging
+- API key authentication with localhost bypass
+- `/analytics` endpoint for cumulative savings and recent runs
+
+Level 3 - OCPP and frequency demand response:
+
+- Mock OCPP 1.6 central system
+- 10 simulated chargers
+- `SetChargingProfile` dispatch demo
+- POSOCO real-time grid frequency integration with synthetic fallback
+- Frequency-based EV demand-response signal
+
+## API Highlights
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /depot/schedule` | Run GridPilot depot optimizer |
+| `GET /depot/status` | Current depot state |
+| `GET /depot/carbon_signal` | Haryana carbon signal |
+| `GET /depot/chargers` | Mock OCPP charger list |
+| `POST /depot/dispatch` | Mock OCPP charging-profile dispatch |
+| `GET /grid/frequency` | Grid frequency demand-response signal |
+| `GET /grid/signal` | FirstFlight signal bus |
+| `GET /analytics` | Saved optimizer run analytics |
+| `GET /data_provenance` | Data source provenance |
 
 ## Quick Start
 
+```powershell
 pip install -r requirements.txt
-python scripts/setup.py
-uvicorn api.main:app --port 8000
+python -m uvicorn api.main:app --port 8000
+```
 
-In a new terminal:
+In another terminal:
+
+```powershell
 cd frontend
 npm install
 npm run dev
-Open localhost:5173
+```
+
+Open:
+
+- http://localhost:3000/
+- http://localhost:3000/dashboard
+
+For the OCPP mock:
+
+```powershell
+python scripts/start_ocpp.py
+```
 
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| EV Scheduler | CVXPY + ECOS (convex QP) |
-| Physics | pandapower (AC power flow) |
-| Forecasting | Facebook Prophet |
-| Anomaly Detection | Isolation Forest |
-| Carbon Data | CEA India 2022-23 (real) |
-| EV Sessions | ACN-Data, Caltech (adapted) |
-| Backend | FastAPI + uvicorn |
-| Frontend | React 18 + Framer Motion + Recharts |
-| 3D Background | Vanta.js + Three.js |
-| Grid Signals | FirstFlight engine (internal) |
-
-## Data Sources
-
-EV charging behavior: Flores-Espino et al. (2021). ACN-Data. Caltech. https://ev.caltech.edu/dataset
-
-Carbon emission factors: Central Electricity Authority. CO2 Baseline Database v16 (2022-23). Government of India.
-
-Weather: Open-Meteo Historical Weather API. https://open-meteo.com
-
-## Demo Scenario
-
-Modeled on Lithium Urban Technologies (project-lithium.com) — India's largest 100% electric corporate fleet operator, Gurugram, Haryana.
-
-500 x Tata Nexon EV (40 kWh, 7.4 kW AC charger)
-Arrival: 20:00 to 22:00 IST (post evening shift)
-Deadline: 07:00 IST (morning dispatch)
-Grid: DVVNL HT-2 Gurugram
-Carbon: CEA Haryana 0.820 kg CO2/kWh
-
-## Project Structure
-
-gridpilot/
-├── pipeline/          Data ingestion (CEA, ACN, weather)
-├── firstflight/       National grid ML engine
-├── gridpilot/         EV orchestration core
-├── api/               FastAPI backend
-├── frontend/          React dashboard
-├── scripts/           Setup and utilities
-└── data/              Generated data (gitignored)
+| Scheduler | CVXPY + ECOS convex QP |
+| Depot physics | pandapower AC power flow |
+| Backend | FastAPI + SQLite + structured logs |
+| Frontend | Next.js 16 + React + Framer Motion + Recharts |
+| Grid intelligence | FirstFlight forecasting, carbon, anomaly, frequency signal bus |
+| Charger protocol | OCPP 1.6 mock central system |
+| Data | Vahan CY2024, ACN-Data, CEA India 2022-23, Vasudha calibration |
 
 ## Academic Context
 
@@ -123,5 +135,3 @@ Developed for the Pre-Ideathon Summit: From Concept to Impact, Department of Com
 Authors: A. Aaryan Dharrmik, Richard Raju, Sincy John
 
 GridPilot v1.0 | Powered by FirstFlight
-
----

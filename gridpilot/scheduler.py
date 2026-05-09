@@ -74,6 +74,11 @@ class GridPilotScheduler:
         n_slots = prepared["n_slots"]
         availability = prepared["availability"]
         energy_needed = prepared["energy_needed"]
+        evs = prepared["ev_requests"]
+        if "charger_kw" in evs.columns:
+            charger_powers = evs["charger_kw"].values.astype(float)
+        else:
+            charger_powers = np.full(n_vehicles, self.CHARGER_POWER)
         delivered = np.zeros(n_vehicles)
         power = np.zeros((n_vehicles, n_slots))
 
@@ -83,7 +88,7 @@ class GridPilotScheduler:
                 remaining_kw = (energy_needed[vehicle] - delivered[vehicle]) / self.DELTA_T
                 if remaining_kw <= 1e-9:
                     break
-                charge_kw = min(self.CHARGER_POWER, remaining_kw)
+                charge_kw = min(charger_powers[vehicle], remaining_kw)
                 power[vehicle, slot] = charge_kw
                 delivered[vehicle] += charge_kw * self.DELTA_T
 
@@ -102,7 +107,14 @@ class GridPilotScheduler:
         building_load = prepared["building_load"]
         carbon_intensity = prepared["carbon_intensity"]
         energy_needed = prepared["energy_needed"]
-        charger_power_matrix = np.full((n_vehicles, n_slots), self.CHARGER_POWER)
+        if "charger_kw" in prepared["ev_requests"].columns:
+            charger_powers = prepared["ev_requests"]["charger_kw"].values.astype(float)
+        else:
+            charger_powers = np.full(n_vehicles, self.CHARGER_POWER)
+        charger_power_matrix = np.tile(
+            charger_powers.reshape(-1, 1),
+            (1, n_slots)
+        )
 
         power = cp.Variable((n_vehicles, n_slots), nonneg=True)
         carbon_matrix = np.tile(carbon_intensity, (n_vehicles, 1))
@@ -140,6 +152,11 @@ class GridPilotScheduler:
         carbon = prepared["carbon_intensity"]
         energy_needed = prepared["energy_needed"]
         departures = pd.to_datetime(prepared["ev_requests"]["departure_deadline"])
+        evs = prepared["ev_requests"]
+        if "charger_kw" in evs.columns:
+            charger_powers = evs["charger_kw"].values.astype(float)
+        else:
+            charger_powers = np.full(n_vehicles, self.CHARGER_POWER)
 
         power = np.zeros((n_vehicles, n_slots))
         delivered = np.zeros(n_vehicles)
@@ -156,7 +173,7 @@ class GridPilotScheduler:
                 if capacity <= 1e-9:
                     break
                 remaining_kw = (energy_needed[vehicle] * 0.95 - delivered[vehicle]) / self.DELTA_T
-                charge_kw = min(self.CHARGER_POWER, capacity, remaining_kw)
+                charge_kw = min(charger_powers[vehicle], capacity, remaining_kw)
                 if charge_kw <= 0:
                     continue
                 power[vehicle, slot] = charge_kw
@@ -172,7 +189,7 @@ class GridPilotScheduler:
                     if capacity <= 1e-9:
                         break
                     remaining_kw = (energy_needed[vehicle] * 0.95 - delivered[vehicle]) / self.DELTA_T
-                    charge_kw = min(self.CHARGER_POWER, capacity, remaining_kw)
+                    charge_kw = min(charger_powers[vehicle], capacity, remaining_kw)
                     power[vehicle, slot] += charge_kw
                     delivered[vehicle] += charge_kw * self.DELTA_T
                     total_load[slot] += charge_kw

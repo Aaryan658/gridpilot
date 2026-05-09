@@ -28,6 +28,9 @@ class GridSignalBus:
         "national_anomalies",
         "recommended_ev_power_kw",
         "rationale",
+        "frequency_hz",
+        "grid_frequency_status",
+        "demand_response",
     ]
 
     def __init__(self) -> None:
@@ -49,6 +52,11 @@ class GridSignalBus:
         surplus_region = self._surplus_region()
         national_anomalies = self._national_anomalies()
         estimated_saving = self._estimated_depot_saving_kg()
+        from firstflight.frequency_monitor import (
+            FrequencyMonitor
+        )
+        fm = FrequencyMonitor()
+        dr = fm.get_demand_response_signal()
 
         clean_window = clean_windows[0] if clean_windows else {
             "start": "02:00",
@@ -82,6 +90,20 @@ class GridSignalBus:
             "national_anomalies": national_anomalies,
             "recommended_ev_power_kw": float(current["recommended_ev_power_kw"]),
             "rationale": rationale,
+            "frequency_hz": dr["frequency_hz"],
+            "grid_frequency_status": dr["grid_status"],
+            "demand_response": {
+                "active":
+                    dr["load_reduction_pct"] > 0,
+                "action": dr["dr_action"],
+                "load_reduction_pct":
+                    dr["load_reduction_pct"],
+                "max_ev_power_kw":
+                    dr["max_ev_power_kw"],
+                "reason": dr["reason"],
+                "revenue_potential":
+                    dr["revenue_potential"],
+            },
         }
 
     def _clean_windows(self, state: str) -> list[dict]:

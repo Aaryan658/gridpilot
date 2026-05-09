@@ -1,0 +1,125 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--text-primary);
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-primary: var(--text-primary);
+
+  /* GridPilot brand */
+  --color-gridpilot: #7C5CBF;
+  --color-firstflight: #00D4AA;
+  --color-danger: #E74C3C;
+  --color-warning: #F9CA24;
+  --color-success: #27AE60;
+  --color-info: #4ECDC4;
+
+  /* Chart colors */
+  --color-chart-1: #00F0FF;
+  --color-chart-2: #00FF9D;
+  --color-chart-3: #9D00FF;
+  --color-chart-4: #FF00E4;
+  --color-chart-5: #FFD700;
+
+  /* Shadcn tokens */
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text-primary);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text-primary);
+  --color-primary: #ffffff;
+  --color-primary-foreground: #000000;
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text-primary);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--text-secondary);
+  --color-accent: var(--surface-2);
+  --color-accent-foreground: var(--text-primary);
+  --color-destructive: #ff0000;
+  --color-destructive-foreground: #ffffff;
+  --color-ring: var(--border);
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+:root, .dark {
+  --bg: #06141B;
+  --surface: #11212D;
+  --surface-2: #253745;
+  --surface-3: #1A2E3F;
+  --border: #4A5C6A;
+  --border-subtle: rgba(74, 92, 106, 0.2);
+  --border-visible: rgba(74, 92, 106, 0.5);
+  --text-secondary: #9BA8AB;
+  --text-primary: #CCD0CF;
+  --text-muted: #4A5C6A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Premium card depth */
+  .card-premium {
+    background: var(--surface);
+    border: 1px solid rgba(74, 92, 106, 0.2);
+    border-radius: 16px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.025) inset,
+      0 8px 32px rgba(0,0,0,0.4),
+      0 1px 2px rgba(0,0,0,0.6);
+  }
+  /* Gradient text utility */
+  .gradient-text {
+    background: linear-gradient(90deg, #7C5CBF, #00D4AA);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  /* Glow utilities */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(124,92,191,0.3);
+  }
+  .glow-teal {
+    box-shadow: 0 0 20px rgba(0,212,170,0.3);
+  }
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--surface-2);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #7C5CBF;
+  }
+  /* Pulse animation */
+  @keyframes pulse-glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(200%) skewX(-15deg); }
+  }
+  @keyframes count-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}

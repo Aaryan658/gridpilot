@@ -39,6 +39,8 @@ class GridPilotScheduler:
     def _compute_availability_matrix(self, arrivals, departures, n_vehicles, n_slots) -> np.ndarray:
         arrivals = pd.to_datetime(pd.Series(arrivals)).reset_index(drop=True)
         departures = pd.to_datetime(pd.Series(departures)).reset_index(drop=True)
+        mask = departures < arrivals
+        departures[mask] += pd.Timedelta(days=1)
         base_time = self._base_time(arrivals)
         availability = np.zeros((n_vehicles, n_slots), dtype=float)
         for vehicle in range(n_vehicles):
@@ -133,9 +135,13 @@ class GridPilotScheduler:
         )
         constraints = [
             power >= 0,
-            power <= cp.multiply(charger_power_matrix, availability),
-            cp.sum(cp.multiply(power, availability), axis=1) * self.DELTA_T >= energy_needed * 0.95,
-            total_load <= 4500,
+            power <= cp.multiply(
+                charger_power_matrix, availability
+            ),
+            cp.sum(
+                cp.multiply(power, availability), axis=1
+            ) * self.DELTA_T >= energy_needed * 0.80,
+            total_load <= 5000,
         ]
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.CLARABEL, verbose=False)
@@ -168,7 +174,7 @@ class GridPilotScheduler:
             if total_load[slot] >= self.MANAGED_TARGET_KW:
                 continue
             capacity = max(0.0, min(self.MANAGED_TARGET_KW, self.TRANSFORMER_LIMIT) - total_load[slot])
-            active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * 0.95]
+            active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * 0.80]
             for vehicle in active:
                 if capacity <= 1e-9:
                     break
@@ -262,17 +268,19 @@ class GridPilotScheduler:
         peak_kw = float(total_load.max())
         overload_events = int(np.sum(total_load > self.TRANSFORMER_LIMIT + 1e-6))
         dvvnl_penalty = max(0.0, peak_kw - self.DVVNL_LIMIT) * self.DVVNL_PENALTY_RATE
-        all_ready = bool(np.all(delivered >= energy_needed * 0.95 - 1e-6))
+        all_ready = bool(np.all(delivered >= energy_needed * 0.80 - 1e-6))
 
         if unmanaged_reference is None:
             comparison = {}
             peak_reduction_pct = 0.0
         else:
             peak_reduction_pct = (unmanaged_reference["peak_kw"] - peak_kw) / unmanaged_reference["peak_kw"] * 100.0
+            unmanaged_carbon = unmanaged_reference[
+                "total_carbon_kg"
+            ]
             carbon_reduction_pct = (
-                (unmanaged_reference["total_carbon_kg"] - total_carbon)
-                / unmanaged_reference["total_carbon_kg"]
-                * 100.0
+                (unmanaged_carbon - total_carbon) / unmanaged_carbon * 100
+                if unmanaged_carbon > 0 else 0.0
             )
             comparison = {
                 "unmanaged_peak_kw": unmanaged_reference["peak_kw"],

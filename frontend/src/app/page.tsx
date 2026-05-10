@@ -106,7 +106,7 @@ export default function Home() {
                 margin: "0 auto",
                 lineHeight: 1.6,
               }}>
-                CVXPY convex QP solved in 4,576ms for 500 vehicles.
+                CVXPY convex QP solved in 1,831ms for 500 vehicles.
                 pandapower AC power flow validates every result.
                 CEA India 2022-23 carbon data.
               </p>

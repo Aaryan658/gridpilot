@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 const FEATURES = [
   {
     title: "Convex QP Optimizer",
-    desc: "CVXPY + ECOS solver. 500 vehicles. Optimal in 4,576ms. Mathematically guaranteed minimum carbon + peak.",
+    desc: "CVXPY + ECOS solver. 500 vehicles. Optimal in 1,831ms. Mathematically guaranteed minimum carbon + peak.",
     accent: "#7C5CBF",
     icon: "⚡",
   },
@@ -29,7 +29,7 @@ const FEATURES = [
 ];
 
 const RESULTS = [
-  { before: "4,100 kW", after: "1,509 kW", label: "Peak Load", delta: "-63.2%" },
+  { before: "4,100 kW", after: "2,204 kW", label: "Peak Load", delta: "-46.3%" },
   { before: "5 events", after: "0 events", label: "Overloads/night", delta: "-100%" },
   { before: "₹8.4L/mo", after: "₹0", label: "DVVNL Penalty", delta: "-100%" },
   { before: "453/500", after: "500/500", label: "Vehicles Ready", delta: "+10%" },

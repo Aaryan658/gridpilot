@@ -20,14 +20,14 @@ GridPilot uses a convex optimizer to flatten charging while still getting every 
 
 | Metric | Unmanaged | GridPilot | Result |
 |---|---:|---:|---:|
-| Peak load | 4,100 kW | 1,509 kW | -63.2% |
+| Peak load | 4,100 kW | 2,204 kW | -46.3% |
 | Transformer loading | 185% | stable | overload avoided |
 | Overload events | 5 per night | 0 | -100% |
 | pandapower critical states | 14 | 0 | eliminated |
-| Carbon saved | baseline | 773.73 kg/night | -18.3% |
-| DVVNL saving | penalty exposure | Rs 9.07 lakh/month | confirmed |
+| Carbon saved | baseline | 774 kg/night | -18.3% |
+| DVVNL saving | penalty exposure | Rs 6.05 lakh/month | confirmed |
 | Vehicles ready by 07:00 | at risk | 500/500 | confirmed |
-| Solver time | manual planning | 4,576ms | CVXPY ECOS optimal |
+| Solver time | manual planning | 1,831ms | CVXPY ECOS optimal |
 
 ## Fleet Model
 
@@ -58,7 +58,7 @@ Level 1 - Next.js 16 frontend:
 - `/dashboard` depot operations page
 - Live API integration with fallback values
 - Recharts load profile with red unmanaged spike and purple GridPilot curve
-- 63.2% peak reduction and Rs 9.07 lakh/month savings surfaced in the UI
+- 46.3% peak reduction and Rs 6.05 lakh/month savings surfaced in the UI
 
 Level 2 - Production backend:
 

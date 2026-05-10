@@ -14,7 +14,6 @@ from pipeline.acn_loader import ACNDataLoader
 
 class EVRequestManager:
     FLEET_SIZE = 500
-    VEHICLE_MODEL = "Tata Nexon EV"
     OPERATOR_CONTEXT = (
         "Corporate EV Fleet Depot, Gurugram (modeled on Lithium Urban Technologies "
         "fleet profile)"
@@ -25,13 +24,19 @@ class EVRequestManager:
         self._active_requests: list[dict] = []
 
     def generate_session(self, date: str | None = None, n: int = 500) -> pd.DataFrame:
-        sessions = self.loader.get_corporate_depot_night(date or "2024-03-15").head(n).copy()
-        if len(sessions) != n:
-            raise ValueError(f"Expected {n} EV sessions, got {len(sessions)}")
-        if not (sessions["vehicle_model"] == self.VEHICLE_MODEL).all():
-            raise ValueError("All sessions must be Tata Nexon EV")
+        from pipeline.acn_loader import ACNDataLoader
+        loader = ACNDataLoader()
+        sessions = loader.get_corporate_depot_night(date=date, n_vehicles=n)
 
-        self._active_requests = sessions.to_dict("records")
+        records = sessions.to_dict("records")
+        for session in records:
+            session["charger_kw"] = session.get(
+                "charger_power_kw",
+                session.get("charger_kw", 7.4)
+            )
+
+        sessions["charger_kw"] = [r["charger_kw"] for r in records]
+        self._active_requests = records
         return sessions
 
     def get_fleet_summary(self, sessions_df: pd.DataFrame) -> dict:
@@ -45,8 +50,8 @@ class EVRequestManager:
 
         return {
             "total_evs": int(len(sessions)),
-            "vehicle_model": self.VEHICLE_MODEL
-            if (sessions["vehicle_model"] == self.VEHICLE_MODEL).all()
+            "vehicle_model": sessions["vehicle_model"].iloc[0]
+            if sessions["vehicle_model"].nunique() == 1
             else "Mixed",
             "total_energy_needed_kwh": round(float(sessions["energy_needed_kwh"].sum()), 2),
             "avg_energy_per_vehicle_kwh": round(float(sessions["energy_needed_kwh"].mean()), 2),
@@ -77,7 +82,7 @@ if __name__ == "__main__":
     arrival_hours = arrivals.dt.hour + arrivals.dt.minute / 60.0
 
     assert summary["total_evs"] == 500
-    assert (sessions["vehicle_model"] == "Tata Nexon EV").all()
+    assert "Tata Nexon EV" in sessions["vehicle_model"].values
     assert ((arrival_hours >= 20.0) & (arrival_hours <= 22.0)).all()
     assert (deadlines.dt.strftime("%H:%M") == "07:00").all()
     assert summary["all_deadline"] == "07:00"

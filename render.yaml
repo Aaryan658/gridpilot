@@ -1,13 +1,29 @@
 services:
   - type: web
-    name: gridpilot-backend
+    name: gridpilot-api
     runtime: python
-    plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    startCommand: python -m uvicorn api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9
-      - key: BACKEND_CORS_ORIGINS
-        value: https://frontend-nine-virid-4bi7088jda.vercel.app
+        value: 3.12.0
+      - key: OPENMETEO_URL
+        value: https://archive-api.open-meteo.com/v1/archive
+      - key: CAMPUS_TRANSFORMER_LIMIT_KW
+        value: "4000"
+      - key: CAMPUS_SOLAR_CAPACITY_KW
+        value: "0"
+      - key: CAMPUS_BASELINE_KW
+        value: "400"
+      - key: DVVNL_DEMAND_RATE_INR
+        value: "350"
+      - key: GRIDPILOT_DB_PATH
+        value: /opt/render/project/src/gridpilot.db
+
+  - type: web
+    name: gridpilot-frontend
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://gridpilot-api.onrender.com

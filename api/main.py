@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 import time
 from datetime import datetime
 from typing import Any
@@ -71,6 +72,27 @@ class OptimizeRequest(BaseModel):
     carbon_signals: dict[str, float] | None = None
 
 
+class _AppCache:
+    signal_bus: GridSignalBus | None = None
+    scheduler: GridPilotScheduler | None = None
+    depot_sim: CorporateEVDepotSimulator | None = None
+    ready: bool = False
+
+_cache = _AppCache()
+
+
+def get_cors_origins() -> list[str]:
+    configured = os.getenv("BACKEND_CORS_ORIGINS", "")
+    defaults = [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+        "https://frontend-nine-virid-4bi7088jda.vercel.app",
+    ]
+    extra = [origin.strip() for origin in configured.split(",") if origin.strip()]
+    return sorted(set(defaults + extra))
+
+
 app = FastAPI(
     title="GridPilot API",
     version="1.0.0",
@@ -92,10 +114,10 @@ async def log_requests(request, call_next):
     return response
 
 
-# Allow browser frontends on any localhost port to call the API
+# Allow the local frontend and deployed Vercel frontend to call the API.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -137,19 +159,60 @@ async def startup_event() -> None:
     state["anomaly"].train_all()
     state["national_optimizer"] = NationalLoadOptimizer()
     state["carbon_engine"] = CarbonEngine()
-    state["signal_bus"] = GridSignalBus()
 
     print("Loading GridPilot engine...")
     state["ev_manager"] = EVRequestManager()
-    state["scheduler"] = GridPilotScheduler()
-    state["depot_sim"] = CorporateEVDepotSimulator()
     state["v2g"] = V2GDispatcher()
     state["models_loaded"] = True
     state["solver_ready"] = True
 
-    print("All systems ready.")
-    print("Depot: Corporate EV Fleet Depot, Gurugram")
-    print("Modeled on: Lithium Urban Technologies fleet")
+    print("Warming cache in background thread...")
+
+    def _warm():
+        t0 = time.time()
+        print("\n[CACHE] Warming up...")
+
+        try:
+            _cache.signal_bus = GridSignalBus()
+            _cache.signal_bus.emit_for_depot()
+            print("[CACHE] ✓ Signal bus (Prophet trained)")
+        except Exception as e:
+            print(f"[CACHE] ✗ Signal bus: {e}")
+
+        try:
+            _cache.scheduler = GridPilotScheduler()
+            print("[CACHE] ✓ Scheduler (CVXPY ready)")
+        except Exception as e:
+            print(f"[CACHE] ✗ Scheduler: {e}")
+
+        try:
+            _cache.depot_sim = CorporateEVDepotSimulator()
+            print("[CACHE] ✓ Depot sim (pandapower ready)")
+        except Exception as e:
+            print(f"[CACHE] ✗ Depot sim: {e}")
+
+        _cache.ready = True
+        ms = round((time.time() - t0) * 1000)
+        print(f"[CACHE] Ready in {ms}ms\n")
+
+    threading.Thread(target=_warm, daemon=True).start()
+
+    print("API accepting requests. Cache warming in background.")
+
+
+def get_cached(obj_name: str):
+    return getattr(_cache, obj_name, None)
+
+
+@app.get("/cache/status")
+async def cache_status():
+    return {
+        "ready": _cache.ready,
+        "signal_bus": _cache.signal_bus is not None,
+        "scheduler": _cache.scheduler is not None,
+        "depot_sim": _cache.depot_sim is not None,
+        "message": "All components cached" if _cache.ready else "Still warming up...",
+    }
 
 
 def ensure_ready() -> None:
@@ -219,8 +282,9 @@ def depot_schedule(request: ScheduleRequest) -> dict:
     building_load = scheduler_building_load()
     signal = get_signal(refresh=True)
 
-    unmanaged = state["scheduler"].get_unmanaged_baseline(sessions, building_load)
-    managed = state["scheduler"].schedule(sessions, building_load, signal, request.enable_v2g)
+    _sched = get_cached("scheduler") or GridPilotScheduler()
+    unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
+    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g)
     unmanaged_sim = simulate_schedule(unmanaged, "unmanaged")
     managed_sim = simulate_schedule(managed, "managed")
 
@@ -327,8 +391,9 @@ def depot_simulate(request: SimulateRequest) -> dict:
     sessions = state["ev_manager"].generate_session("2024-01-15", request.n_vehicles)
     building_load = scenario_building_load(request.scenario)
     signal = get_signal()
-    unmanaged = state["scheduler"].get_unmanaged_baseline(sessions, building_load)
-    managed = state["scheduler"].schedule(sessions, building_load, signal, request.enable_v2g)
+    _sched = get_cached("scheduler") or GridPilotScheduler()
+    unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
+    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g)
 
     solar = pd.Series([float(request.solar_kw)] * 48)
     before = simulate_schedule(unmanaged, "before", solar_profile=solar)
@@ -525,7 +590,8 @@ def dashboard_data() -> dict:
 
 def get_signal(refresh: bool = False) -> dict:
     if refresh or not state.get("last_signal"):
-        state["last_signal"] = state["signal_bus"].emit_for_depot("haryana")
+        bus = get_cached("signal_bus") or GridSignalBus()
+        state["last_signal"] = bus.emit_for_depot("haryana")
     return state["last_signal"]
 
 
@@ -561,7 +627,8 @@ def simulate_schedule(result: dict, label: str, solar_profile: pd.Series | None 
         ev_schedule[slot] = {"A": zone_kw, "B": zone_kw, "C": zone_kw, "D": zone_kw}
     baseline = window["building_load_kw"].reset_index(drop=True)
     solar = solar_profile if solar_profile is not None else pd.Series([0.0] * 48)
-    return state["depot_sim"].simulate_night(ev_schedule, baseline, solar, label)
+    depot = get_cached("depot_sim") or CorporateEVDepotSimulator()
+    return depot.simulate_night(ev_schedule, baseline, solar, label)
 
 
 def summarize_simulation(simulation: pd.DataFrame) -> dict:

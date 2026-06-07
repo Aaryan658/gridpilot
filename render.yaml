@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: gridpilot-backend
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn api.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: BACKEND_CORS_ORIGINS
+        value: https://frontend-nine-virid-4bi7088jda.vercel.app

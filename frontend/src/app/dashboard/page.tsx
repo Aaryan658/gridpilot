@@ -68,6 +68,18 @@ export default function DashboardPage() {
   const [carbonSignal, setCarbonSignal] = useState<CarbonSignal | null>(null);
   const [solveStep, setSolveStep] = useState("");
   const [isLive, setIsLive] = useState(false);
+  const [wasWarmup, setWasWarmup] = useState(false);
+
+  useEffect(() => {
+    const ping = () => {
+      fetch(
+        process.env.NEXT_PUBLIC_API_URL + "/health"
+      ).catch(() => {});
+    };
+    ping();
+    const interval = setInterval(ping, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setChartReady(true);
@@ -81,6 +93,9 @@ export default function DashboardPage() {
     setSolved(false);
     setResult(null);
     setIsLive(false);
+    setWasWarmup(false);
+
+    const start = Date.now();
 
     const STEPS = [
       { ms: 280,  t: "Loading 500 EV sessions..." },
@@ -109,6 +124,11 @@ export default function DashboardPage() {
     })();
 
     const [data] = await Promise.all([apiPromise, animPromise]);
+
+    const totalMs = Date.now() - start;
+    if (totalMs > 5000) {
+      setWasWarmup(true);
+    }
 
     const DEMO = {
       peak_reduction_pct: 46.34,
@@ -266,6 +286,16 @@ export default function DashboardPage() {
               }}>
                 {isLive ? "● Live Result" : "● Demo Result"}
               </div>
+              {wasWarmup && (
+                <div style={{
+                  fontSize: 10,
+                  color: "#F9CA24",
+                  marginBottom: 6,
+                }}>
+                  ⚡ Server was sleeping — now warm.
+                  Next run will be ~2s.
+                </div>
+              )}
               {[
                 { l: "Peak reduction", v: `${Number(result.peak_reduction_pct).toFixed(1)}%` },
                 { l: "DVVNL saving", v: `₹${(result.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L/mo` },

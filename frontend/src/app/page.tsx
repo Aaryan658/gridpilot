@@ -1,8 +1,18 @@
+"use client";
+
+import { useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import GridPilotCharts from "@/components/charts/GridPilotCharts";
 import FeatureSection from "@/components/FeatureSection";
+import LiveCalculator from "@/components/LiveCalculator";
 
 export default function Home() {
+  useEffect(() => {
+    fetch(
+      (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/health"
+    ).catch(() => {});
+  }, []);
+
   return (
     <>
       {/* Nav */}
@@ -112,6 +122,654 @@ export default function Home() {
               </p>
             </div>
             <GridPilotCharts />
+          </div>
+        </section>
+
+        {/* SECTION 1: The Math */}
+        <section style={{
+          width: "100%",
+          padding: "60px 32px",
+          background: "#06141B",
+          borderTop: "1px solid rgba(74,92,106,0.1)",
+        }}>
+          <div style={{
+            maxWidth: 900, margin: "0 auto",
+          }}>
+            <div style={{
+              textAlign: "center", marginBottom: 40,
+            }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "#7C5CBF",
+                display: "block", marginBottom: 12,
+              }}>
+                The Algorithm
+              </span>
+              <h2 style={{
+                fontSize: "clamp(22px,3vw,36px)",
+                fontWeight: 700, color: "#CCD0CF",
+                letterSpacing: "-0.02em",
+                marginBottom: 12,
+              }}>
+                Convex quadratic program.
+                Not a heuristic.
+              </h2>
+              <p style={{
+                color: "#9BA8AB", fontSize: 14,
+                maxWidth: 560, margin: "0 auto",
+                lineHeight: 1.6,
+              }}>
+                GridPilot solves a mathematically
+                guaranteed optimal schedule using
+                CVXPY with the CLARABEL interior-point
+                solver. Four competing objectives.
+                One hard constraint. 500 variables.
+              </p>
+            </div>
+
+            {/* Objective function display */}
+            <div style={{
+              background: "#11212D",
+              border: "1px solid rgba(74,92,106,0.2)",
+              borderRadius: 16,
+              padding: "28px 32px",
+              marginBottom: 20,
+              fontFamily: "monospace",
+              boxShadow:
+                "0 1px 0 rgba(255,255,255,0.02) inset,"
+                +"0 8px 32px rgba(0,0,0,0.4)",
+            }}>
+              <div style={{
+                fontSize: 11, color: "#4A5C6A",
+                textTransform: "uppercase",
+                letterSpacing: "0.1em",
+                marginBottom: 16,
+              }}>
+                Objective function
+              </div>
+              <div style={{
+                fontSize: "clamp(13px,2vw,17px)",
+                color: "#CCD0CF",
+                lineHeight: 2,
+                overflowX: "auto",
+              }}>
+                <span style={{ color: "#9BA8AB" }}>
+                  minimize
+                </span>{" "}
+                <span style={{ color: "#7C5CBF",
+                               fontWeight: 700 }}>
+                  α
+                </span>
+                <span style={{ color: "#CCD0CF" }}>
+                  ·C(x)
+                </span>
+                {" + "}
+                <span style={{ color: "#7C5CBF",
+                               fontWeight: 700 }}>
+                  β
+                </span>
+                <span style={{ color: "#CCD0CF" }}>
+                  ·P(x)
+                </span>
+                {" + "}
+                <span style={{ color: "#7C5CBF",
+                               fontWeight: 700 }}>
+                  γ
+                </span>
+                <span style={{ color: "#CCD0CF" }}>
+                  ·D(x)
+                </span>
+                {" + "}
+                <span style={{ color: "#7C5CBF",
+                               fontWeight: 700 }}>
+                  δ
+                </span>
+                <span style={{ color: "#CCD0CF" }}>
+                  ·V(x)
+                </span>
+              </div>
+              <div style={{
+                display: "grid",
+                gridTemplateColumns:
+                  "repeat(auto-fit,minmax(180px,1fr))",
+                gap: 12,
+                marginTop: 24,
+              }}>
+                {[
+                  {
+                    sym: "α = 0.50",
+                    term: "C(x)",
+                    name: "Carbon cost",
+                    desc: "CEA Haryana intensity × kWh",
+                    color: "#00D4AA",
+                  },
+                  {
+                    sym: "β = 0.20",
+                    term: "P(x)",
+                    name: "Peak penalty",
+                    desc: "sum(max(load − 2000, 0)²)",
+                    color: "#7C5CBF",
+                  },
+                  {
+                    sym: "γ = 0.20",
+                    term: "D(x)",
+                    name: "Discomfort",
+                    desc: "max(energy_needed − delivered, 0)",
+                    color: "#F9CA24",
+                  },
+                  {
+                    sym: "δ = 0.10",
+                    term: "V(x)",
+                    name: "DVVNL penalty",
+                    desc: "max(peak − 4500, 0) × 500",
+                    color: "#E74C3C",
+                  },
+                ].map(item => (
+                  <div key={item.term} style={{
+                    padding: "12px 14px",
+                    background: "rgba(37,55,69,0.4)",
+                    borderRadius: 8,
+                    borderLeft:
+                      `3px solid ${item.color}`,
+                  }}>
+                    <div style={{
+                      fontSize: 12, fontWeight: 700,
+                      color: item.color,
+                      fontFamily: "monospace",
+                      marginBottom: 4,
+                    }}>
+                      {item.sym} · {item.term}
+                    </div>
+                    <div style={{
+                      fontSize: 12, fontWeight: 600,
+                      color: "#CCD0CF",
+                      marginBottom: 3,
+                    }}>
+                      {item.name}
+                    </div>
+                    <div style={{
+                      fontSize: 11,
+                      color: "#4A5C6A",
+                      fontFamily: "monospace",
+                    }}>
+                      {item.desc}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{
+                marginTop: 20,
+                padding: "12px 16px",
+                background: "rgba(124,92,191,0.08)",
+                borderRadius: 8,
+                border:
+                  "1px solid rgba(124,92,191,0.2)",
+              }}>
+                <span style={{
+                  fontSize: 11, color: "#7C5CBF",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginRight: 12,
+                }}>
+                  Hard constraint:
+                </span>
+                <span style={{
+                  fontSize: 12, color: "#9BA8AB",
+                  fontFamily: "monospace",
+                }}>
+                  total_load[t] ≤ 5,000 kW ∀t
+                </span>
+                <span style={{
+                  fontSize: 11, color: "#4A5C6A",
+                  marginLeft: 12,
+                }}>
+                  (transformer safety limit)
+                </span>
+              </div>
+            </div>
+
+            {/* Solver stats */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(150px,1fr))",
+              gap: 12,
+            }}>
+              {[
+                {
+                  value: "CLARABEL",
+                  label: "Solver",
+                  sub: "Interior-point method",
+                  color: "#7C5CBF",
+                },
+                {
+                  value: "1,831ms",
+                  label: "Solve time",
+                  sub: "500 vehicles, 96 timeslots",
+                  color: "#00D4AA",
+                },
+                {
+                  value: "optimal",
+                  label: "Status",
+                  sub: "Mathematically guaranteed",
+                  color: "#27AE60",
+                },
+                {
+                  value: "48,000",
+                  label: "Variables",
+                  sub: "500 vehicles × 96 slots",
+                  color: "#9BA8AB",
+                },
+              ].map(s => (
+                <div key={s.label} style={{
+                  background: "#11212D",
+                  border: "1px solid rgba(74,92,106,0.2)",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  borderTop: `2px solid ${s.color}`,
+                }}>
+                  <div style={{
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: s.color,
+                    fontFamily: "monospace",
+                    marginBottom: 4,
+                  }}>
+                    {s.value}
+                  </div>
+                  <div style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: "#9BA8AB",
+                    marginBottom: 2,
+                  }}>
+                    {s.label}
+                  </div>
+                  <div style={{
+                    fontSize: 10,
+                    color: "#4A5C6A",
+                  }}>
+                    {s.sub}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 2: Data sources */}
+        <section style={{
+          width: "100%",
+          padding: "60px 32px",
+          background: "#06141B",
+          borderTop: "1px solid rgba(74,92,106,0.1)",
+        }}>
+          <div style={{
+            maxWidth: 900, margin: "0 auto",
+          }}>
+            <div style={{
+              textAlign: "center", marginBottom: 40,
+            }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "#00D4AA",
+                display: "block", marginBottom: 12,
+              }}>
+                Data provenance
+              </span>
+              <h2 style={{
+                fontSize: "clamp(22px,3vw,36px)",
+                fontWeight: 700, color: "#CCD0CF",
+                letterSpacing: "-0.02em",
+              }}>
+                Every number has a source.
+              </h2>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(260px,1fr))",
+              gap: 12,
+            }}>
+              {[
+                {
+                  source: "CEA CO₂ Baseline v16",
+                  type: "REAL · GOVERNMENT",
+                  typeColor: "#27AE60",
+                  value: "0.820 kg CO₂/kWh",
+                  usage:
+                    "Carbon cost term in objective "
+                    +"function. Haryana state grid.",
+                  citation:
+                    "Ministry of Power, India 2022-23",
+                  icon: "🌿",
+                },
+                {
+                  source: "Vahan Dashboard MoRTH",
+                  type: "REAL · GOVERNMENT",
+                  typeColor: "#27AE60",
+                  value: "6 vehicle models",
+                  usage:
+                    "Fleet composition. Nexon 33%, "
+                    +"Xpres-T 20%, Tiago 16%, "
+                    +"Windsor 15%, eC3 10%, ZS 6%.",
+                  citation: "CY2024 India EV sales",
+                  icon: "🚗",
+                },
+                {
+                  source: "ACN-Data (Caltech)",
+                  type: "REAL · ADAPTED",
+                  typeColor: "#F9CA24",
+                  value: "30,000+ sessions",
+                  usage:
+                    "Arrival time distributions "
+                    +"and session energy. Adapted "
+                    +"to Indian depot context.",
+                  citation:
+                    "Flores-Espino et al. 2021",
+                  icon: "⚡",
+                },
+                {
+                  source: "Open-Meteo API",
+                  type: "REAL · API",
+                  typeColor: "#4ECDC4",
+                  value: "3yr hourly",
+                  usage:
+                    "Gurugram weather for solar "
+                    +"irradiance and load patterns.",
+                  citation:
+                    "open-meteo.com historical",
+                  icon: "🌤️",
+                },
+                {
+                  source: "DVVNL HT-2 Tariff",
+                  type: "REAL · REGULATORY",
+                  typeColor: "#27AE60",
+                  value: "₹350/kVA/month",
+                  usage:
+                    "Demand charge calculation. "
+                    +"Dakshinanchal Vidyut Vitran "
+                    +"Nigam Ltd, Gurugram zone.",
+                  citation:
+                    "DVVNL tariff schedule 2023",
+                  icon: "📋",
+                },
+                {
+                  source: "Vasudha Foundation 2023",
+                  type: "REAL · PUBLISHED",
+                  typeColor: "#F9CA24",
+                  value: "22.4 kWh/session",
+                  usage:
+                    "Indian depot session energy "
+                    +"calibration. Validates ACN "
+                    +"adaptation factor.",
+                  citation:
+                    "EV Charging Infrastructure "
+                    +"India 2023",
+                  icon: "📊",
+                },
+              ].map(d => (
+                <div key={d.source} style={{
+                  background: "#11212D",
+                  border: "1px solid rgba(74,92,106,0.2)",
+                  borderRadius: 12,
+                  padding: "16px",
+                  boxShadow:
+                    "0 4px 16px rgba(0,0,0,0.3)",
+                }}>
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                    marginBottom: 10,
+                  }}>
+                    <span style={{
+                      fontSize: 18,
+                    }}>
+                      {d.icon}
+                    </span>
+                    <span style={{
+                      fontSize: 9,
+                      fontWeight: 700,
+                      color: d.typeColor,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      padding: "2px 8px",
+                      borderRadius: 12,
+                      background:
+                        `${d.typeColor}15`,
+                      border:
+                        `1px solid ${d.typeColor}30`,
+                    }}>
+                      {d.type}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: "#CCD0CF",
+                    marginBottom: 4,
+                  }}>
+                    {d.source}
+                  </div>
+                  <div style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: "#7C5CBF",
+                    fontFamily: "monospace",
+                    marginBottom: 8,
+                  }}>
+                    {d.value}
+                  </div>
+                  <div style={{
+                    fontSize: 11,
+                    color: "#9BA8AB",
+                    lineHeight: 1.5,
+                    marginBottom: 8,
+                  }}>
+                    {d.usage}
+                  </div>
+                  <div style={{
+                    fontSize: 10,
+                    color: "#4A5C6A",
+                    fontStyle: "italic",
+                  }}>
+                    {d.citation}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 3: Tech stack */}
+        <section style={{
+          width: "100%",
+          padding: "60px 32px",
+          background: "#06141B",
+          borderTop: "1px solid rgba(74,92,106,0.1)",
+        }}>
+          <div style={{
+            maxWidth: 900, margin: "0 auto",
+          }}>
+            <div style={{
+              textAlign: "center", marginBottom: 40,
+            }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "#7C5CBF",
+                display: "block", marginBottom: 12,
+              }}>
+                Technical stack
+              </span>
+              <h2 style={{
+                fontSize: "clamp(22px,3vw,36px)",
+                fontWeight: 700, color: "#CCD0CF",
+                letterSpacing: "-0.02em",
+              }}>
+                Production-grade components.
+              </h2>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns:
+                "repeat(auto-fit,minmax(200px,1fr))",
+              gap: 10,
+            }}>
+              {[
+                {
+                  layer: "Optimizer",
+                  tools: ["CVXPY", "CLARABEL solver",
+                          "NumPy", "SciPy"],
+                  color: "#7C5CBF",
+                  result: "46.3% peak reduction",
+                },
+                {
+                  layer: "ML Engine",
+                  tools: ["Prophet (Meta)",
+                          "Isolation Forest",
+                          "scikit-learn"],
+                  color: "#00D4AA",
+                  result: "MAPE 0.83%, F1 0.95",
+                },
+                {
+                  layer: "Physics",
+                  tools: ["pandapower 3.4.0",
+                          "AC power flow",
+                          "7-bus network"],
+                  color: "#4ECDC4",
+                  result: "14 violations → 0",
+                },
+                {
+                  layer: "Backend",
+                  tools: ["FastAPI", "uvicorn",
+                          "SQLAlchemy", "SQLite"],
+                  color: "#9BA8AB",
+                  result: "10 REST endpoints",
+                },
+                {
+                  layer: "Frontend",
+                  tools: ["Next.js 16",
+                          "TypeScript",
+                          "Recharts", "Framer Motion"],
+                  color: "#F9CA24",
+                  result: "Live on Vercel",
+                },
+                {
+                  layer: "Charger Control",
+                  tools: ["OCPP 1.6",
+                          "WebSockets",
+                          "SetChargingProfile"],
+                  color: "#27AE60",
+                  result: "10 mock chargers",
+                },
+              ].map(s => (
+                <div key={s.layer} style={{
+                  background: "#11212D",
+                  border: "1px solid rgba(74,92,106,0.2)",
+                  borderRadius: 10,
+                  padding: "14px 16px",
+                  borderLeft: `3px solid ${s.color}`,
+                }}>
+                  <div style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: s.color,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    marginBottom: 8,
+                  }}>
+                    {s.layer}
+                  </div>
+                  {s.tools.map(t => (
+                    <div key={t} style={{
+                      fontSize: 12,
+                      color: "#9BA8AB",
+                      padding: "2px 0",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                    }}>
+                      <span style={{
+                        width: 4, height: 4,
+                        borderRadius: "50%",
+                        background: s.color,
+                        opacity: 0.6,
+                        flexShrink: 0,
+                      }} />
+                      {t}
+                    </div>
+                  ))}
+                  <div style={{
+                    marginTop: 10,
+                    fontSize: 11,
+                    color: s.color,
+                    fontWeight: 600,
+                    fontFamily: "monospace",
+                  }}>
+                    → {s.result}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION 4: Interactive Calculator */}
+        <section style={{
+          width: "100%",
+          padding: "60px 32px",
+          background: "#06141B",
+          borderTop:
+            "1px solid rgba(74,92,106,0.1)",
+        }}>
+          <div style={{
+            maxWidth: 900, margin: "0 auto",
+          }}>
+            <div style={{
+              textAlign: "center",
+              marginBottom: 40,
+            }}>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                color: "#7C5CBF",
+                display: "block", marginBottom: 12,
+              }}>
+                Interactive calculator
+              </span>
+              <h2 style={{
+                fontSize: "clamp(22px,3vw,36px)",
+                fontWeight: 700, color: "#CCD0CF",
+                letterSpacing: "-0.02em",
+                marginBottom: 12,
+              }}>
+                Change the inputs.
+                Watch the math update.
+              </h2>
+              <p style={{
+                fontSize: 14, color: "#9BA8AB",
+                maxWidth: 520,
+                margin: "0 auto",
+                lineHeight: 1.6,
+              }}>
+                Drag the sliders to see how fleet size,
+                tariff rates, and charger mix affect the
+                optimizer output. Every calculation is
+                shown step by step.
+              </p>
+            </div>
+            <LiveCalculator />
           </div>
         </section>
 

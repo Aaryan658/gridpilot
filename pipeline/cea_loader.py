@@ -16,7 +16,7 @@ class CEALoader:
         "Chhattisgarh": 0.910,
         "Goa": 0.720,
         "Gujarat": 0.712,
-        "Haryana": 0.820,
+        "Haryana": 0.727,
         "Himachal Pradesh": 0.240,
         "Jharkhand": 0.900,
         "Karnataka": 0.508,
@@ -40,7 +40,7 @@ class CEALoader:
         "Andaman and Nicobar Islands": 0.650,
         "Chandigarh": 0.760,
         "Dadra and Nagar Haveli and Daman and Diu": 0.700,
-        "Delhi": 0.820,
+        "Delhi": 0.727,
         "Jammu and Kashmir": 0.460,
         "Ladakh": 0.320,
         "Lakshadweep": 0.600,
@@ -63,17 +63,17 @@ class CEALoader:
             hour = timestamp.hour
             if state.strip() == "Haryana":
                 if 0 <= hour < 2:
-                    intensity = rng.uniform(0.80, 0.84)
+                    intensity = rng.uniform(0.71, 0.74)
                 elif 2 <= hour < 5:
-                    intensity = rng.uniform(0.71, 0.749)
+                    intensity = rng.uniform(0.63, 0.66)
                 elif 5 <= hour < 8:
-                    intensity = rng.uniform(0.76, 0.82)
+                    intensity = rng.uniform(0.67, 0.73)
                 elif 8 <= hour < 18:
-                    intensity = rng.uniform(0.80, 0.86)
+                    intensity = rng.uniform(0.71, 0.76)
                 elif 18 <= hour < 22:
-                    intensity = rng.uniform(0.86, 0.92)
+                    intensity = rng.uniform(0.76, 0.82)
                 else:
-                    intensity = rng.uniform(0.82, 0.86)
+                    intensity = rng.uniform(0.73, 0.76)
             else:
                 if 2 <= hour < 5:
                     intensity = base_factor * rng.uniform(0.86, 0.92)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
 
     factor = loader.get_state_emission_factor("Haryana")
     print(f"Haryana factor: {factor:.3f}")
-    assert factor == 0.820, "Haryana factor must be exactly 0.820"
+    assert factor == 0.727, "Haryana factor must be exactly 0.727"
 
     profile = loader.get_hourly_carbon_profile("Haryana", "2024-03-15")
     print(f"Generated rows: {len(profile)}")

@@ -9,47 +9,47 @@ import pandas as pd
 INDIA_CORPORATE_FLEET_MIX = [
     {
         "model": "Tata Nexon EV",
-        "count": 165,
+        "count": 135,
         "battery_kwh": 30.2,
         "charger_kw": 7.4,
         "range_km": 312,
-        "source": "Vahan CY2024 — 62% Tata share"
-    },
-    {
-        "model": "Tata Xpres-T EV",
-        "count": 100,
-        "battery_kwh": 21.5,
-        "charger_kw": 7.2,
-        "range_km": 306,
-        "source": "Tata fleet-exclusive model"
+        "source": "Vahan CY2025 — 27% share"
     },
     {
         "model": "Tata Tiago EV",
-        "count": 80,
+        "count": 70,
         "battery_kwh": 19.2,
         "charger_kw": 3.3,
         "range_km": 250,
-        "source": "Vahan CY2024"
+        "source": "Vahan CY2025 — 14% share"
     },
     {
         "model": "MG Windsor EV",
-        "count": 75,
+        "count": 90,
         "battery_kwh": 38.0,
         "charger_kw": 7.4,
         "range_km": 331,
-        "source": "JSW MG 21% market share CY2024"
+        "source": "JSW MG 26% market share CY2025"
     },
     {
-        "model": "Citroen eC3",
-        "count": 50,
-        "battery_kwh": 29.2,
+        "model": "Mahindra BE6",
+        "count": 85,
+        "battery_kwh": 59.0,
         "charger_kw": 7.2,
-        "range_km": 320,
-        "source": "7,000+ fleet bulk orders 2024"
+        "range_km": 535,
+        "source": "Mahindra BE6 official specs 2024"
+    },
+    {
+        "model": "Tata Curvv EV",
+        "count": 80,
+        "battery_kwh": 55.0,
+        "charger_kw": 7.2,
+        "range_km": 502,
+        "source": "Tata Curvv EV official specs 2024"
     },
     {
         "model": "MG ZS EV",
-        "count": 30,
+        "count": 40,
         "battery_kwh": 50.3,
         "charger_kw": 7.4,
         "range_km": 461,
@@ -203,7 +203,7 @@ class ACNDataLoader:
                     "zone": zone,
                     "priority": "NORMAL",
                     "data_source":
-                        "ACN-Data + Vahan CY2024",
+                        "ACN-Data + Vahan CY2025",
                     "market_source":
                         spec["source"],
                 })
@@ -252,5 +252,5 @@ class ACNDataLoader:
             "zone_breakdown":
                 df["zone"].value_counts().to_dict(),
             "data_source":
-                "Vahan CY2024 + ACN behavioral",
+                "Vahan CY2025 + ACN behavioral",
         }

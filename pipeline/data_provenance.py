@@ -13,7 +13,7 @@ def build_data_provenance_report() -> dict:
         "fleet_vehicle_mix": {
             "source": (
                 "Vahan Dashboard + "
-                "Autocar Professional CY2024"
+                "Autocar Professional CY2025"
             ),
             "type": "REAL_GOVERNMENT",
             "validation": (
@@ -28,14 +28,14 @@ def build_data_provenance_report() -> dict:
         },
         "carbon_intensity": {
             "source":
-                "CEA CO2 Baseline v16 2022-23",
+                "CEA CO2 Baseline Database for the Indian Power Sector, Version 20.0, December 2024. Ministry of Power, Government of India. cea.nic.in",
             "type": "REAL_GOVERNMENT",
             "value":
-                "Haryana 0.820 kg CO2/kWh",
+                "Haryana 0.727 kg CO2/kWh",
         },
         "ev_registrations": {
             "source":
-                "Vahan Dashboard MoRTH 2024",
+                "Vahan Dashboard MoRTH CY2025 (EVreporter analysis, Vahan Portal as of January 2026)",
             "type": "REAL_GOVERNMENT",
             "value": (
                 "Haryana 68,900 EVs, "
@@ -44,7 +44,7 @@ def build_data_provenance_report() -> dict:
         },
         "grid_demand": {
             "source":
-                "CEA Annual Report 2022-23",
+                "CEA Annual Report 2023-24",
             "type": "REAL_GOVERNMENT",
             "value": "NR peak 74,000 MW",
         },

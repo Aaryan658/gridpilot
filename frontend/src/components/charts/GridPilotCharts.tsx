@@ -10,58 +10,58 @@ import { useState, useEffect } from "react";
 import { fetchDashboardData, MOCK_DATA } from "@/lib/api";
 
 const LOAD_DATA = [
-  {t:"20:00",u:1200,m:1200,s:0},
-  {t:"20:30",u:1900,m:1250,s:0},
-  {t:"21:00",u:2800,m:1300,s:0},
-  {t:"21:30",u:3500,m:1320,s:0},
-  {t:"22:00",u:4100,m:1350,s:0},
-  {t:"22:30",u:4100,m:1370,s:0},
-  {t:"23:00",u:4080,m:1400,s:0},
-  {t:"23:30",u:4050,m:1430,s:0},
-  {t:"00:00",u:4000,m:1460,s:0},
-  {t:"00:30",u:3900,m:1490,s:0},
-  {t:"01:00",u:3800,m:1520,s:0},
-  {t:"01:30",u:3600,m:1560,s:0},
-  {t:"02:00",u:3400,m:1509,s:0},
-  {t:"02:30",u:3200,m:1509,s:0},
-  {t:"03:00",u:3000,m:1509,s:20},
-  {t:"03:30",u:2800,m:1509,s:80},
-  {t:"04:00",u:2600,m:1509,s:180},
-  {t:"04:30",u:2400,m:1480,s:320},
-  {t:"05:00",u:2100,m:1300,s:420},
-  {t:"05:30",u:1800,m:1100,s:460},
-  {t:"06:00",u:1500,m:900,s:490},
-  {t:"06:30",u:1200,m:600,s:500},
-  {t:"07:00",u:900, m:420,s:480},
-  {t:"07:30",u:850, m:410,s:460},
-  {t:"08:00",u:800, m:400,s:440},
+  {t:"20:00",u:1100,m:1100,s:0},
+  {t:"20:30",u:1750,m:1150,s:0},
+  {t:"21:00",u:2550,m:1200,s:0},
+  {t:"21:30",u:3200,m:1230,s:0},
+  {t:"22:00",u:3767,m:1260,s:0},
+  {t:"22:30",u:3767,m:1280,s:0},
+  {t:"23:00",u:3750,m:1310,s:0},
+  {t:"23:30",u:3680,m:1340,s:0},
+  {t:"00:00",u:3680,m:1370,s:0},
+  {t:"00:30",u:3500,m:1400,s:0},
+  {t:"01:00",u:3500,m:1420,s:0},
+  {t:"01:30",u:3300,m:1440,s:0},
+  {t:"02:00",u:3100,m:1400,s:20},
+  {t:"02:30",u:2900,m:1400,s:80},
+  {t:"03:00",u:2750,m:1400,s:180},
+  {t:"03:30",u:2550,m:1400,s:320},
+  {t:"04:00",u:2400,m:1400,s:420},
+  {t:"04:30",u:2150,m:1250,s:460},
+  {t:"05:00",u:1950,m:1100,s:490},
+  {t:"05:30",u:1650,m:850,s:500},
+  {t:"06:00",u:1400,m:550,s:500},
+  {t:"06:30",u:1100,m:550,s:500},
+  {t:"07:00",u:820, m:360,s:500},
+  {t:"07:30",u:780, m:360,s:500},
+  {t:"08:00",u:730, m:360,s:500},
 ];
 
 const CARBON_DATA = [
-  {h:"00",i:0.82,sig:"NEUTRAL"},
-  {h:"01",i:0.80,sig:"NEUTRAL"},
-  {h:"02",i:0.73,sig:"CLEAN"},
-  {h:"03",i:0.72,sig:"CLEAN"},
-  {h:"04",i:0.71,sig:"CLEAN"},
-  {h:"05",i:0.74,sig:"CLEAN"},
-  {h:"06",i:0.78,sig:"NEUTRAL"},
-  {h:"07",i:0.80,sig:"NEUTRAL"},
-  {h:"08",i:0.82,sig:"NEUTRAL"},
-  {h:"09",i:0.83,sig:"NEUTRAL"},
-  {h:"10",i:0.83,sig:"NEUTRAL"},
-  {h:"11",i:0.82,sig:"NEUTRAL"},
-  {h:"12",i:0.81,sig:"NEUTRAL"},
-  {h:"13",i:0.82,sig:"NEUTRAL"},
-  {h:"14",i:0.83,sig:"NEUTRAL"},
-  {h:"15",i:0.83,sig:"NEUTRAL"},
-  {h:"16",i:0.84,sig:"DIRTY"},
-  {h:"17",i:0.86,sig:"DIRTY"},
-  {h:"18",i:0.88,sig:"DIRTY"},
-  {h:"19",i:0.90,sig:"DIRTY"},
-  {h:"20",i:0.89,sig:"DIRTY"},
-  {h:"21",i:0.87,sig:"DIRTY"},
-  {h:"22",i:0.85,sig:"DIRTY"},
-  {h:"23",i:0.83,sig:"NEUTRAL"},
+  {h:"00",i:0.72,sig:"NEUTRAL"},
+  {h:"01",i:0.71,sig:"NEUTRAL"},
+  {h:"02",i:0.64,sig:"CLEAN"},
+  {h:"03",i:0.63,sig:"CLEAN"},
+  {h:"04",i:0.63,sig:"CLEAN"},
+  {h:"05",i:0.66,sig:"CLEAN"},
+  {h:"06",i:0.69,sig:"NEUTRAL"},
+  {h:"07",i:0.71,sig:"NEUTRAL"},
+  {h:"08",i:0.72,sig:"NEUTRAL"},
+  {h:"09",i:0.73,sig:"NEUTRAL"},
+  {h:"10",i:0.73,sig:"NEUTRAL"},
+  {h:"11",i:0.72,sig:"NEUTRAL"},
+  {h:"12",i:0.71,sig:"NEUTRAL"},
+  {h:"13",i:0.72,sig:"NEUTRAL"},
+  {h:"14",i:0.73,sig:"NEUTRAL"},
+  {h:"15",i:0.73,sig:"NEUTRAL"},
+  {h:"16",i:0.74,sig:"NEUTRAL"},
+  {h:"17",i:0.76,sig:"NEUTRAL"},
+  {h:"18",i:0.78,sig:"DIRTY"},
+  {h:"19",i:0.79,sig:"DIRTY"},
+  {h:"20",i:0.79,sig:"DIRTY"},
+  {h:"21",i:0.77,sig:"DIRTY"},
+  {h:"22",i:0.75,sig:"NEUTRAL"},
+  {h:"23",i:0.73,sig:"NEUTRAL"},
 ];
 
 const SIG_COLORS: Record<string, string> = {
@@ -273,7 +273,7 @@ export default function GridPilotCharts() {
               Depot Load Profile
             </h3>
             <p style={{ fontSize: 11, color: "#4A5C6A" }}>
-              500 Mixed EVs (Vahan CY2024) | Corporate Fleet, Gurugram | DVVNL HT-2 Tariff
+              500 Mixed EVs (Vahan CY2025) | Corporate Fleet, Gurugram | DVVNL HT-2 Tariff
             </p>
           </div>
           <div style={{
@@ -419,9 +419,9 @@ export default function GridPilotCharts() {
                 tick={{ fill: "#4A5C6A", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
-                domain={[0, 4600]}
+                domain={[0, 5000]}
                 tickFormatter={(v: number) => v >= 1000 ? (v / 1000).toFixed(0) + "k" : String(v)}
-                tickCount={5}
+                tickCount={6}
               />
 
               <Tooltip content={<CustomTooltip />} />
@@ -482,7 +482,7 @@ export default function GridPilotCharts() {
             Carbon Intensity — Haryana Grid
           </span>
           <span style={{ fontSize: 10, color: "#4A5C6A" }}>
-            CEA India 2022-23 | Powered by FirstFlight
+            CEA India 2023-24 | Powered by FirstFlight
           </span>
         </div>
 
@@ -561,9 +561,9 @@ export default function GridPilotCharts() {
       <div className="flex flex-wrap gap-2 justify-center mt-2">
         {[
           "ACN-Data (Caltech)",
-          "CEA India 2022-23",
-          "Vahan CY2024",
-          "CVXPY + ECOS",
+          "CEA India 2023-24",
+          "Vahan CY2025",
+          "CVXPY + CLARABEL",
           "pandapower AC flow",
         ].map(src => (
           <span key={src} style={{

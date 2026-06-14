@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 const FEATURES = [
   {
     title: "Convex QP Optimizer",
-    desc: "CVXPY + ECOS solver. 500 vehicles. Optimal in 1,831ms. Mathematically guaranteed minimum carbon + peak.",
+    desc: "CVXPY + CLARABEL solver. 500 vehicles. Optimal in ~14s. Mathematically guaranteed minimum carbon + peak.",
     accent: "#7C5CBF",
     icon: "⚡",
   },
@@ -16,7 +16,7 @@ const FEATURES = [
   },
   {
     title: "Real Carbon Signals",
-    desc: "CEA India 2022-23 state-wise emission factors. Haryana: 0.820 kg CO₂/kWh. FirstFlight signal bus feeds the optimizer.",
+    desc: "CEA India 2023-24 state-wise emission factors. Haryana: 0.727 kg CO₂/kWh. FirstFlight signal bus feeds the optimizer.",
     accent: "#27AE60",
     icon: "🌿",
   },
@@ -29,9 +29,9 @@ const FEATURES = [
 ];
 
 const RESULTS = [
-  { before: "4,100 kW", after: "2,204 kW", label: "Peak Load", delta: "-46.3%" },
-  { before: "5 events", after: "0 events", label: "Overloads/night", delta: "-100%" },
-  { before: "₹8.4L/mo", after: "₹0", label: "DVVNL Penalty", delta: "-100%" },
+  { before: "3,767 kW", after: "2,000 kW", label: "Peak Load", delta: "-46.9%" },
+  { before: "0 events", after: "0 events", label: "Overloads/night", delta: "0%" },
+  { before: "₹0", after: "₹0", label: "DVVNL Penalty", delta: "0%" },
   { before: "453/500", after: "500/500", label: "Vehicles Ready", delta: "+10%" },
 ];
 

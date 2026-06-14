@@ -17,24 +17,24 @@ import {
 import { fetchCarbonSignal, MOCK_DATA, runSchedule } from "@/lib/api";
 
 const LOAD_DATA = [
-  { t: "20:00", u: 1200, m: 1200, s: 0 },
-  { t: "20:30", u: 1900, m: 1250, s: 0 },
-  { t: "21:00", u: 2800, m: 1300, s: 0 },
-  { t: "21:30", u: 3500, m: 1320, s: 0 },
-  { t: "22:00", u: 4100, m: 1350, s: 0 },
-  { t: "22:30", u: 4100, m: 1370, s: 0 },
-  { t: "23:00", u: 4080, m: 1400, s: 0 },
-  { t: "00:00", u: 4000, m: 1460, s: 0 },
-  { t: "01:00", u: 3800, m: 1520, s: 0 },
-  { t: "02:00", u: 3400, m: 1509, s: 0 },
-  { t: "03:00", u: 3000, m: 1509, s: 20 },
-  { t: "04:00", u: 2600, m: 1509, s: 180 },
-  { t: "05:00", u: 2100, m: 1300, s: 420 },
-  { t: "06:00", u: 1500, m: 900, s: 490 },
-  { t: "06:30", u: 1200, m: 600, s: 500 },
-  { t: "07:00", u: 900,  m: 400, s: 500 },
-  { t: "07:30", u: 850,  m: 400, s: 500 },
-  { t: "08:00", u: 800,  m: 400, s: 500 },
+  { t: "20:00", u: 1100, m: 1100, s: 0 },
+  { t: "20:30", u: 1750, m: 1150, s: 0 },
+  { t: "21:00", u: 2550, m: 1200, s: 0 },
+  { t: "21:30", u: 3200, m: 1230, s: 0 },
+  { t: "22:00", u: 3767, m: 1260, s: 0 },
+  { t: "22:30", u: 3767, m: 1280, s: 0 },
+  { t: "23:00", u: 3750, m: 1310, s: 0 },
+  { t: "00:00", u: 3680, m: 1370, s: 0 },
+  { t: "01:00", u: 3500, m: 1420, s: 0 },
+  { t: "02:00", u: 3100, m: 1400, s: 20 },
+  { t: "03:00", u: 2750, m: 1400, s: 180 },
+  { t: "04:00", u: 2400, m: 1400, s: 420 },
+  { t: "05:00", u: 1950, m: 1200, s: 460 },
+  { t: "06:00", u: 1400, m: 850, s: 490 },
+  { t: "06:30", u: 1100, m: 550, s: 500 },
+  { t: "07:00", u: 820,  m: 360, s: 500 },
+  { t: "07:30", u: 780,  m: 360, s: 500 },
+  { t: "08:00", u: 730,  m: 360, s: 500 },
 ];
 
 type ScheduleComparison = {
@@ -131,10 +131,10 @@ export default function DashboardPage() {
     }
 
     const DEMO = {
-      peak_reduction_pct: 46.34,
-      dvvnl_monthly_saving_inr: 605000,
-      carbon_saved_kg: 774,
-      solve_time_ms: 1831,
+      peak_reduction_pct: 46.9,
+      dvvnl_monthly_saving_inr: 618511,
+      carbon_saved_kg: 2416,
+      solve_time_ms: 14230,
       all_ready: true,
       source: "demo" as const,
     };
@@ -604,7 +604,7 @@ export default function DashboardPage() {
               Carbon Signal — Haryana Grid
             </span>
             <span style={{ fontSize: 10, color: "#4A5C6A" }}>
-              {carbonSignal?.rationale?.slice(0, 60) || "CEA 2022-23 | FirstFlight"}
+              {carbonSignal?.rationale?.slice(0, 60) || "CEA 2023-24 | FirstFlight"}
             </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -637,8 +637,8 @@ export default function DashboardPage() {
         <div style={{ marginTop: 20, display: "flex", flexWrap: "wrap", gap: 6 }}>
           {[
             "ACN-Data (Caltech)",
-            "CEA India 2022-23",
-            "Vahan CY2024",
+            "CEA India 2023-24",
+            "Vahan CY2025",
             "pandapower AC flow",
             "CVXPY + CLARABEL",
           ].map((s) => (

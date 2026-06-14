@@ -1,0 +1,422 @@
+{
+  "D:\\Projects\\GridPilot\\api\\auth.py": {
+    "mtime": 1778338663.6415813,
+    "ast_hash": "7dab96b3f4da0872e0dec6ea5ab2d301",
+    "semantic_hash": "7dab96b3f4da0872e0dec6ea5ab2d301"
+  },
+  "D:\\Projects\\GridPilot\\api\\logger.py": {
+    "mtime": 1778338663.6037068,
+    "ast_hash": "5e197ed8f1ab533d90418bd6f7283ad1",
+    "semantic_hash": "5e197ed8f1ab533d90418bd6f7283ad1"
+  },
+  "D:\\Projects\\GridPilot\\api\\main.py": {
+    "mtime": 1778341405.654798,
+    "ast_hash": "09bdeff8b3c7c08ffeb4f2084e177757",
+    "semantic_hash": "09bdeff8b3c7c08ffeb4f2084e177757"
+  },
+  "D:\\Projects\\GridPilot\\database\\models.py": {
+    "mtime": 1778334056.988412,
+    "ast_hash": "5604c13c0a8daa63540d340fb364f61a",
+    "semantic_hash": "5604c13c0a8daa63540d340fb364f61a"
+  },
+  "D:\\Projects\\GridPilot\\database\\repository.py": {
+    "mtime": 1778334057.0120585,
+    "ast_hash": "076f73038e58de8d3da5540aa81e9a15",
+    "semantic_hash": "076f73038e58de8d3da5540aa81e9a15"
+  },
+  "D:\\Projects\\GridPilot\\database\\__init__.py": {
+    "mtime": 1778334056.9640963,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\anomaly.py": {
+    "mtime": 1777395187.2291405,
+    "ast_hash": "31375e473e6f3e178d74131a923dfcc3",
+    "semantic_hash": "31375e473e6f3e178d74131a923dfcc3"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\carbon.py": {
+    "mtime": 1777395135.2990322,
+    "ast_hash": "82680c20b7c11118cc767de3c3475695",
+    "semantic_hash": "82680c20b7c11118cc767de3c3475695"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\forecaster.py": {
+    "mtime": 1777395158.3641133,
+    "ast_hash": "7b100e552bb34dbcd855023f8395f196",
+    "semantic_hash": "7b100e552bb34dbcd855023f8395f196"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\frequency_monitor.py": {
+    "mtime": 1778341396.150854,
+    "ast_hash": "dba1fd3a9c95f1276d001ba62b01780f",
+    "semantic_hash": "dba1fd3a9c95f1276d001ba62b01780f"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\national_opt.py": {
+    "mtime": 1777395218.1581714,
+    "ast_hash": "7bc36356cdb40e859d9546dfaac6215f",
+    "semantic_hash": "7bc36356cdb40e859d9546dfaac6215f"
+  },
+  "D:\\Projects\\GridPilot\\firstflight\\signal_bus.py": {
+    "mtime": 1778341402.2695515,
+    "ast_hash": "2b1b5e90f5818319ebe7206c3f396c63",
+    "semantic_hash": "2b1b5e90f5818319ebe7206c3f396c63"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\components.json": {
+    "mtime": 1778306993.0550117,
+    "ast_hash": "519f93133ded707d8847caceca85dbac",
+    "semantic_hash": "519f93133ded707d8847caceca85dbac"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\eslint.config.mjs": {
+    "mtime": 1778306993.060016,
+    "ast_hash": "6c4307ffa009658f5c97f5629094c0c2",
+    "semantic_hash": "6c4307ffa009658f5c97f5629094c0c2"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\next-env.d.ts": {
+    "mtime": 1778332435.003912,
+    "ast_hash": "b698cdd97fe8e3bd16dcd74899ad7cef",
+    "semantic_hash": "b698cdd97fe8e3bd16dcd74899ad7cef"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\next.config.ts": {
+    "mtime": 1778306993.061021,
+    "ast_hash": "639d9e689a74c94421cfce5c07918907",
+    "semantic_hash": "639d9e689a74c94421cfce5c07918907"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\package.json": {
+    "mtime": 1778307824.0907884,
+    "ast_hash": "74cb991f1de0afb2b7311be92e23deae",
+    "semantic_hash": "74cb991f1de0afb2b7311be92e23deae"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\postcss.config.mjs": {
+    "mtime": 1778306993.0631123,
+    "ast_hash": "481fac0fdecd70e1821cc30b86030c1a",
+    "semantic_hash": "481fac0fdecd70e1821cc30b86030c1a"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\tsconfig.json": {
+    "mtime": 1778306993.0661125,
+    "ast_hash": "0a2f4ed9289b65cd3feb4fb4ab3a4fcd",
+    "semantic_hash": "0a2f4ed9289b65cd3feb4fb4ab3a4fcd"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.amazonq\\cli-agents\\clone-website.json": {
+    "mtime": 1778306993.0437565,
+    "ast_hash": "f4d3fc70e23b24bb70cbaa091db65400",
+    "semantic_hash": "f4d3fc70e23b24bb70cbaa091db65400"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.vercel\\project.json": {
+    "mtime": 1778331023.0178354,
+    "ast_hash": "345e3af85a8465ccc603fcbc3451bb3e",
+    "semantic_hash": "345e3af85a8465ccc603fcbc3451bb3e"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\scripts\\sync-agent-rules.sh": {
+    "mtime": 1778306993.0641122,
+    "ast_hash": "b48fccabfd1777c7f3d0c8a0ddb0ed05",
+    "semantic_hash": "b48fccabfd1777c7f3d0c8a0ddb0ed05"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\scripts\\sync-skills.mjs": {
+    "mtime": 1778306993.0641122,
+    "ast_hash": "39c68bfa99ae785d42090bff7148c194",
+    "semantic_hash": "39c68bfa99ae785d42090bff7148c194"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\app\\layout.tsx": {
+    "mtime": 1778307802.9539459,
+    "ast_hash": "eecc2061bb49cd24ba457b511899ad08",
+    "semantic_hash": "eecc2061bb49cd24ba457b511899ad08"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\app\\page.tsx": {
+    "mtime": 1778394925.7930984,
+    "ast_hash": "05bb53f1c2726ab59a178b992f5421c6",
+    "semantic_hash": "05bb53f1c2726ab59a178b992f5421c6"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\app\\dashboard\\page.tsx": {
+    "mtime": 1778394939.953868,
+    "ast_hash": "cae7d1f895367087988b5de330987b2c",
+    "semantic_hash": "cae7d1f895367087988b5de330987b2c"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\components\\FeatureSection.tsx": {
+    "mtime": 1778394837.2092192,
+    "ast_hash": "6dcdafcc490aadf7141c6207472253c1",
+    "semantic_hash": "6dcdafcc490aadf7141c6207472253c1"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\components\\HeroSection.tsx": {
+    "mtime": 1778394828.1413834,
+    "ast_hash": "71371d10744a38750e27a96d3c22d362",
+    "semantic_hash": "71371d10744a38750e27a96d3c22d362"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\components\\LiveCalculator.tsx": {
+    "mtime": 1778394865.7481842,
+    "ast_hash": "a93ece4fa3daa57ed3512e5f6544026a",
+    "semantic_hash": "a93ece4fa3daa57ed3512e5f6544026a"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\components\\charts\\GridPilotCharts.tsx": {
+    "mtime": 1778394845.1228216,
+    "ast_hash": "804d840800f9fc2a95635c78beb7eadb",
+    "semantic_hash": "804d840800f9fc2a95635c78beb7eadb"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\components\\ui\\button.tsx": {
+    "mtime": 1778306993.0651126,
+    "ast_hash": "4f32021ecfa285b9f35f59fc4e3d6741",
+    "semantic_hash": "4f32021ecfa285b9f35f59fc4e3d6741"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\lib\\api.ts": {
+    "mtime": 1778394852.898744,
+    "ast_hash": "7471ea6e34371059269a44c8c3ef97bc",
+    "semantic_hash": "7471ea6e34371059269a44c8c3ef97bc"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\src\\lib\\utils.ts": {
+    "mtime": 1778306993.0661125,
+    "ast_hash": "1d8011eb18769078bf77502b220daa5e",
+    "semantic_hash": "1d8011eb18769078bf77502b220daa5e"
+  },
+  "D:\\Projects\\GridPilot\\gridpilot\\depot_sim.py": {
+    "mtime": 1777395358.0223534,
+    "ast_hash": "acb531d26ed8bdd89a1f5ae16153f37a",
+    "semantic_hash": "acb531d26ed8bdd89a1f5ae16153f37a"
+  },
+  "D:\\Projects\\GridPilot\\gridpilot\\ev_manager.py": {
+    "mtime": 1778389098.9571512,
+    "ast_hash": "46d50d5e1a5771149ed320b91f6a8202",
+    "semantic_hash": "46d50d5e1a5771149ed320b91f6a8202"
+  },
+  "D:\\Projects\\GridPilot\\gridpilot\\scheduler.py": {
+    "mtime": 1778389250.743382,
+    "ast_hash": "d96019253b14021267bce31ae92dad01",
+    "semantic_hash": "d96019253b14021267bce31ae92dad01"
+  },
+  "D:\\Projects\\GridPilot\\gridpilot\\v2g.py": {
+    "mtime": 1777395414.520233,
+    "ast_hash": "19543b3e46d264ef59a508db45b6c081",
+    "semantic_hash": "19543b3e46d264ef59a508db45b6c081"
+  },
+  "D:\\Projects\\GridPilot\\gridpilot\\__init__.py": {
+    "mtime": 1777393197.0371473,
+    "ast_hash": "3768dc74d396c2bbeaecb2c4f4391f11",
+    "semantic_hash": "3768dc74d396c2bbeaecb2c4f4391f11"
+  },
+  "D:\\Projects\\GridPilot\\ocpp_mock\\central_system.py": {
+    "mtime": 1778339295.7577345,
+    "ast_hash": "2fcc5d618f0c774d63ffbc5b7792fe6f",
+    "semantic_hash": "2fcc5d618f0c774d63ffbc5b7792fe6f"
+  },
+  "D:\\Projects\\GridPilot\\ocpp_mock\\charger.py": {
+    "mtime": 1778339295.7257762,
+    "ast_hash": "228031003f52fcbf46bd1bc519017c1c",
+    "semantic_hash": "228031003f52fcbf46bd1bc519017c1c"
+  },
+  "D:\\Projects\\GridPilot\\ocpp_mock\\__init__.py": {
+    "mtime": 1778339295.6947262,
+    "ast_hash": "68b329da9893e34099c7d8ad5cb9c940",
+    "semantic_hash": "68b329da9893e34099c7d8ad5cb9c940"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\acn_loader.py": {
+    "mtime": 1778332035.738417,
+    "ast_hash": "1cccc79e63aded2f6546ab71f5a8b341",
+    "semantic_hash": "1cccc79e63aded2f6546ab71f5a8b341"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\cea_loader.py": {
+    "mtime": 1777394827.7227004,
+    "ast_hash": "d16cdbcb4fa0ecef89d5a6d2f056cf64",
+    "semantic_hash": "d16cdbcb4fa0ecef89d5a6d2f056cf64"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\data_provenance.py": {
+    "mtime": 1778332281.2493033,
+    "ast_hash": "2be70fe17d6bfbbb4099b30344d1dd38",
+    "semantic_hash": "2be70fe17d6bfbbb4099b30344d1dd38"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\download_acn.py": {
+    "mtime": 1778332033.7020864,
+    "ast_hash": "d4ecfe7028378d5bff6a2b9827e194b2",
+    "semantic_hash": "d4ecfe7028378d5bff6a2b9827e194b2"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\dvvnl_loader.py": {
+    "mtime": 1777394910.7271354,
+    "ast_hash": "2d9089bd5e3d6fe7b2a5f21ef9382171",
+    "semantic_hash": "2d9089bd5e3d6fe7b2a5f21ef9382171"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\iex_loader.py": {
+    "mtime": 1777394935.3122993,
+    "ast_hash": "aa3a8c3146b947235c62f6fc2c745571",
+    "semantic_hash": "aa3a8c3146b947235c62f6fc2c745571"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\preprocess.py": {
+    "mtime": 1777394973.2154648,
+    "ast_hash": "ee1b0edfaf5e06ff726235d210ccc36a",
+    "semantic_hash": "ee1b0edfaf5e06ff726235d210ccc36a"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\vahan_loader.py": {
+    "mtime": 1778332273.9238951,
+    "ast_hash": "bfb39f558d193b6d3e7d87cdcd74825b",
+    "semantic_hash": "bfb39f558d193b6d3e7d87cdcd74825b"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\vasudha_loader.py": {
+    "mtime": 1778332279.2423124,
+    "ast_hash": "1e75babf8e7b5316e86ecdcda91350bf",
+    "semantic_hash": "1e75babf8e7b5316e86ecdcda91350bf"
+  },
+  "D:\\Projects\\GridPilot\\pipeline\\weather_loader.py": {
+    "mtime": 1777395025.049821,
+    "ast_hash": "7d1f81e8fab869180069247c9800ff61",
+    "semantic_hash": "7d1f81e8fab869180069247c9800ff61"
+  },
+  "D:\\Projects\\GridPilot\\scripts\\download_data.py": {
+    "mtime": 1777563763.3139534,
+    "ast_hash": "6858911841120d143de8733bf0fd99ef",
+    "semantic_hash": "6858911841120d143de8733bf0fd99ef"
+  },
+  "D:\\Projects\\GridPilot\\scripts\\setup.py": {
+    "mtime": 1777567321.423761,
+    "ast_hash": "bf95fe3f87675377efc157cd78f77919",
+    "semantic_hash": "bf95fe3f87675377efc157cd78f77919"
+  },
+  "D:\\Projects\\GridPilot\\scripts\\start_ocpp.py": {
+    "mtime": 1778339295.7866893,
+    "ast_hash": "2b468a562538e51c4e94822682a8891f",
+    "semantic_hash": "2b468a562538e51c4e94822682a8891f"
+  },
+  "D:\\Projects\\GridPilot\\README.md": {
+    "mtime": 1778390521.1333218,
+    "ast_hash": "f3f051dbf1decaa534c6de9d0f047d6c",
+    "semantic_hash": "f3f051dbf1decaa534c6de9d0f047d6c"
+  },
+  "D:\\Projects\\GridPilot\\requirements.txt": {
+    "mtime": 1777394389.1926167,
+    "ast_hash": "de29e9dfb74937c1e5a5736f7ac3505f",
+    "semantic_hash": "de29e9dfb74937c1e5a5736f7ac3505f"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.aider.conf.yml": {
+    "mtime": 1778306993.0437565,
+    "ast_hash": "76313c9d9bd169592936abfa7517b483",
+    "semantic_hash": "76313c9d9bd169592936abfa7517b483"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\CHANGELOG.md": {
+    "mtime": 1778306993.053922,
+    "ast_hash": "ca33e3f180764b50590031b35076de44",
+    "semantic_hash": "ca33e3f180764b50590031b35076de44"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\CLAUDE.md": {
+    "mtime": 1778306993.053922,
+    "ast_hash": "771faa62feb60b7de901a397aebb29b0",
+    "semantic_hash": "771faa62feb60b7de901a397aebb29b0"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\docker-compose.yml": {
+    "mtime": 1778306993.056012,
+    "ast_hash": "c91540c8a9119f96beb83adddb3e8de5",
+    "semantic_hash": "c91540c8a9119f96beb83adddb3e8de5"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\GEMINI.md": {
+    "mtime": 1778306993.0550117,
+    "ast_hash": "771faa62feb60b7de901a397aebb29b0",
+    "semantic_hash": "771faa62feb60b7de901a397aebb29b0"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\README.md": {
+    "mtime": 1778306993.0550117,
+    "ast_hash": "c3be37916c6e49b97814bf7a398057ce",
+    "semantic_hash": "c3be37916c6e49b97814bf7a398057ce"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.amazonq\\rules\\project.md": {
+    "mtime": 1778306993.0456023,
+    "ast_hash": "af5f9d4aff17cc8e681464ab6b086247",
+    "semantic_hash": "af5f9d4aff17cc8e681464ab6b086247"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.augment\\commands\\clone-website.md": {
+    "mtime": 1778306993.0456023,
+    "ast_hash": "479239568a15bba21f1071a7092008ab",
+    "semantic_hash": "479239568a15bba21f1071a7092008ab"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.codex\\skills\\clone-website\\SKILL.md": {
+    "mtime": 1778306993.0476067,
+    "ast_hash": "cb18a7c454b60db46e92065fa2d8dd59",
+    "semantic_hash": "cb18a7c454b60db46e92065fa2d8dd59"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.cursor\\commands\\clone-website.md": {
+    "mtime": 1778306993.0488553,
+    "ast_hash": "7cc064ac01865f23fabaf6ab90081bd5",
+    "semantic_hash": "7cc064ac01865f23fabaf6ab90081bd5"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\copilot-instructions.md": {
+    "mtime": 1778306993.0508978,
+    "ast_hash": "af5f9d4aff17cc8e681464ab6b086247",
+    "semantic_hash": "af5f9d4aff17cc8e681464ab6b086247"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\copilot-setup-steps.yml": {
+    "mtime": 1778306993.0508978,
+    "ast_hash": "87be43d5db163984b7f359ac2439f628",
+    "semantic_hash": "87be43d5db163984b7f359ac2439f628"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\PULL_REQUEST_TEMPLATE.md": {
+    "mtime": 1778306993.0508978,
+    "ast_hash": "aa6e41b7a176058279b77e715636a354",
+    "semantic_hash": "aa6e41b7a176058279b77e715636a354"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\ISSUE_TEMPLATE\\bug_report.yml": {
+    "mtime": 1778306993.050363,
+    "ast_hash": "88c9e63b4da9816b1dd9c973e07bba77",
+    "semantic_hash": "88c9e63b4da9816b1dd9c973e07bba77"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\ISSUE_TEMPLATE\\config.yml": {
+    "mtime": 1778306993.0508978,
+    "ast_hash": "83ceb949af0fef1ba474b76db64d5787",
+    "semantic_hash": "83ceb949af0fef1ba474b76db64d5787"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\ISSUE_TEMPLATE\\feature_request.yml": {
+    "mtime": 1778306993.0508978,
+    "ast_hash": "4104d2806cd3de614d0192fe8226fa3e",
+    "semantic_hash": "4104d2806cd3de614d0192fe8226fa3e"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\skills\\clone-website\\SKILL.md": {
+    "mtime": 1778306993.0519028,
+    "ast_hash": "cb18a7c454b60db46e92065fa2d8dd59",
+    "semantic_hash": "cb18a7c454b60db46e92065fa2d8dd59"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.github\\workflows\\ci.yml": {
+    "mtime": 1778306993.0519028,
+    "ast_hash": "91d4e635d99abcedcea7a23dc7aa7ecd",
+    "semantic_hash": "91d4e635d99abcedcea7a23dc7aa7ecd"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.opencode\\commands\\clone-website.md": {
+    "mtime": 1778306993.0529222,
+    "ast_hash": "8c8fbd45149e5274b24c945d8a8a552e",
+    "semantic_hash": "8c8fbd45149e5274b24c945d8a8a552e"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.vercel\\README.txt": {
+    "mtime": 1778331023.0178354,
+    "ast_hash": "2b13c79d37d6ed82a3255b83b6815034",
+    "semantic_hash": "2b13c79d37d6ed82a3255b83b6815034"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\.windsurf\\workflows\\clone-website.md": {
+    "mtime": 1778306993.0529222,
+    "ast_hash": "7cc064ac01865f23fabaf6ab90081bd5",
+    "semantic_hash": "7cc064ac01865f23fabaf6ab90081bd5"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\docs\\research\\INSPECTION_GUIDE.md": {
+    "mtime": 1778306993.060016,
+    "ast_hash": "fe391c816cb27fbd0c96a69ba151844a",
+    "semantic_hash": "fe391c816cb27fbd0c96a69ba151844a"
+  },
+  "D:\\Projects\\GridPilot\\Lithum Urban Technologies.png": {
+    "mtime": 1778310390.6180303,
+    "ast_hash": "f75fe73b26c63841710ec9b0171814b9",
+    "semantic_hash": "f75fe73b26c63841710ec9b0171814b9"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\docs\\design-references\\comparison.png": {
+    "mtime": 1778306993.060016,
+    "ast_hash": "3c517f9056e09b947b8bb1cad5cb7b13",
+    "semantic_hash": "3c517f9056e09b947b8bb1cad5cb7b13"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\public\\images\\ev_grid_dot_matrix.png": {
+    "mtime": 1778308124.6329193,
+    "ast_hash": "062c62733066cbb7286a0b210a72be6f",
+    "semantic_hash": "062c62733066cbb7286a0b210a72be6f"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\public\\images\\ev_grid_modern.png": {
+    "mtime": 1778307747.3459506,
+    "ast_hash": "39c905c0c88eefde00ddb4f5254081b4",
+    "semantic_hash": "39c905c0c88eefde00ddb4f5254081b4"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\public\\images\\Lithium_Urban_Technologies.png": {
+    "mtime": 1778310390.6180303,
+    "ast_hash": "f75fe73b26c63841710ec9b0171814b9",
+    "semantic_hash": "f75fe73b26c63841710ec9b0171814b9"
+  },
+  "D:\\Projects\\GridPilot\\frontend\\public\\images\\nano_banana_dot_matrix.png": {
+    "mtime": 1778307710.532536,
+    "ast_hash": "7b66fe202f777d9a66dc1ae51fb74efd",
+    "semantic_hash": "7b66fe202f777d9a66dc1ae51fb74efd"
+  }
+}

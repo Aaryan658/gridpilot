@@ -2,17 +2,17 @@
 import { useState, useCallback } from "react";
 
 const FLEET_MIX = [
-  { model: "Tata Nexon EV",   share: 0.33,
+  { model: "Tata Nexon EV",   share: 0.27,
     batt: 30.2, charger: 7.4 },
-  { model: "Tata Xpres-T EV", share: 0.20,
-    batt: 21.5, charger: 7.2 },
-  { model: "Tata Tiago EV",   share: 0.16,
+  { model: "Tata Tiago EV",   share: 0.14,
     batt: 19.2, charger: 3.3 },
-  { model: "MG Windsor EV",   share: 0.15,
+  { model: "MG Windsor EV",   share: 0.18,
     batt: 38.0, charger: 7.4 },
-  { model: "Citroen eC3",     share: 0.10,
-    batt: 29.2, charger: 7.2 },
-  { model: "MG ZS EV",        share: 0.06,
+  { model: "Mahindra BE6",    share: 0.17,
+    batt: 59.0, charger: 7.2 },
+  { model: "Tata Curvv EV",   share: 0.16,
+    batt: 55.0, charger: 7.2 },
+  { model: "MG ZS EV",        share: 0.08,
     batt: 50.3, charger: 7.4 },
 ];
 
@@ -37,7 +37,7 @@ export default function LiveCalculator() {
   const [nVehicles,  setN]   = useState(500);
   const [socArrival, setSoc]  = useState(20);
   const [demandRate, setDr]   = useState(350);
-  const [carbonInt,  setCi]   = useState(82);
+  const [carbonInt,  setCi]   = useState(72.7);
 
   const r = useCallback(() => {
     const n   = nVehicles;
@@ -503,9 +503,9 @@ export default function LiveCalculator() {
         Step 4 managed peak estimated from
         objective weights · Press "Run Live
         Optimization" for actual CLARABEL output ·
-        Real API result (~774 kg) is lower because
+        Real API result (~2,416 kg) is lower because
         the optimizer shifts charging to the clean
-        window (0.73 kg/kWh vs 0.82 kg/kWh average)
+        window (0.647 kg/kWh vs 0.727 kg/kWh average)
       </p>
     </div>
   );

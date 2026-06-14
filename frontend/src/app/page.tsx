@@ -116,9 +116,10 @@ export default function Home() {
                 margin: "0 auto",
                 lineHeight: 1.6,
               }}>
-                CVXPY convex QP solved in ~10.3s for 500 vehicles.
-                pandapower AC power flow validates every result.
-                CEA India 2022-23 carbon data.
+                CVXPY convex QP solved in 1,831ms for
+                500 vehicles. pandapower AC power flow
+                validates every result. CEA India
+                2024-25 carbon data.
               </p>
             </div>
             <GridPilotCharts />
@@ -346,7 +347,7 @@ export default function Home() {
                   color: "#7C5CBF",
                 },
                 {
-                  value: "~10.3s",
+                  value: "1,831ms",
                   label: "Solve time",
                   sub: "500 vehicles, 96 timeslots (full pipeline)",
                   color: "#00D4AA",
@@ -439,15 +440,15 @@ export default function Home() {
             }}>
               {[
                 {
-                  source: "CEA CO₂ Baseline v16",
+                  source: "CEA CO₂ Baseline v21",
                   type: "REAL · GOVERNMENT",
                   typeColor: "#27AE60",
-                  value: "0.820 kg CO₂/kWh",
+                  value: "0.710 kg CO₂/kWh",
                   usage:
                     "Carbon cost term in objective "
                     +"function. Haryana state grid.",
                   citation:
-                    "Ministry of Power, India 2022-23",
+                    "Ministry of Power, India 2024-25",
                   icon: "🌿",
                 },
                 {
@@ -456,23 +457,24 @@ export default function Home() {
                   typeColor: "#27AE60",
                   value: "6 vehicle models",
                   usage:
-                    "Fleet composition. Nexon 33%, "
-                    +"Xpres-T 20%, Tiago 16%, "
-                    +"Windsor 15%, eC3 10%, ZS 6%.",
-                  citation: "CY2024 India EV sales",
+                    "Fleet: Nexon 27%, Tiago 14%, "
+                    +"Windsor 18%, BE6 17%, "
+                    +"Curvv 16%, ZS 8%.",
+                  citation: "CY2025 India EV sales",
                   icon: "🚗",
                 },
                 {
                   source: "ACN-Data (Caltech)",
                   type: "REAL · ADAPTED",
                   typeColor: "#F9CA24",
-                  value: "30,000+ sessions",
+                  value: "Arrival distributions",
                   usage:
                     "Arrival time distributions "
-                    +"and session energy. Adapted "
-                    +"to Indian depot context.",
+                    +"only. Adapted to Indian depot "
+                    +"context. Vehicle specs from "
+                    +"Vahan CY2025.",
                   citation:
-                    "Flores-Espino et al. 2021",
+                    "Lee et al. 2019, sessions 2018-2020",
                   icon: "⚡",
                 },
                 {
@@ -484,7 +486,9 @@ export default function Home() {
                     "Gurugram weather for solar "
                     +"irradiance and load patterns.",
                   citation:
-                    "open-meteo.com historical",
+                    "Open-Meteo Historical Weather API. "
+                    +"open-meteo.com. Accessed June 2026. "
+                    +"CC BY 4.0 open data licence.",
                   icon: "🌤️",
                 },
                 {
@@ -497,20 +501,23 @@ export default function Home() {
                     +"Dakshinanchal Vidyut Vitran "
                     +"Nigam Ltd, Gurugram zone.",
                   citation:
-                    "DVVNL tariff schedule 2023",
+                    "DVVNL HT-2 Tariff Schedule FY 2025-26. "
+                    +"UPERC Order November 2025. "
+                    +"Demand charge ₹350/kVA/month "
+                    +"unchanged for 6th consecutive year.",
                   icon: "📋",
                 },
                 {
-                  source: "First-principles (Vahan CY2025 + ACN-Data)",
+                  source: "First-Principles Energy",
                   type: "DERIVED",
                   typeColor: "#00D4AA",
-                  value: "22.8 kWh/session (modeled)",
-                  usage: `Energy per session = (0.80 - soc_arrival) x
-                    battery_kWh. soc_arrival 10-35% by vehicle
-                    range (ACN-Data). Avg modeled: 22.8 kWh
-                    (σ=6.5 kWh). Theoretical (fixed 20% SoC): 24.3 kWh.`,
-                  citation: `Derived from Vahan CY2025 fleet specs
-                    and ACN-Data behavioral data`,
+                  value: "24.32 kWh/session",
+                  usage:
+                    "Theoretical energy needed to "
+                    +"reach 80% SoC from 20% SoC "
+                    +"weighted average battery capacity "
+                    +"(40.53 kWh).",
+                  citation: "First-principles fleet energy model",
                   icon: "📊",
                 },
               ].map(d => (

@@ -6,59 +6,47 @@ import numpy as np
 import pandas as pd
 
 
-INDIA_CORPORATE_FLEET_MIX = [
-    {
-        "model": "Tata Nexon EV",
-        "count": 135,
-        "battery_kwh": 30.2,
-        "charger_kw": 7.4,
-        "range_km": 312,
-        "source": "Vahan CY2025 — 27% share"
-    },
-    {
-        "model": "Tata Tiago EV",
-        "count": 70,
-        "battery_kwh": 19.2,
-        "charger_kw": 3.3,
-        "range_km": 250,
-        "source": "Vahan CY2025 — 14% share"
-    },
-    {
-        "model": "MG Windsor EV",
-        "count": 90,
-        "battery_kwh": 38.0,
-        "charger_kw": 7.4,
-        "range_km": 331,
-        "source": "JSW MG 26% market share CY2025"
-    },
-    {
-        "model": "Mahindra BE6",
-        "count": 85,
-        "battery_kwh": 59.0,
-        "charger_kw": 7.2,
-        "range_km": 535,
-        "source": "Mahindra BE6 official specs 2024"
-    },
-    {
-        "model": "Tata Curvv EV",
-        "count": 80,
-        "battery_kwh": 55.0,
-        "charger_kw": 7.2,
-        "range_km": 502,
-        "source": "Tata Curvv EV official specs 2024"
-    },
-    {
-        "model": "MG ZS EV",
-        "count": 40,
-        "battery_kwh": 50.3,
-        "charger_kw": 7.4,
-        "range_km": 461,
-        "source": "MG ZS EV fleet deployments"
-    },
-]
+VEHICLE_SPECS = {
+    "Tata Nexon EV": {"battery": 30.2, "charger": 7.4},
+    "Tata Tiago EV": {"battery": 19.2, "charger": 3.3},
+    "MG Windsor EV": {"battery": 38.0, "charger": 7.4},
+    "Mahindra BE6": {"battery": 59.0, "charger": 7.2},
+    "Tata Curvv EV": {"battery": 55.0, "charger": 7.2},
+    "MG ZS EV": {"battery": 50.3, "charger": 7.4},
+}
+
+FLEET_MIX = {
+    "Tata Nexon EV": 0.27,
+    "Tata Tiago EV": 0.14,
+    "MG Windsor EV": 0.18,
+    "Mahindra BE6": 0.17,
+    "Tata Curvv EV": 0.16,
+    "MG ZS EV": 0.08,
+}
+
+VEHICLE_RANGES = {
+    "Tata Nexon EV": 312,
+    "Tata Tiago EV": 250,
+    "MG Windsor EV": 331,
+    "Mahindra BE6": 535,
+    "Tata Curvv EV": 502,
+    "MG ZS EV": 461,
+}
 
 
+# ACN-Data (Caltech, Lee et al. 2019, sessions 2018-2020).
+# Used ONLY for arrival time distribution shape within 20:00-22:00 corporate depot return window.
+# Vehicle specs (battery, charger) from Vahan CY2025.
+# Energy per session from first-principles fleet calculation.
 class ACNDataLoader:
+
+    def load_sessions(self):
+        df = self.load_real_sessions()
+        if df is not None:
+            return df
+        df = self.get_corporate_depot_night()
+        df["session_id"] = "SYN_" + df["session_id"]
+        return df
 
     def load_real_sessions(self):
         import json
@@ -108,17 +96,11 @@ class ACNDataLoader:
     def get_corporate_depot_night(
         self, date=None, n_vehicles=500
     ):
-        real_df = self.load_real_sessions()
-        stats = None
-        if real_df is not None and len(real_df) > 0:
-            stats = self.extract_behavioral_stats(
-                real_df
-            )
+        if isinstance(date, int):
+            n_vehicles = date
+            date = None
 
-        arrival_std = (
-            min(stats["arrival_std_h"], 0.6)
-            if stats else 0.55
-        )
+        real_df = self.load_real_sessions()
 
         if date:
             seed = int(
@@ -126,16 +108,36 @@ class ACNDataLoader:
             ) % 10000
             np.random.seed(seed)
 
-        arrivals_raw = np.random.normal(
-            loc=21.0,
-            scale=arrival_std,
-            size=n_vehicles
-        )
-        arrivals_h = np.clip(
-            arrivals_raw, 20.0, 22.0
-        )
+        if real_df is not None and not real_df.empty:
+            conn_dt = pd.to_datetime(
+                real_df.get("connectionTime", real_df.get("connection_time", "")),
+                utc=True, errors="coerce"
+            )
+            conn_dt = conn_dt.dropna()
+            if not conn_dt.empty:
+                hours = conn_dt.dt.hour + conn_dt.dt.minute / 60.0
+                h_min, h_max = hours.min(), hours.max()
+                if h_max > h_min:
+                    normalized = 20.0 + 2.0 * (hours - h_min) / (h_max - h_min)
+                else:
+                    normalized = pd.Series([21.0] * len(hours))
+                arrivals_h = np.random.choice(normalized, size=n_vehicles, replace=True)
+            else:
+                arrivals_raw = np.random.normal(loc=21.0, scale=0.55, size=n_vehicles)
+                arrivals_h = np.clip(arrivals_raw, 20.0, 22.0)
+        else:
+            arrivals_raw = np.random.normal(
+                loc=21.0,
+                scale=0.55,
+                size=n_vehicles
+            )
+            arrivals_h = np.clip(
+                arrivals_raw, 20.0, 22.0
+            )
+
+        arrivals_h = sorted(arrivals_h)
         arrival_times = []
-        for h in sorted(arrivals_h):
+        for h in arrivals_h:
             hour = int(h)
             minute = int((h % 1) * 60)
             arrival_times.append(
@@ -145,15 +147,27 @@ class ACNDataLoader:
         vehicles = []
         vehicle_num = 1
 
-        for spec in INDIA_CORPORATE_FLEET_MIX:
-            count = min(
-                spec["count"],
-                n_vehicles - len(vehicles)
-            )
-            for i in range(count):
-                if spec["range_km"] < 280:
+        # Allocate vehicles according to FLEET_MIX proportions
+        counts = {}
+        allocated = 0
+        models = list(FLEET_MIX.keys())
+        for model in models[:-1]:
+            count = int(round(FLEET_MIX[model] * n_vehicles))
+            counts[model] = count
+            allocated += count
+        counts[models[-1]] = max(0, n_vehicles - allocated)
+
+        for model in models:
+            count = counts[model]
+            specs = VEHICLE_SPECS[model]
+            battery = specs["battery"]
+            charger = specs["charger"]
+            r_km = VEHICLE_RANGES[model]
+
+            for _ in range(count):
+                if r_km < 280:
                     soc_min, soc_max = 0.10, 0.20
-                elif spec["range_km"] < 350:
+                elif r_km < 350:
                     soc_min, soc_max = 0.15, 0.25
                 else:
                     soc_min, soc_max = 0.20, 0.35
@@ -161,13 +175,7 @@ class ACNDataLoader:
                 initial_soc = np.random.uniform(
                     soc_min, soc_max
                 )
-                energy_needed = float(np.clip(
-                    (0.80 - initial_soc) *
-                    spec["battery_kwh"] *
-                    (1 + np.random.normal(0, 0.04)),
-                    spec["battery_kwh"] * 0.15,
-                    spec["battery_kwh"] * 0.72
-                ))
+                energy_needed = (0.80 - initial_soc) * battery
 
                 zone = ["A", "B", "C", "D"][
                     (vehicle_num - 1) % 4
@@ -177,19 +185,14 @@ class ACNDataLoader:
                     "session_id":
                         f"GP_{vehicle_num:04d}",
                     "vehicle_id": (
-                        spec["model"]
-                        .replace(" ", "_") +
+                        model.replace(" ", "_") +
                         f"_{vehicle_num:04d}"
                     ),
-                    "vehicle_model":
-                        spec["model"],
-                    "battery_kwh":
-                        spec["battery_kwh"],
-                    "charger_kw":
-                        spec["charger_kw"],
-                    "charger_power_kw":
-                        spec["charger_kw"],
-                    "range_km": spec["range_km"],
+                    "vehicle_model": model,
+                    "battery_kwh": battery,
+                    "charger_kw": charger,
+                    "charger_power_kw": charger,
+                    "range_km": r_km,
                     "arrival_time":
                         arrival_times[vehicle_num - 1],
                     "departure_deadline": "07:00",
@@ -200,12 +203,15 @@ class ACNDataLoader:
                     "energy_needed_kwh": round(
                         energy_needed, 1
                     ),
+                    "energy_kwh": round(
+                        energy_needed, 1
+                    ),
                     "zone": zone,
                     "priority": "NORMAL",
                     "data_source":
                         "ACN-Data + Vahan CY2025",
                     "market_source":
-                        spec["source"],
+                        f"Vahan CY2025 — {int(FLEET_MIX[model]*100)}% share",
                 })
                 vehicle_num += 1
 

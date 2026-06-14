@@ -23,7 +23,9 @@ def download_data():
     acn_status = "SYNTHETIC" if "SYN" in acn_sessions['session_id'].iloc[0] else "REAL"
     print(f"[{acn_status}] ACN-Data: {len(acn_sessions)} sessions")
 
-    # 2. Open-Meteo
+    # 2. Open-Meteo Historical Weather API.
+    # open-meteo.com. Accessed June 2026.
+    # CC BY 4.0 open data licence.
     weather_loader = WeatherLoader()
     print("Fetching weather data for 5 locations + Gurugram...")
     # Fetch 3 years as requested (2022, 2023, 2024)

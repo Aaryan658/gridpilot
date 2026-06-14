@@ -482,7 +482,7 @@ export default function GridPilotCharts() {
             Carbon Intensity — Haryana Grid
           </span>
           <span style={{ fontSize: 10, color: "#4A5C6A" }}>
-            CEA India 2023-24 | Powered by FirstFlight
+            CEA India 2024-25 | Powered by FirstFlight
           </span>
         </div>
 
@@ -561,7 +561,7 @@ export default function GridPilotCharts() {
       <div className="flex flex-wrap gap-2 justify-center mt-2">
         {[
           "ACN-Data (Caltech)",
-          "CEA India 2023-24",
+          "CEA India 2024-25",
           "Vahan CY2025",
           "CVXPY + CLARABEL",
           "pandapower AC flow",

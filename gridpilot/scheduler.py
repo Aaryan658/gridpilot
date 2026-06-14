@@ -230,7 +230,7 @@ class GridPilotScheduler:
         }
 
     def _carbon_array(self, carbon_signal: dict, base_time: pd.Timestamp) -> np.ndarray:
-        carbon = np.full(self.N_SLOTS, 0.727, dtype=float)
+        carbon = np.full(self.N_SLOTS, 0.710, dtype=float)
         if not carbon_signal or "carbon_forecast_48h" not in carbon_signal:
             for slot in range(self.N_SLOTS):
                 hour = (base_time + pd.Timedelta(minutes=15 * slot)).hour

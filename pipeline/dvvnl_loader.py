@@ -8,6 +8,9 @@ import pandas as pd
 
 
 class DVVNLLoader:
+    # DVVNL HT-2 Tariff Schedule FY 2025-26
+    # UPERC Order November 2025.
+    # Demand charge ₹350/kVA/month unchanged for 6th consecutive year.
     TARIFF = {
         "energy_charge_per_kwh": 6.50,
         "demand_charge_per_kva_month": 350,

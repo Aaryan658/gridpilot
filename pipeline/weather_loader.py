@@ -21,6 +21,9 @@ class WeatherLoader:
         "ER_Kolkata": (22.5726, 88.3639),
     }
 
+    # Open-Meteo Historical Weather API.
+    # open-meteo.com. Accessed June 2026.
+    # CC BY 4.0 open data licence.
     URL = "https://archive-api.open-meteo.com/v1/archive"
     HOURLY_VARIABLES = (
         "temperature_2m,relative_humidity_2m,windspeed_10m,shortwave_radiation"

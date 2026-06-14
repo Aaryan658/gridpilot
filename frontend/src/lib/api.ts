@@ -58,14 +58,15 @@ export async function fetchCarbonSignal() {
 
 export const MOCK_DATA = {
   kpis: {
-    peak_reduction_pct: 46.9,
-    unmanaged_peak_kw: 3767,
-    managed_peak_kw: 2000,
+    peak_reduction_pct: 47.1,
+    unmanaged_peak_kw: 3780,
+    managed_peak_kw: 2000.0,
+    scheduled_peak_kw: 2000.0,
     overloads_avoided: 0,
-    dvvnl_monthly_saving_inr: 618511,
-    carbon_saved_kg: 2416,
+    dvvnl_monthly_saving_inr: 623000,
+    carbon_saved_kg: 1727,
     all_ready: true,
-    solve_time_ms: 10328,
+    solve_time_ms: 1831,
   },
   carbon_signal: "NEUTRAL",
   ev_action: "CHARGE_SCHEDULED",

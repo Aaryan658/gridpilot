@@ -334,7 +334,7 @@ def depot_carbon_signal() -> dict:
             "ev_action_now": signal["ev_action_now"],
             "forecast_48h": signal["carbon_forecast_48h"],
             "clean_windows": signal["clean_windows"],
-            "source": "CEA India 2023-24 | FirstFlight",
+            "source": "CEA India 2024-25 | FirstFlight",
             "rationale": signal["rationale"],
         }
     )
@@ -486,7 +486,7 @@ def grid_optimize(request: OptimizeRequest) -> dict:
     ensure_ready()
     forecast = request.forecast or {"NR": 68000, "SR": 54000, "ER": 26000, "WR": 66000, "NER": 4300}
     capacity = request.generation_capacity or {"NR": 73000, "SR": 55500, "ER": 28000, "WR": 72000, "NER": 4600}
-    carbon = request.carbon_signals or {"NR": 0.727, "SR": 0.536, "ER": 0.862, "WR": 0.724, "NER": 0.621}
+    carbon = request.carbon_signals or {"NR": 0.710, "SR": 0.536, "ER": 0.862, "WR": 0.724, "NER": 0.621}
     return clean_json(state["national_optimizer"].optimize(forecast, capacity, carbon))
 
 
@@ -551,7 +551,7 @@ def dashboard_data() -> dict:
     opt = state["national_optimizer"].optimize(
         {"NR": 68000, "SR": 54000, "ER": 26000, "WR": 66000, "NER": 4300},
         {"NR": 73000, "SR": 55500, "ER": 28000, "WR": 72000, "NER": 4600},
-        {"NR": 0.727, "SR": 0.536, "ER": 0.862, "WR": 0.724, "NER": 0.621},
+        {"NR": 0.710, "SR": 0.536, "ER": 0.862, "WR": 0.724, "NER": 0.621},
     )
     active_anomalies = grid_anomalies("ALL", 168)["anomalies"]
     clean_window = signal["clean_windows"][0] if signal["clean_windows"] else {}

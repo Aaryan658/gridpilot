@@ -46,10 +46,10 @@ Representative fleet:
 
 Step 0 - Real data:
 
-- Mixed 6-model India fleet using Vahan CY2024 mix
+- Mixed 6-model India fleet using Vahan CY2025 mix
 - ACN-Data real behavioral arrival and dwell distributions
-- Vasudha Foundation energy calibration
-- CEA India 2022-23 carbon data
+- First-Principles energy calibration
+- CEA India 2024-25 carbon data
 - Data provenance API endpoint
 
 Level 1 - Next.js 16 frontend:
@@ -126,7 +126,7 @@ python scripts/start_ocpp.py
 | Frontend | Next.js 16 + React + Framer Motion + Recharts |
 | Grid intelligence | FirstFlight forecasting, carbon, anomaly, frequency signal bus |
 | Charger protocol | OCPP 1.6 mock central system |
-| Data | Vahan CY2024, ACN-Data, CEA India 2022-23, Vasudha calibration |
+| Data | Vahan CY2025, ACN-Data, CEA India 2024-25, First-Principles calibration |
 
 ## Academic Context
 

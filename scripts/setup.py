@@ -96,7 +96,7 @@ def print_summary_table(forecast_summary, anomaly_summary, managed):
     print("+" + "-" * 58 + "+")
     print("| DATA SOURCES                                             |")
     print("|  EV sessions:  ACN-Data (Caltech, adapted)               |")
-    print("|  Carbon:       CEA India 2022-23 (Haryana: 0.820)       |")
+    print("|  Carbon:       CEA India 2024-25 (Haryana: 0.710)       |")
     print("|  Weather:      Open-Meteo Gurugram (real/synthetic)      |")
     print("|  Grid demand:  IEX/CEA statistics                        |")
     print("+" + "-" * 58 + "+")

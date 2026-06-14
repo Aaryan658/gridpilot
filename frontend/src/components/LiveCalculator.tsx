@@ -37,7 +37,7 @@ export default function LiveCalculator() {
   const [nVehicles,  setN]   = useState(500);
   const [socArrival, setSoc]  = useState(20);
   const [demandRate, setDr]   = useState(350);
-  const [carbonInt,  setCi]   = useState(72.7);
+  const [carbonInt,  setCi]   = useState(71.0);
 
   const r = useCallback(() => {
     const n   = nVehicles;
@@ -503,9 +503,9 @@ export default function LiveCalculator() {
         Step 4 managed peak estimated from
         objective weights · Press "Run Live
         Optimization" for actual CLARABEL output ·
-        Real API result (~2,416 kg) is lower because
+        Real API result (~650 kg) is lower because
         the optimizer shifts charging to the clean
-        window (0.647 kg/kWh vs 0.727 kg/kWh average)
+        window (0.613 kg/kWh vs 0.710 kg/kWh average)
       </p>
     </div>
   );

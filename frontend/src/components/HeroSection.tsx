@@ -101,6 +101,7 @@ export default function HeroSection() {
             justify-center gap-4 mb-20"
         >
           <button
+            suppressHydrationWarning
             onClick={() => {
               document.getElementById("live-demo")
                 ?.scrollIntoView({ behavior: "smooth" })

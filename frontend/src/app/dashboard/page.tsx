@@ -72,9 +72,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const ping = () => {
-      fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/health"
-      ).catch(() => {});
+      const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      fetch(apiBase + "/health").catch(() => {});
     };
     ping();
     const interval = setInterval(ping, 10 * 60 * 1000);

@@ -8,6 +8,10 @@ export async function fetchDashboardData() {
       { next: { revalidate: 30 } }
     );
     if (!res.ok) throw new Error(res.statusText);
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Expected JSON response from API");
+    }
     return await res.json();
   } catch (e) {
     console.warn("API offline, using mock data");
@@ -36,6 +40,10 @@ export async function runSchedule(params: {
       }
     );
     if (!res.ok) throw new Error(res.statusText);
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Expected JSON response from API");
+    }
     return await res.json();
   } catch (e) {
     console.warn("Schedule API failed:", e);
@@ -50,6 +58,10 @@ export async function fetchCarbonSignal() {
       { next: { revalidate: 60 } }
     );
     if (!res.ok) throw new Error(res.statusText);
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new TypeError("Expected JSON response from API");
+    }
     return await res.json();
   } catch (e) {
     return null;

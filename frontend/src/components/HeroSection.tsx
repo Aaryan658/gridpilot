@@ -2,9 +2,9 @@
 import { motion } from "framer-motion";
 
 const stats = [
-  { value: "47.1%", label: "Peak Load Reduced" },
-  { value: "₹6.23L", label: "Monthly Savings" },
-  { value: "500", label: "EVs Orchestrated" },
+  { value: "55.1%", label: "Peak Load Reduced" },
+  { value: "₹8.60L", label: "Monthly Savings" },
+  { value: "600", label: "EVs Orchestrated" },
   { value: "0", label: "Overload Events" },
 ];
 
@@ -88,8 +88,8 @@ export default function HeroSection() {
             max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           GridPilot prevents transformer overloads at EV
-          depots using convex optimization. 500 vehicles.
-          Zero overloads. ₹6.23 lakh saved every month.
+          depots using convex optimization. 600 vehicles.
+          Zero overloads. ₹8.60 lakh saved every month.
         </motion.p>
 
         {/* CTA buttons */}

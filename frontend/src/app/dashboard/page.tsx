@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Area,
@@ -17,24 +17,31 @@ import {
 import { fetchCarbonSignal, MOCK_DATA, runSchedule } from "@/lib/api";
 
 const LOAD_DATA = [
-  { t: "20:00", u: 1100, m: 1100, s: 0 },
-  { t: "20:30", u: 1750, m: 1150, s: 0 },
-  { t: "21:00", u: 2550, m: 1200, s: 0 },
-  { t: "21:30", u: 3200, m: 1230, s: 0 },
-  { t: "22:00", u: 3767, m: 1260, s: 0 },
-  { t: "22:30", u: 3767, m: 1280, s: 0 },
-  { t: "23:00", u: 3750, m: 1310, s: 0 },
-  { t: "00:00", u: 3680, m: 1370, s: 0 },
-  { t: "01:00", u: 3500, m: 1420, s: 0 },
-  { t: "02:00", u: 3100, m: 1400, s: 20 },
-  { t: "03:00", u: 2750, m: 1400, s: 180 },
-  { t: "04:00", u: 2400, m: 1400, s: 420 },
-  { t: "05:00", u: 1950, m: 1200, s: 460 },
-  { t: "06:00", u: 1400, m: 850, s: 490 },
-  { t: "06:30", u: 1100, m: 550, s: 500 },
-  { t: "07:00", u: 820,  m: 360, s: 500 },
-  { t: "07:30", u: 780,  m: 360, s: 500 },
-  { t: "08:00", u: 730,  m: 360, s: 500 },
+  { t: "20:00", u: 1100,  m: 2000, s: 0 },
+  { t: "20:30", u: 2200,  m: 2000, s: 0 },
+  { t: "21:00", u: 3400,  m: 2000, s: 0 },
+  { t: "21:30", u: 4200,  m: 2000, s: 0 },
+  { t: "22:00", u: 4456,  m: 2000, s: 0 },
+  { t: "22:30", u: 4380,  m: 2000, s: 0 },
+  { t: "23:00", u: 4100,  m: 2000, s: 0 },
+  { t: "23:30", u: 3700,  m: 2000, s: 0 },
+  { t: "00:00", u: 3200,  m: 2000, s: 0 },
+  { t: "00:30", u: 2800,  m: 2000, s: 0 },
+  { t: "01:00", u: 2500,  m: 2000, s: 20 },
+  { t: "01:30", u: 2200,  m: 2000, s: 50 },
+  { t: "02:00", u: 1950,  m: 2000, s: 100 },
+  { t: "02:30", u: 1750,  m: 1980, s: 180 },
+  { t: "03:00", u: 1600,  m: 1940, s: 280 },
+  { t: "03:30", u: 1450,  m: 1880, s: 380 },
+  { t: "04:00", u: 1300,  m: 1780, s: 460 },
+  { t: "04:30", u: 1150,  m: 1600, s: 520 },
+  { t: "05:00", u: 1050,  m: 1350, s: 560 },
+  { t: "05:30", u: 950,   m: 1050, s: 580 },
+  { t: "06:00", u: 900,   m: 700,  s: 540 },
+  { t: "06:30", u: 870,   m: 380,  s: 450 },
+  { t: "07:00", u: 850,   m: 150,  s: 320 },
+  { t: "07:30", u: 830,   m: 80,   s: 180 },
+  { t: "08:00", u: 800,   m: 50,   s: 60 },
 ];
 
 type ScheduleComparison = {
@@ -61,6 +68,7 @@ type CarbonSignal = {
 };
 
 export default function DashboardPage() {
+  const isFirstRun = useRef(true);
   const [solving, setSolving] = useState(false);
   const [solved, setSolved] = useState(false);
   const [chartReady, setChartReady] = useState(false);
@@ -96,33 +104,55 @@ export default function DashboardPage() {
 
     const start = Date.now();
 
-    const STEPS = [
-      { ms: 280,  t: "Loading 500 EV sessions..." },
-      { ms: 560,  t: "Building constraint matrix..." },
-      { ms: 840,  t: "Running CVXPY convex QP..." },
-      { ms: 1120, t: "CLARABEL interior-point..." },
-      { ms: 1400, t: "pandapower AC validation..." },
-      { ms: 1650, t: "Computing DVVNL savings..." },
-      { ms: 10300, t: "Optimal solution found ✓" },
-    ];
+    const firstRun = isFirstRun.current;
+    isFirstRun.current = false;
+
+    const STEPS = firstRun
+      ? [
+          { ms: 2000,  t: "Loading 600 EV sessions..." },
+          { ms: 5000,  t: "Building constraint matrix (57,600 vars)..." },
+          { ms: 8000,  t: "JIT compiling CVXPY constraints..." },
+          { ms: 14000, t: "Running CVXPY convex QP..." },
+          { ms: 24000, t: "CLARABEL interior-point solving..." },
+          { ms: 28000, t: "pandapower AC validation..." },
+          { ms: 32000, t: "Computing DVVNL savings..." },
+          { ms: 35000, t: "Optimal solution found ✓" },
+        ]
+      : [
+          { ms: 300,  t: "Loading 600 EV sessions..." },
+          { ms: 700,  t: "Building constraint matrix (57,600 vars)..." },
+          { ms: 1200, t: "Running CVXPY convex QP..." },
+          { ms: 3200, t: "CLARABEL interior-point solving..." },
+          { ms: 4200, t: "pandapower AC validation..." },
+          { ms: 5000, t: "Computing DVVNL savings..." },
+          { ms: 5500, t: "Optimal solution found ✓" },
+        ];
 
     const apiPromise = runSchedule({
-      n_vehicles: 500,
+      n_vehicles: 600,
       date: "2024-01-15",
       enable_v2g: false,
     });
 
-    const animPromise = (async () => {
-      const start = Date.now();
-      for (const step of STEPS) {
-        const wait = step.ms - (Date.now() - start);
-        if (wait > 0)
-          await new Promise(r => setTimeout(r, wait));
-        setSolveStep(step.t);
-      }
-    })();
+    let isApiDone = false;
+    apiPromise.finally(() => isApiDone = true);
 
-    const [data] = await Promise.all([apiPromise, animPromise]);
+    const animPromise = new Promise<null>(resolve => {
+      const start = Date.now();
+      (async () => {
+        for (const step of STEPS) {
+          if (isApiDone) break;
+          const wait = step.ms - (Date.now() - start);
+          if (wait > 0)
+            await new Promise(r => setTimeout(r, wait));
+          if (!isApiDone) setSolveStep(step.t);
+        }
+        resolve(null);
+      })();
+    });
+
+    await animPromise;
+    const data = await apiPromise;
 
     const totalMs = Date.now() - start;
     if (totalMs > 5000) {
@@ -130,10 +160,10 @@ export default function DashboardPage() {
     }
 
     const DEMO = {
-      peak_reduction_pct: 46.9,
-      dvvnl_monthly_saving_inr: 619000,
-      carbon_saved_kg: 650,
-      solve_time_ms: 1831,
+      peak_reduction_pct: 55.1,
+      dvvnl_monthly_saving_inr: 860000,
+      carbon_saved_kg: 2072,
+      solve_time_ms: 3000,
       all_ready: true,
       source: "demo" as const,
     };
@@ -154,7 +184,7 @@ export default function DashboardPage() {
         peak_reduction_pct: c.peak_reduction_pct || DEMO.peak_reduction_pct,
         dvvnl_monthly_saving_inr: c.dvvnl_monthly_saving_inr || DEMO.dvvnl_monthly_saving_inr,
         carbon_saved_kg: carbonSaved,
-        solve_time_ms: Math.min(1831, rawMs),
+        solve_time_ms: rawMs,
         all_ready: data.all_ready_on_time ?? data.managed?.fleet_summary?.all_ready_on_time ?? true,
         source: "live",
       });
@@ -179,7 +209,7 @@ export default function DashboardPage() {
     : `₹${(MOCK_DATA.kpis.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L`;
   const solveTime =
     result?.solve_time_ms ?? MOCK_DATA.kpis.solve_time_ms;
-  const readyCount = result?.all_ready === false ? "Check" : "500/500";
+  const readyCount = result?.all_ready === false ? "Check" : "600/600";
 
   return (
     <div
@@ -287,21 +317,12 @@ export default function DashboardPage() {
               }}>
                 {isLive ? "● Live Result" : "● Demo Result"}
               </div>
-              {wasWarmup && (
-                <div style={{
-                  fontSize: 10,
-                  color: "#F9CA24",
-                  marginBottom: 6,
-                }}>
-                  ⚡ Server was sleeping — now warm.
-                  Next run will be ~2s.
-                </div>
-              )}
+
               {[
                 { l: "Peak reduction", v: `${Number(result.peak_reduction_pct).toFixed(1)}%` },
                 { l: "DVVNL saving", v: `₹${(result.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L/mo` },
                 { l: "Solve time", v: `${Number(solveTime).toFixed(0)}ms` },
-                { l: "All ready", v: result.all_ready ? "500/500 ✓" : "Check" },
+                { l: "All ready", v: result.all_ready ? "600/600 ✓" : "Check" },
               ].map(r => (
                 <div key={r.l} style={{
                   display: "flex",
@@ -434,7 +455,7 @@ export default function DashboardPage() {
                 Depot Load Profile
               </div>
               <div style={{ fontSize: 11, color: "#4A5C6A" }}>
-                500 Mixed EVs | Corporate Fleet, Gurugram | DVVNL HT-2
+                600 Mixed EVs | Corporate Fleet, Gurugram | DVVNL HT-2
               </div>
             </div>
             <div

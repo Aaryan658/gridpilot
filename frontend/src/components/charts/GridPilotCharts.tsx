@@ -10,31 +10,31 @@ import { useState, useEffect } from "react";
 import { fetchDashboardData, MOCK_DATA } from "@/lib/api";
 
 const LOAD_DATA = [
-  {t:"20:00",u:1100,m:1100,s:0},
-  {t:"20:30",u:1750,m:1150,s:0},
-  {t:"21:00",u:2550,m:1200,s:0},
-  {t:"21:30",u:3200,m:1230,s:0},
-  {t:"22:00",u:3767,m:1260,s:0},
-  {t:"22:30",u:3767,m:1280,s:0},
-  {t:"23:00",u:3750,m:1310,s:0},
-  {t:"23:30",u:3680,m:1340,s:0},
-  {t:"00:00",u:3680,m:1370,s:0},
-  {t:"00:30",u:3500,m:1400,s:0},
-  {t:"01:00",u:3500,m:1420,s:0},
-  {t:"01:30",u:3300,m:1440,s:0},
-  {t:"02:00",u:3100,m:1400,s:20},
-  {t:"02:30",u:2900,m:1400,s:80},
-  {t:"03:00",u:2750,m:1400,s:180},
-  {t:"03:30",u:2550,m:1400,s:320},
-  {t:"04:00",u:2400,m:1400,s:420},
-  {t:"04:30",u:2150,m:1250,s:460},
-  {t:"05:00",u:1950,m:1100,s:490},
-  {t:"05:30",u:1650,m:850,s:500},
-  {t:"06:00",u:1400,m:550,s:500},
-  {t:"06:30",u:1100,m:550,s:500},
-  {t:"07:00",u:820, m:360,s:500},
-  {t:"07:30",u:780, m:360,s:500},
-  {t:"08:00",u:730, m:360,s:500},
+  {t:"20:00", u:1100,  m:2000, s:0},
+  {t:"20:30", u:2200,  m:2000, s:0},
+  {t:"21:00", u:3400,  m:2000, s:0},
+  {t:"21:30", u:4200,  m:2000, s:0},
+  {t:"22:00", u:4456,  m:2000, s:0},
+  {t:"22:30", u:4380,  m:2000, s:0},
+  {t:"23:00", u:4100,  m:2000, s:0},
+  {t:"23:30", u:3700,  m:2000, s:0},
+  {t:"00:00", u:3200,  m:2000, s:0},
+  {t:"00:30", u:2800,  m:2000, s:0},
+  {t:"01:00", u:2500,  m:2000, s:20},
+  {t:"01:30", u:2200,  m:2000, s:50},
+  {t:"02:00", u:1950,  m:2000, s:100},
+  {t:"02:30", u:1750,  m:1980, s:180},
+  {t:"03:00", u:1600,  m:1940, s:280},
+  {t:"03:30", u:1450,  m:1880, s:380},
+  {t:"04:00", u:1300,  m:1780, s:460},
+  {t:"04:30", u:1150,  m:1600, s:520},
+  {t:"05:00", u:1050,  m:1350, s:560},
+  {t:"05:30", u:950,   m:1050, s:580},
+  {t:"06:00", u:900,   m:700,  s:540},
+  {t:"06:30", u:870,   m:380,  s:450},
+  {t:"07:00", u:850,   m:150,  s:320},
+  {t:"07:30", u:830,   m:80,   s:180},
+  {t:"08:00", u:800,   m:50,   s:60},
 ];
 
 const CARBON_DATA = [
@@ -200,7 +200,7 @@ export default function GridPilotCharts() {
       accent: "#F9CA24",
     },
     {
-      value: kpis.all_ready ? "500/500" : "453/500",
+      value: kpis.all_ready ? "600/600" : "543/600",
       label: "Vehicles Ready",
       sub: "by 07:00 IST deadline",
       accent: "#27AE60",
@@ -273,7 +273,7 @@ export default function GridPilotCharts() {
               Depot Load Profile
             </h3>
             <p style={{ fontSize: 11, color: "#4A5C6A" }}>
-              500 Mixed EVs (Vahan CY2025) | Corporate Fleet, Gurugram | DVVNL HT-2 Tariff
+              600 Mixed EVs (Vahan CY2025) | Corporate Fleet, Gurugram | DVVNL HT-2
             </p>
           </div>
           <div style={{
@@ -395,13 +395,13 @@ export default function GridPilotCharts() {
 
               {/* DVVNL penalty */}
               <ReferenceLine
-                y={4500}
+                y={4600}
                 stroke="#F9CA24"
                 strokeOpacity={0.4}
                 strokeWidth={1}
                 strokeDasharray="5 5"
                 label={{
-                  value: "4,500 kW penalty",
+                  value: "4,600 kW penalty",
                   position: "insideTopRight",
                   fill: "rgba(249,202,36,0.7)",
                   fontSize: 10,

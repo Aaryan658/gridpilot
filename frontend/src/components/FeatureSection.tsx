@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 const FEATURES = [
   {
     title: "Convex QP Optimizer",
-    desc: "CVXPY + CLARABEL solver. 500 vehicles. Optimal in ~1831ms. Mathematically guaranteed minimum carbon + peak.",
+    desc: "CVXPY + CLARABEL solver. 600 vehicles. Optimal in ~3s. Mathematically guaranteed minimum carbon + peak.",
     accent: "#7C5CBF",
     icon: "⚡",
   },
@@ -29,10 +29,10 @@ const FEATURES = [
 ];
 
 const RESULTS = [
-  { before: "3,780 kW", after: "2,000 kW", label: "Peak Load", delta: "-47.1%" },
-  { before: "0 events", after: "0 events", label: "Overloads/night", delta: "0%" },
+  { before: "4,456 kW", after: "2,000 kW", label: "Peak Load", delta: "-55.1%" },
+  { before: "3 events", after: "0 events", label: "Overloads/night", delta: "-100%" },
   { before: "₹0", after: "₹0", label: "DVVNL Penalty", delta: "0%" },
-  { before: "453/500", after: "500/500", label: "Vehicles Ready", delta: "+10%" },
+  { before: "543/600", after: "600/600", label: "Vehicles Ready", delta: "+10.5%" },
 ];
 
 export default function FeatureSection() {

@@ -34,7 +34,7 @@ export async function runSchedule(params: {
         },
         body: JSON.stringify({
           date: params.date || "2024-01-15",
-          n_vehicles: params.n_vehicles || 500,
+          n_vehicles: params.n_vehicles || 600,
           enable_v2g: params.enable_v2g || false,
         }),
       }
@@ -70,15 +70,20 @@ export async function fetchCarbonSignal() {
 
 export const MOCK_DATA = {
   kpis: {
-    peak_reduction_pct: 47.1,
-    unmanaged_peak_kw: 3780,
+    n_vehicles: 600,
+    unmanaged_peak_kw: 4455.8,
     managed_peak_kw: 2000.0,
     scheduled_peak_kw: 2000.0,
-    overloads_avoided: 0,
-    dvvnl_monthly_saving_inr: 623000,
-    carbon_saved_kg: 1727,
+    peak_reduction_pct: 55.1,
+    unmanaged_overload_events: 3,
+    scheduled_overload_events: 0,
+    overloads_avoided: 3,
+    dvvnl_monthly_saving_inr: 860000,
+    carbon_saved_kg: 2072,
+    solve_time_ms: 3000,
     all_ready: true,
-    solve_time_ms: 1831,
+    all_ready_on_time: true,
+    transformer_utilisation_pct: 111.4,
   },
   carbon_signal: "NEUTRAL",
   ev_action: "CHARGE_SCHEDULED",

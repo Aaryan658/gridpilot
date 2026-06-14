@@ -5,7 +5,7 @@ r = requests.post(
     'http://localhost:8000/depot/schedule',
     json={
         'date':'2024-01-15',
-        'n_vehicles':500,
+        'n_vehicles':600,
         'enable_v2g':False
     }
 )

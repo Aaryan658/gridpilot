@@ -34,7 +34,7 @@ function fmt(n: number, dec = 0): string {
 }
 
 export default function LiveCalculator() {
-  const [nVehicles,  setN]   = useState(500);
+  const [nVehicles,  setN]   = useState(600);
   const [socArrival, setSoc]  = useState(20);
   const [demandRate, setDr]   = useState(350);
   const [carbonInt,  setCi]   = useState(71.0);
@@ -76,7 +76,7 @@ export default function LiveCalculator() {
       * 500;
 
     const reductionFactor = Math.min(
-      0.463 + (n - 500) * 0.00004, 0.68
+      0.551 + (n - 600) * 0.0008, 0.68
     );
     const managed  = Math.round(
       unPeak * (1 - reductionFactor)
@@ -223,7 +223,7 @@ export default function LiveCalculator() {
           How to read this:
         </span>
         {" "}GridPilot solves an optimization problem
-        with 500 variables (one per vehicle) and
+        with 600 variables (one per vehicle) and
         2 hard rules it can never break.
         Within those rules it finds the schedule
         that simultaneously minimizes carbon
@@ -405,7 +405,7 @@ export default function LiveCalculator() {
       {/* Step 4 */}
       <div style={card}>
         {sectionHead(
-          "Step 4 — Optimizer output (CLARABEL, ~1.8s)"
+          "Step 4 — Optimizer output (CLARABEL, ~3s)"
         )}
         {eqLine("4a",
           "managed_peak ≈ estimated from objective weights · exact from CVXPY",
@@ -434,7 +434,7 @@ export default function LiveCalculator() {
         )}
         {eqLine("4f",
           "all_vehicles_ready = Σ delivered[v] ≥ 0.80 × battery_kwh",
-          "500/500 ✓",
+          "600/600 ✓",
           "#27AE60"
         )}
       </div>

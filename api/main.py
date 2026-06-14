@@ -55,12 +55,12 @@ _ocpp_central = None
 
 class ScheduleRequest(BaseModel):
     date: str = "2024-01-15"
-    n_vehicles: int = 500
+    n_vehicles: int = 600
     enable_v2g: bool = False
 
 
 class SimulateRequest(BaseModel):
-    n_vehicles: int = 500
+    n_vehicles: int = 600
     solar_kw: float = 0.0
     enable_v2g: bool = False
     scenario: str = "normal"
@@ -232,7 +232,7 @@ def health() -> dict:
             "solver_ready": bool(state["solver_ready"]),
             "depot": DEPOT_NAME,
             "operator_context": OPERATOR_CONTEXT,
-            "fleet_size": 500,
+            "fleet_size": 600,
             "timestamp": timestamp_now(),
         }
     )
@@ -280,13 +280,13 @@ def depot_schedule(request: ScheduleRequest) -> dict:
 
     baseline_profile = state["dvvnl_loader"].generate_depot_baseline(request.date)
     building_load = scheduler_building_load()
-    signal = get_signal(refresh=True)
+    signal = get_signal(refresh=False)
 
     _sched = get_cached("scheduler") or GridPilotScheduler()
     unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
-    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g)
-    unmanaged_sim = simulate_schedule(unmanaged, "unmanaged")
-    managed_sim = simulate_schedule(managed, "managed")
+    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g, unmanaged_reference=unmanaged)
+    unmanaged_sim = None
+    managed_sim = None
 
     state["last_unmanaged_result"] = unmanaged
     state["last_schedule_result"] = managed
@@ -306,10 +306,7 @@ def depot_schedule(request: ScheduleRequest) -> dict:
         "unmanaged": summarize_schedule(unmanaged),
         "managed": summarize_schedule(managed),
         "comparison": managed["comparison"],
-        "physics_simulation": {
-            "unmanaged": summarize_simulation(unmanaged_sim),
-            "managed": summarize_simulation(managed_sim),
-        },
+        "physics_simulation": None,
         "timestamp": timestamp_now(),
     }
     result = clean_json(response)
@@ -597,12 +594,12 @@ def get_signal(refresh: bool = False) -> dict:
 
 def active_evs_count() -> int:
     sessions = state.get("last_sessions")
-    return int(len(sessions)) if sessions is not None else 500
+    return int(len(sessions)) if sessions is not None else 600
 
 
 def get_or_create_sessions() -> pd.DataFrame:
     if state.get("last_sessions") is None:
-        state["last_sessions"] = state["ev_manager"].generate_session("2024-01-15", 500)
+        state["last_sessions"] = state["ev_manager"].generate_session("2024-01-15", 600)
     return state["last_sessions"]
 
 

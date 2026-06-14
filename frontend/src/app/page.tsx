@@ -116,8 +116,8 @@ export default function Home() {
                 margin: "0 auto",
                 lineHeight: 1.6,
               }}>
-                CVXPY convex QP solved in 1,831ms for
-                500 vehicles. pandapower AC power flow
+                CVXPY convex QP solved in ~3s for
+                600 vehicles. pandapower AC power flow
                 validates every result. CEA India
                 2024-25 carbon data.
               </p>
@@ -166,7 +166,7 @@ export default function Home() {
                 guaranteed optimal schedule using
                 CVXPY with the CLARABEL interior-point
                 solver. Four competing objectives.
-                One hard constraint. 500 variables.
+                One hard constraint. 57,600 variables.
               </p>
             </div>
 
@@ -347,9 +347,9 @@ export default function Home() {
                   color: "#7C5CBF",
                 },
                 {
-                  value: "1,831ms",
+                  value: "~3s",
                   label: "Solve time",
-                  sub: "500 vehicles, 96 timeslots (full pipeline)",
+                  sub: "600 vehicles, 96 timeslots (full pipeline)",
                   color: "#00D4AA",
                 },
                 {
@@ -359,9 +359,9 @@ export default function Home() {
                   color: "#27AE60",
                 },
                 {
-                  value: "48,000",
+                  value: "57,600",
                   label: "Variables",
-                  sub: "500 vehicles × 96 slots",
+                  sub: "600 vehicles × 96 slots",
                   color: "#9BA8AB",
                 },
               ].map(s => (

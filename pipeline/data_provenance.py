@@ -22,9 +22,14 @@ def build_data_provenance_report() -> dict:
             ),
         },
         "energy_calibration": {
-            "source": "Vasudha Foundation 2023",
-            "type": "REAL_PUBLISHED",
-            "value": "22.4 kWh/session Indian avg",
+            "source": (
+                "First-principles calculation from Vahan CY2025 "
+                "fleet weighted average battery capacity (40.53 kWh) "
+                "and SoC arrival distribution (10-35% by vehicle range) "
+                "consistent with ACN-Data behavioral data"
+            ),
+            "type": "DERIVED",
+            "value": "22.8 kWh/session (modeled avg, σ=6.5 kWh)",
         },
         "carbon_intensity": {
             "source":

@@ -501,17 +501,16 @@ export default function Home() {
                   icon: "📋",
                 },
                 {
-                  source: "Vasudha Foundation 2023",
-                  type: "REAL · PUBLISHED",
-                  typeColor: "#F9CA24",
-                  value: "22.4 kWh/session",
-                  usage:
-                    "Indian depot session energy "
-                    +"calibration. Validates ACN "
-                    +"adaptation factor.",
-                  citation:
-                    "EV Charging Infrastructure "
-                    +"India 2023",
+                  source: "First-principles (Vahan CY2025 + ACN-Data)",
+                  type: "DERIVED",
+                  typeColor: "#00D4AA",
+                  value: "22.8 kWh/session (modeled)",
+                  usage: `Energy per session = (0.80 - soc_arrival) x
+                    battery_kWh. soc_arrival 10-35% by vehicle
+                    range (ACN-Data). Avg modeled: 22.8 kWh
+                    (σ=6.5 kWh). Theoretical (fixed 20% SoC): 24.3 kWh.`,
+                  citation: `Derived from Vahan CY2025 fleet specs
+                    and ACN-Data behavioral data`,
                   icon: "📊",
                 },
               ].map(d => (

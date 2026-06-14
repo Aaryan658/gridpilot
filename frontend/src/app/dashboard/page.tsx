@@ -104,7 +104,7 @@ export default function DashboardPage() {
       { ms: 1120, t: "CLARABEL interior-point..." },
       { ms: 1400, t: "pandapower AC validation..." },
       { ms: 1650, t: "Computing DVVNL savings..." },
-      { ms: 1831, t: "Optimal solution found ✓" },
+      { ms: 10300, t: "Optimal solution found ✓" },
     ];
 
     const apiPromise = runSchedule({
@@ -134,7 +134,7 @@ export default function DashboardPage() {
       peak_reduction_pct: 46.9,
       dvvnl_monthly_saving_inr: 618511,
       carbon_saved_kg: 2416,
-      solve_time_ms: 14230,
+      solve_time_ms: 10328,
       all_ready: true,
       source: "demo" as const,
     };

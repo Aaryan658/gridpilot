@@ -65,7 +65,7 @@ export const MOCK_DATA = {
     dvvnl_monthly_saving_inr: 618511,
     carbon_saved_kg: 2416,
     all_ready: true,
-    solve_time_ms: 14230,
+    solve_time_ms: 10328,
   },
   carbon_signal: "NEUTRAL",
   ev_action: "CHARGE_SCHEDULED",

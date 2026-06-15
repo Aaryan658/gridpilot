@@ -116,7 +116,7 @@ export default function Home() {
                 margin: "0 auto",
                 lineHeight: 1.6,
               }}>
-                CVXPY convex QP solved in ~3s for
+                CVXPY convex QP solved in 35s for
                 600 vehicles. pandapower AC power flow
                 validates every result. CEA India
                 2024-25 carbon data.
@@ -347,8 +347,8 @@ export default function Home() {
                   color: "#7C5CBF",
                 },
                 {
-                  value: "~3s",
-                  label: "Solve time",
+                  value: "35s",
+                  label: "Total solve time",
                   sub: "600 vehicles, 96 timeslots (full pipeline)",
                   color: "#00D4AA",
                 },

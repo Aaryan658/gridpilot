@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 const FEATURES = [
   {
     title: "Convex QP Optimizer",
-    desc: "CVXPY + CLARABEL solver. 600 vehicles. Optimal in ~3s. Mathematically guaranteed minimum carbon + peak.",
+    desc: "CVXPY + CLARABEL solver. 600 vehicles. Optimal in 35s. Mathematically guaranteed minimum carbon + peak.",
     accent: "#7C5CBF",
     icon: "⚡",
   },

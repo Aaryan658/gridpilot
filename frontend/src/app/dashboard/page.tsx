@@ -142,10 +142,13 @@ export default function DashboardPage() {
       (async () => {
         for (const step of STEPS) {
           if (isApiDone) break;
-          const wait = step.ms - (Date.now() - start);
-          if (wait > 0)
-            await new Promise(r => setTimeout(r, wait));
-          if (!isApiDone) setSolveStep(step.t);
+          setSolveStep(step.t);
+          
+          const targetTime = start + step.ms;
+          while (Date.now() < targetTime) {
+            if (isApiDone) break;
+            await new Promise(r => setTimeout(r, 100)); // check every 100ms
+          }
         }
         resolve(null);
       })();

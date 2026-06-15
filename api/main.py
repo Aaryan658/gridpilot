@@ -175,21 +175,21 @@ async def startup_event() -> None:
         try:
             _cache.signal_bus = GridSignalBus()
             _cache.signal_bus.emit_for_depot()
-            print("[CACHE] ✓ Signal bus (Prophet trained)")
+            print("[CACHE] [OK] Signal bus (Prophet trained)")
         except Exception as e:
-            print(f"[CACHE] ✗ Signal bus: {e}")
+            print(f"[CACHE] [ERR] Signal bus: {e}")
 
         try:
             _cache.scheduler = GridPilotScheduler()
-            print("[CACHE] ✓ Scheduler (CVXPY ready)")
+            print("[CACHE] [OK] Scheduler (CVXPY ready)")
         except Exception as e:
-            print(f"[CACHE] ✗ Scheduler: {e}")
+            print(f"[CACHE] [ERR] Scheduler: {e}")
 
         try:
             _cache.depot_sim = CorporateEVDepotSimulator()
-            print("[CACHE] ✓ Depot sim (pandapower ready)")
+            print("[CACHE] [OK] Depot sim (pandapower ready)")
         except Exception as e:
-            print(f"[CACHE] ✗ Depot sim: {e}")
+            print(f"[CACHE] [ERR] Depot sim: {e}")
 
         _cache.ready = True
         ms = round((time.time() - t0) * 1000)

@@ -82,27 +82,11 @@ class _AppCache:
 _cache = _AppCache()
 
 
-def get_cors_origins() -> list[str]:
-    configured = os.getenv("BACKEND_CORS_ORIGINS", "")
-    defaults = [
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://localhost:3000",
-        "http://localhost:3001",
-        settings.FRONTEND_URL,
-        "https://frontend-nine-virid-4bi7088jda.vercel.app",
-        "https://gridpilot-frontend.onrender.com",
-    ]
-    extra = [origin.strip() for origin in configured.split(",") if origin.strip()]
-    return sorted(set(defaults + extra))
-
-
 app = FastAPI(
     title=settings.APP_NAME,
     version="1.0.0",
     description="GridPilot backend for Corporate EV Fleet Depot, Gurugram.",
 )
-
 
 @app.middleware("http")
 async def log_requests(request, call_next):
@@ -117,15 +101,30 @@ async def log_requests(request, call_next):
     )
     return response
 
+allowed_origins = [
+    "http://localhost:3000",
+    "https://gridpilot.in",
+    "https://www.gridpilot.in",
+    settings.FRONTEND_URL,
+]
 
-# Allow the local frontend and deployed Vercel frontend to call the API.
+# Test CORS with:
+# curl -H "Origin: https://gridpilot.in" \
+#      -H "Access-Control-Request-Method: GET" \
+#      -X OPTIONS \
+#      https://gridpilot-api.onrender.com/ping -v
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=get_cors_origins(),
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
 )
+
+@app.get("/ping")
+def ping():
+    return {"message": "pong", "environment": settings.ENVIRONMENT}
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

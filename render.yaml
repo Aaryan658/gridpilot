@@ -32,4 +32,4 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://gridpilot-api.onrender.com
+        value: https://gridpilot-api-service.onrender.com

@@ -38,6 +38,7 @@ class OptimizerRun(Base):
     __tablename__ = "optimizer_runs"
     id = Column(Integer, primary_key=True)
     run_id = Column(String, unique=True)
+    depot_id = Column(String, index=True, nullable=True)
     timestamp = Column(DateTime,
         default=datetime.datetime.utcnow)
     n_vehicles = Column(Integer)

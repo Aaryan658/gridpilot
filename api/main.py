@@ -43,7 +43,9 @@ from ocpp_mock.central_system import (
 )
 from api.config import settings
 from api.routers.auth import router as auth_router
-from api.auth.dependencies import require_depot_admin
+from api.auth.dependencies import require_depot_admin, get_current_user, optional_current_user
+from typing import Optional
+from api.models.user import User
 
 
 DEPOT_NAME = "Corporate EV Fleet Depot, Gurugram"
@@ -95,6 +97,10 @@ app.include_router(auth_router)
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
+    "http://localhost:3002",
+    "http://localhost:3003",
+    "http://localhost:3004",
+    "http://localhost:3005",
     "https://gridpilot.in",
     "https://www.gridpilot.in",
     "https://gridpilot-frontend.onrender.com",
@@ -162,6 +168,16 @@ state: dict[str, Any] = {
 @app.on_event("startup")
 async def startup_event() -> None:
     print("GridPilot API starting...")
+    print("Running database migrations...")
+    try:
+        from database.models import engine
+        from sqlalchemy import text
+        with engine.begin() as conn:
+            conn.execute(text("ALTER TABLE optimizer_runs ADD COLUMN depot_id VARCHAR;"))
+            print("Successfully added depot_id column to optimizer_runs.")
+    except Exception as e:
+        print("Migration skipped or already applied:", e)
+
     print("Loading FirstFlight models...")
     state["cea_loader"] = CEALoader()
     state["dvvnl_loader"] = DVVNLLoader()
@@ -285,8 +301,8 @@ def depot_status() -> dict:
     )
 
 
-@app.post("/depot/schedule", dependencies=[Depends(require_depot_admin)])
-def depot_schedule(request: ScheduleRequest) -> dict:
+@app.post("/depot/schedule")
+def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depends(optional_current_user)) -> dict:
     ensure_ready()
     sessions = state["ev_manager"].generate_session(request.date, request.n_vehicles)
     state["last_sessions"] = sessions
@@ -324,7 +340,8 @@ def depot_schedule(request: ScheduleRequest) -> dict:
     }
     result = clean_json(response)
     try:
-        run_id = optimizer_repo.save_run(result)
+        depot_id = current_user.depot_id if current_user else None
+        run_id = optimizer_repo.save_run(result, depot_id=depot_id)
         result["run_id"] = run_id
         gridpilot_logger.log_optimizer_run(result)
     except Exception as e:
@@ -332,7 +349,7 @@ def depot_schedule(request: ScheduleRequest) -> dict:
     return result
 
 
-@app.get("/depot/carbon_signal", dependencies=[Depends(require_depot_admin)])
+@app.get("/depot/carbon_signal")
 def depot_carbon_signal() -> dict:
     ensure_ready()
     signal = get_signal(refresh=True)
@@ -539,13 +556,13 @@ async def data_provenance():
     return build_data_provenance_report()
 
 
-@app.get("/analytics")
-async def analytics():
+@app.get("/analytics", dependencies=[Depends(require_depot_admin)])
+async def analytics(current_user: User = Depends(require_depot_admin)):
     return {
         "cumulative":
-            optimizer_repo.get_cumulative_savings(),
+            optimizer_repo.get_cumulative_savings(current_user=current_user),
         "recent_runs":
-            optimizer_repo.get_last_runs(10),
+            optimizer_repo.get_last_runs(10, current_user=current_user),
     }
 
 

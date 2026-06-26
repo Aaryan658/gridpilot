@@ -5,9 +5,21 @@ export async function apiFetch(
   options: RequestInit = {},
   token?: string
 ) {
+  let authStr = token;
+  if (!authStr && typeof window !== 'undefined') {
+    authStr = localStorage.getItem('gridpilot_token') || undefined;
+    if (!authStr) {
+      const match = document.cookie.match(/(?:^|;\s*)gridpilot_token=([^;]*)/);
+      if (match) {
+        authStr = match[1];
+        localStorage.setItem('gridpilot_token', authStr);
+      }
+    }
+  }
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(authStr && { Authorization: `Bearer ${authStr}` }),
     ...options.headers,
   }
 
@@ -37,7 +49,7 @@ export async function runSchedule(params: {
   date?: string;
   n_vehicles?: number;
   enable_v2g?: boolean;
-}) {
+}, token?: string) {
   try {
     return await apiFetch('/depot/schedule', {
       method: "POST",
@@ -46,16 +58,16 @@ export async function runSchedule(params: {
         n_vehicles: params.n_vehicles || 600,
         enable_v2g: params.enable_v2g || false,
       }),
-    });
+    }, token);
   } catch (e) {
     console.warn("Schedule API failed:", e);
     return null;
   }
 }
 
-export async function fetchCarbonSignal() {
+export async function fetchCarbonSignal(token?: string) {
   try {
-    return await apiFetch('/depot/carbon_signal', { next: { revalidate: 60 } });
+    return await apiFetch('/depot/carbon_signal', { next: { revalidate: 60 } }, token);
   } catch (e) {
     return null;
   }

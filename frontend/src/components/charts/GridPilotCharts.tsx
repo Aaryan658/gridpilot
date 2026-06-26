@@ -132,8 +132,11 @@ function CustomLegend() {
 
 export default function GridPilotCharts() {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-  const currentHour = new Date().getHours();
+  const [currentHour, setCurrentHour] = useState(0);
+  useEffect(() => { 
+    setMounted(true); 
+    setCurrentHour(new Date().getHours());
+  }, []);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [apiData, setApiData] = useState<any>(null);

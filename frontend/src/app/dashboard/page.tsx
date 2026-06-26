@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import {
   Area,
@@ -68,6 +69,8 @@ type CarbonSignal = {
 };
 
 export default function DashboardPage() {
+  const { user, token, viewAsAdmin, setViewAsAdmin } = useAuth();
+  const isAdmin = user?.role === "gridpilot_admin" && viewAsAdmin;
   const isFirstRun = useRef(true);
   const [solving, setSolving] = useState(false);
   const [solved, setSolved] = useState(false);
@@ -90,7 +93,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setChartReady(true);
-    fetchCarbonSignal().then((data) => {
+    if (token) fetchCarbonSignal(token).then((data) => {
       if (data) setCarbonSignal(data);
     });
   }, []);
@@ -132,7 +135,7 @@ export default function DashboardPage() {
       n_vehicles: 600,
       date: "2024-01-15",
       enable_v2g: false,
-    });
+    }, token);
 
     let isApiDone = false;
     apiPromise.finally(() => isApiDone = true);
@@ -222,6 +225,7 @@ export default function DashboardPage() {
         display: "flex",
       }}
     >
+{!isAdmin && (
       <div
         style={{
           width: 240,
@@ -375,8 +379,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      )}
 
-      <div style={{ flex: 1, padding: 24, overflowY: "auto" }}>
+      <div style={{ flex: 1, padding: isAdmin ? 0 : 24, overflowY: "auto" }}>
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: "#CCD0CF", marginBottom: 4 }}>
             Depot Dashboard

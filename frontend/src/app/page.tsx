@@ -41,6 +41,22 @@ export default function Home() {
         </span>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <a
+            href="/login"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#7C5CBF",
+              textDecoration: "none",
+              padding: "6px 14px",
+              borderRadius: 20,
+              border: "1px solid rgba(124,92,191,0.3)",
+              background: "rgba(124,92,191,0.1)",
+              transition: "all 0.15s",
+            }}
+          >
+            Admin Login
+          </a>
+          <a
             href="/dashboard"
             style={{
               fontSize: 12,

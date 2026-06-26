@@ -2,10 +2,12 @@ import uuid, datetime
 from database.models import (
     SessionLocal, OptimizerRun, GridMeasurement
 )
+from api.auth.depot_filter import apply_depot_filter
+from api.models.user import User
 
 class OptimizerRepository:
 
-    def save_run(self, result: dict) -> str:
+    def save_run(self, result: dict, depot_id: str = None) -> str:
         run_id = str(uuid.uuid4())[:8]
         db = SessionLocal()
         try:
@@ -20,6 +22,7 @@ class OptimizerRepository:
             ) or 0
             run = OptimizerRun(
                 run_id=run_id,
+                depot_id=depot_id,
                 n_vehicles=result.get(
                     "n_vehicles", 500),
                 peak_kw_before=comparison.get(
@@ -56,10 +59,13 @@ class OptimizerRepository:
         finally:
             db.close()
 
-    def get_cumulative_savings(self) -> dict:
+    def get_cumulative_savings(self, current_user: User = None) -> dict:
         db = SessionLocal()
         try:
-            runs = db.query(OptimizerRun).all()
+            query = db.query(OptimizerRun)
+            if current_user:
+                query = apply_depot_filter(query, OptimizerRun, current_user)
+            runs = query.all()
             if not runs:
                 return {
                     "total_runs": 0,
@@ -101,11 +107,15 @@ class OptimizerRepository:
         finally:
             db.close()
 
-    def get_last_runs(self, n=10) -> list:
+    def get_last_runs(self, n=10, current_user: User = None) -> list:
         db = SessionLocal()
         try:
+            query = db.query(OptimizerRun)
+            if current_user:
+                query = apply_depot_filter(query, OptimizerRun, current_user)
+                
             runs = (
-                db.query(OptimizerRun)
+                query
                 .order_by(
                     OptimizerRun.timestamp.desc()
                 )

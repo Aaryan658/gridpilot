@@ -88,8 +88,35 @@ app = FastAPI(
     description="GridPilot backend for Corporate EV Fleet Depot, Gurugram.",
 )
 
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://gridpilot.in",
+    "https://www.gridpilot.in",
+    "https://gridpilot-frontend.onrender.com",
+    settings.FRONTEND_URL,
+]
+
+# CORS must be added before the logging middleware so OPTIONS preflight
+# requests are handled correctly without returning 400.
+# Test CORS with:
+# curl -H "Origin: https://gridpilot.in" \
+#      -H "Access-Control-Request-Method: GET" \
+#      -X OPTIONS \
+#      https://gridpilot-api.onrender.com/ping -v
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+)
+
 @app.middleware("http")
 async def log_requests(request, call_next):
+    # Skip logging for OPTIONS preflight — let CORS handle it cleanly
+    if request.method == "OPTIONS":
+        return await call_next(request)
     start = time.time()
     response = await call_next(request)
     ms = round((time.time() - start) * 1000)
@@ -100,29 +127,6 @@ async def log_requests(request, call_next):
         ms
     )
     return response
-
-allowed_origins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "https://gridpilot.in",
-    "https://www.gridpilot.in",
-    "https://gridpilot-frontend.onrender.com",
-    settings.FRONTEND_URL,
-]
-
-# Test CORS with:
-# curl -H "Origin: https://gridpilot.in" \
-#      -H "Access-Control-Request-Method: GET" \
-#      -X OPTIONS \
-#      https://gridpilot-api.onrender.com/ping -v
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Authorization", "Content-Type"],
-)
 
 @app.get("/ping")
 def ping():

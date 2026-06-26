@@ -103,8 +103,10 @@ async def log_requests(request, call_next):
 
 allowed_origins = [
     "http://localhost:3000",
+    "http://localhost:3001",
     "https://gridpilot.in",
     "https://www.gridpilot.in",
+    "https://gridpilot-frontend.onrender.com",
     settings.FRONTEND_URL,
 ]
 

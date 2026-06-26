@@ -1,18 +1,32 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL
-  || "http://localhost:8000";
+import { config } from './config';
+
+export async function apiFetch(
+  path: string,
+  options: RequestInit = {},
+  token?: string
+) {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+    ...options.headers,
+  }
+
+  const response = await fetch(`${config.apiUrl}${path}`, {
+    ...options,
+    headers,
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.detail || `API error: ${response.status}`)
+  }
+
+  return response.json()
+}
 
 export async function fetchDashboardData() {
   try {
-    const res = await fetch(
-      `${API_BASE}/dashboard_data`,
-      { next: { revalidate: 30 } }
-    );
-    if (!res.ok) throw new Error(res.statusText);
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new TypeError("Expected JSON response from API");
-    }
-    return await res.json();
+    return await apiFetch('/dashboard_data', { next: { revalidate: 30 } });
   } catch (e) {
     console.warn("API offline, using mock data");
     return null;
@@ -25,26 +39,14 @@ export async function runSchedule(params: {
   enable_v2g?: boolean;
 }) {
   try {
-    const res = await fetch(
-      `${API_BASE}/depot/schedule`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          date: params.date || "2024-01-15",
-          n_vehicles: params.n_vehicles || 600,
-          enable_v2g: params.enable_v2g || false,
-        }),
-      }
-    );
-    if (!res.ok) throw new Error(res.statusText);
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new TypeError("Expected JSON response from API");
-    }
-    return await res.json();
+    return await apiFetch('/depot/schedule', {
+      method: "POST",
+      body: JSON.stringify({
+        date: params.date || "2024-01-15",
+        n_vehicles: params.n_vehicles || 600,
+        enable_v2g: params.enable_v2g || false,
+      }),
+    });
   } catch (e) {
     console.warn("Schedule API failed:", e);
     return null;
@@ -53,16 +55,7 @@ export async function runSchedule(params: {
 
 export async function fetchCarbonSignal() {
   try {
-    const res = await fetch(
-      `${API_BASE}/depot/carbon_signal`,
-      { next: { revalidate: 60 } }
-    );
-    if (!res.ok) throw new Error(res.statusText);
-    const contentType = res.headers.get("content-type");
-    if (!contentType || !contentType.includes("application/json")) {
-      throw new TypeError("Expected JSON response from API");
-    }
-    return await res.json();
+    return await apiFetch('/depot/carbon_signal', { next: { revalidate: 60 } });
   } catch (e) {
     return null;
   }

@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import HeroSection from "@/components/HeroSection";
 import GridPilotCharts from "@/components/charts/GridPilotCharts";
 import FeatureSection from "@/components/FeatureSection";
 import LiveCalculator from "@/components/LiveCalculator";
+import { apiFetch } from "@/lib/api";
 
 export default function Home() {
+  const [isConnected, setIsConnected] = useState<boolean | null>(null);
+
   useEffect(() => {
-    fetch(
-      (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") + "/health"
-    ).catch(() => {});
+    apiFetch("/ping")
+      .then(() => setIsConnected(true))
+      .catch(() => setIsConnected(false));
   }, []);
 
   return (
@@ -52,6 +55,26 @@ export default function Home() {
           >
             Live Dashboard →
           </a>
+          
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            fontSize: 10,
+            color: isConnected ? "#00D4AA" : (isConnected === false ? "#E74C3C" : "#9BA8AB"),
+            padding: "3px 10px",
+            border: `1px solid ${isConnected ? "rgba(0,212,170,0.3)" : (isConnected === false ? "rgba(231,76,60,0.3)" : "rgba(155,168,171,0.3)")}`,
+            borderRadius: 20,
+            background: isConnected ? "rgba(0,212,170,0.05)" : (isConnected === false ? "rgba(231,76,60,0.05)" : "transparent"),
+          }}>
+            <div style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: isConnected ? "#00D4AA" : (isConnected === false ? "#E74C3C" : "#9BA8AB"),
+              boxShadow: isConnected ? "0 0 6px #00D4AA" : (isConnected === false ? "0 0 6px #E74C3C" : "none")
+            }} />
+            {isConnected ? "Backend connected" : (isConnected === false ? "Backend disconnected" : "Connecting...")}
+          </div>
+
           <span style={{
             fontSize: 10, color: "#00D4AA",
             padding: "3px 10px",

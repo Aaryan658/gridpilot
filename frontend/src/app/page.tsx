@@ -177,7 +177,6 @@ export default function Home() {
               borderRadius: 16,
               padding: "28px 32px",
               marginBottom: 20,
-              fontFamily: "monospace",
               boxShadow:
                 "0 1px 0 rgba(255,255,255,0.02) inset,"
                 +"0 8px 32px rgba(0,0,0,0.4)",
@@ -278,7 +277,7 @@ export default function Home() {
                     <div style={{
                       fontSize: 12, fontWeight: 700,
                       color: item.color,
-                      fontFamily: "monospace",
+                      fontFamily: "var(--font-geist-mono)",
                       marginBottom: 4,
                     }}>
                       {item.sym} · {item.term}
@@ -293,7 +292,7 @@ export default function Home() {
                     <div style={{
                       fontSize: 11,
                       color: "#4A5C6A",
-                      fontFamily: "monospace",
+                      fontFamily: "var(--font-geist-mono)",
                     }}>
                       {item.desc}
                     </div>
@@ -319,7 +318,7 @@ export default function Home() {
                 </span>
                 <span style={{
                   fontSize: 12, color: "#9BA8AB",
-                  fontFamily: "monospace",
+                  fontFamily: "var(--font-geist-mono)",
                 }}>
                   total_load[t] ≤ 5,000 kW ∀t
                 </span>
@@ -376,7 +375,7 @@ export default function Home() {
                     fontSize: 18,
                     fontWeight: 700,
                     color: s.color,
-                    fontFamily: "monospace",
+                    fontFamily: "var(--font-geist-mono)",
                     marginBottom: 4,
                   }}>
                     {s.value}
@@ -568,7 +567,7 @@ export default function Home() {
                     fontSize: 13,
                     fontWeight: 600,
                     color: "#7C5CBF",
-                    fontFamily: "monospace",
+                    fontFamily: "var(--font-geist-mono)",
                     marginBottom: 8,
                   }}>
                     {d.value}
@@ -720,7 +719,7 @@ export default function Home() {
                     fontSize: 11,
                     color: s.color,
                     fontWeight: 600,
-                    fontFamily: "monospace",
+                    fontFamily: "var(--font-geist-mono)",
                   }}>
                     → {s.result}
                   </div>

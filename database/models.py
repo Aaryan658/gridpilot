@@ -10,11 +10,12 @@ from sqlalchemy.pool import StaticPool
 import datetime
 import os
 from dotenv import load_dotenv
+from api.config import settings
 
 load_dotenv()
 
 Base = declarative_base()
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./gridpilot.db")
+DATABASE_URL = settings.DATABASE_URL
 
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(

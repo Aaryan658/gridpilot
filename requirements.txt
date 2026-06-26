@@ -19,3 +19,4 @@ SQLAlchemy==2.0.30
 websockets==12.0
 ocpp==0.26.0
 psycopg2-binary==2.9.9
+pydantic-settings==2.7.0

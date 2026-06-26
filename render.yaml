@@ -1,3 +1,9 @@
+# Environment variables required in Render dashboard:
+# DATABASE_URL  - from Render PostgreSQL add-on (auto-injected)
+# SECRET_KEY    - generate with: openssl rand -hex 32
+# FRONTEND_URL  - your Vercel deployment URL
+# ENVIRONMENT   - set to "production"
+
 services:
   - type: web
     name: gridpilot-api

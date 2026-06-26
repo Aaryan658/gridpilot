@@ -41,6 +41,7 @@ from api.logger import gridpilot_logger
 from ocpp_mock.central_system import (
     GridPilotCentralSystem
 )
+from api.config import settings
 
 
 DEPOT_NAME = "Corporate EV Fleet Depot, Gurugram"
@@ -88,14 +89,16 @@ def get_cors_origins() -> list[str]:
         "http://localhost:5174",
         "http://localhost:3000",
         "http://localhost:3001",
+        settings.FRONTEND_URL,
         "https://frontend-nine-virid-4bi7088jda.vercel.app",
+        "https://gridpilot-frontend.onrender.com",
     ]
     extra = [origin.strip() for origin in configured.split(",") if origin.strip()]
     return sorted(set(defaults + extra))
 
 
 app = FastAPI(
-    title="GridPilot API",
+    title=settings.APP_NAME,
     version="1.0.0",
     description="GridPilot backend for Corporate EV Fleet Depot, Gurugram.",
 )

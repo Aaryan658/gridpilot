@@ -117,7 +117,7 @@ export default function LiveCalculator() {
     color?: string
   ) => (
     <span style={{
-      fontFamily: "var(--font-geist-mono)",
+      fontFamily: "var(--font-mono)",
       fontSize: 13, fontWeight: 700,
       color: color || "#CCD0CF",
       background: "rgba(37,55,69,0.6)",
@@ -145,13 +145,13 @@ export default function LiveCalculator() {
         "1px solid rgba(74,92,106,0.1)",
     }}>
       <span style={{
-        fontFamily: "var(--font-geist-mono)",
+        fontFamily: "var(--font-mono)",
         fontSize: 12, color: "#4A5C6A",
       }}>
         {n}
       </span>
       <span style={{
-        fontFamily: "var(--font-geist-mono)",
+        fontFamily: "var(--font-mono)",
         fontSize: 13, color: "#9BA8AB",
       }}>
         {expr}
@@ -255,7 +255,7 @@ export default function LiveCalculator() {
               <span style={{
                 fontSize: 12, fontWeight: 700,
                 color: "#CCD0CF",
-                fontFamily: "var(--font-geist-mono)",
+                fontFamily: "var(--font-mono)",
               }}>
                 {s.display}
               </span>
@@ -343,7 +343,7 @@ export default function LiveCalculator() {
           borderRadius: 8,
           padding: "10px 14px",
           marginBottom: 10,
-          fontFamily: "var(--font-geist-mono)",
+          fontFamily: "var(--font-mono)",
           fontSize: 13,
           color: "#CCD0CF",
           lineHeight: 1.8,
@@ -479,7 +479,7 @@ export default function LiveCalculator() {
             <div style={{
               fontSize: 22, fontWeight: 700,
               color: x.col,
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-mono)",
               marginBottom: 4,
             }}>
               {x.v}
@@ -510,3 +510,4 @@ export default function LiveCalculator() {
     </div>
   );
 }
+

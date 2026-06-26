@@ -295,7 +295,7 @@ export default function DashboardPage() {
               borderRadius: 8,
               fontSize: 11,
               color: "#00D4AA",
-              fontFamily: "var(--font-geist-mono)",
+              fontFamily: "var(--font-mono)",
               lineHeight: 1.4,
             }}>
               {solveStep}
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                   marginBottom: 3,
                 }}>
                   <span style={{ color: "#4A5C6A" }}>{r.l}</span>
-                  <span style={{ color: "#CCD0CF", fontWeight: 600, fontFamily: "var(--font-geist-mono)" }}>
+                  <span style={{ color: "#CCD0CF", fontWeight: 600, fontFamily: "var(--font-mono)" }}>
                     {r.v}
                   </span>
                 </div>
@@ -686,3 +686,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

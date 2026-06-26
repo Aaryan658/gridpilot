@@ -277,7 +277,7 @@ export default function Home() {
                     <div style={{
                       fontSize: 12, fontWeight: 700,
                       color: item.color,
-                      fontFamily: "var(--font-geist-mono)",
+                      fontFamily: "var(--font-mono)",
                       marginBottom: 4,
                     }}>
                       {item.sym} · {item.term}
@@ -292,7 +292,7 @@ export default function Home() {
                     <div style={{
                       fontSize: 11,
                       color: "#4A5C6A",
-                      fontFamily: "var(--font-geist-mono)",
+                      fontFamily: "var(--font-mono)",
                     }}>
                       {item.desc}
                     </div>
@@ -318,7 +318,7 @@ export default function Home() {
                 </span>
                 <span style={{
                   fontSize: 12, color: "#9BA8AB",
-                  fontFamily: "var(--font-geist-mono)",
+                  fontFamily: "var(--font-mono)",
                 }}>
                   total_load[t] ≤ 5,000 kW ∀t
                 </span>
@@ -375,7 +375,7 @@ export default function Home() {
                     fontSize: 18,
                     fontWeight: 700,
                     color: s.color,
-                    fontFamily: "var(--font-geist-mono)",
+                    fontFamily: "var(--font-mono)",
                     marginBottom: 4,
                   }}>
                     {s.value}
@@ -567,7 +567,7 @@ export default function Home() {
                     fontSize: 13,
                     fontWeight: 600,
                     color: "#7C5CBF",
-                    fontFamily: "var(--font-geist-mono)",
+                    fontFamily: "var(--font-mono)",
                     marginBottom: 8,
                   }}>
                     {d.value}
@@ -719,7 +719,7 @@ export default function Home() {
                     fontSize: 11,
                     color: s.color,
                     fontWeight: 600,
-                    fontFamily: "var(--font-geist-mono)",
+                    fontFamily: "var(--font-mono)",
                   }}>
                     → {s.result}
                   </div>
@@ -801,3 +801,4 @@ export default function Home() {
     </>
   );
 }
+

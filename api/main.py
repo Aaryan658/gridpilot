@@ -9,7 +9,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, Query, Request
+from fastapi import FastAPI, Query, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -42,6 +42,8 @@ from ocpp_mock.central_system import (
     GridPilotCentralSystem
 )
 from api.config import settings
+from api.routers.auth import router as auth_router
+from api.auth.dependencies import require_depot_admin
 
 
 DEPOT_NAME = "Corporate EV Fleet Depot, Gurugram"
@@ -87,6 +89,8 @@ app = FastAPI(
     version="1.0.0",
     description="GridPilot backend for Corporate EV Fleet Depot, Gurugram.",
 )
+
+app.include_router(auth_router)
 
 allowed_origins = [
     "http://localhost:3000",
@@ -247,7 +251,7 @@ def health() -> dict:
     )
 
 
-@app.get("/depot/status")
+@app.get("/depot/status", dependencies=[Depends(require_depot_admin)])
 def depot_status() -> dict:
     ensure_ready()
     signal = get_signal()
@@ -281,7 +285,7 @@ def depot_status() -> dict:
     )
 
 
-@app.post("/depot/schedule")
+@app.post("/depot/schedule", dependencies=[Depends(require_depot_admin)])
 def depot_schedule(request: ScheduleRequest) -> dict:
     ensure_ready()
     sessions = state["ev_manager"].generate_session(request.date, request.n_vehicles)
@@ -328,7 +332,7 @@ def depot_schedule(request: ScheduleRequest) -> dict:
     return result
 
 
-@app.get("/depot/carbon_signal")
+@app.get("/depot/carbon_signal", dependencies=[Depends(require_depot_admin)])
 def depot_carbon_signal() -> dict:
     ensure_ready()
     signal = get_signal(refresh=True)
@@ -346,7 +350,7 @@ def depot_carbon_signal() -> dict:
     )
 
 
-@app.post("/depot/dispatch")
+@app.post("/depot/dispatch", dependencies=[Depends(require_depot_admin)])
 async def dispatch_to_chargers(
     n_chargers: int = 10
 ):
@@ -369,7 +373,7 @@ async def dispatch_to_chargers(
     }
 
 
-@app.get("/depot/chargers")
+@app.get("/depot/chargers", dependencies=[Depends(require_depot_admin)])
 async def get_chargers():
     return {
         "connected": 10,
@@ -391,7 +395,7 @@ async def get_chargers():
     }
 
 
-@app.post("/depot/simulate")
+@app.post("/depot/simulate", dependencies=[Depends(require_depot_admin)])
 def depot_simulate(request: SimulateRequest) -> dict:
     ensure_ready()
     sessions = state["ev_manager"].generate_session("2024-01-15", request.n_vehicles)
@@ -415,7 +419,7 @@ def depot_simulate(request: SimulateRequest) -> dict:
     )
 
 
-@app.get("/depot/v2g")
+@app.get("/depot/v2g", dependencies=[Depends(require_depot_admin)])
 def depot_v2g() -> dict:
     ensure_ready()
     sessions = get_or_create_sessions()
@@ -434,7 +438,7 @@ def depot_v2g() -> dict:
     )
 
 
-@app.get("/depot/fleet")
+@app.get("/depot/fleet", dependencies=[Depends(require_depot_admin)])
 def depot_fleet() -> dict:
     ensure_ready()
     sessions = get_or_create_sessions()

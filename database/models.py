@@ -137,5 +137,6 @@ class VehicleChargerMap(Base):
         UniqueConstraint('depot_id', 'charger_id'),
     )
 
+from api.models.user import User
 Base.metadata.create_all(engine)
 print("Database tables created")

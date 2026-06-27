@@ -183,6 +183,13 @@ async def startup_event() -> None:
     except Exception as e:
         print("Migration skipped or already applied:", e)
 
+    # Automatically create default admin if not exists
+    try:
+        from scripts.create_admin import create_admin
+        create_admin("admin2@gridpilot.in", "test")
+    except Exception as e:
+        print(f"Failed to create default admin: {e}")
+
     print("Loading FirstFlight models...")
     state["cea_loader"] = CEALoader()
     state["dvvnl_loader"] = DVVNLLoader()

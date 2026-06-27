@@ -322,6 +322,7 @@ class GridPilotScheduler:
             "total_carbon_kg": round(total_carbon, 2),
             "dvvnl_penalty_inr": round(float(dvvnl_penalty), 2),
             "all_ready_on_time": all_ready,
+            "power_schedule": power,
             "schedule": schedule,
             "timeseries": pd.DataFrame(
                 {

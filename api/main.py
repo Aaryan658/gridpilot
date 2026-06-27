@@ -374,8 +374,13 @@ def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depe
         seed_vehicle_charger_map(effective_depot)
         mapping = get_full_mapping(effective_depot)
         if mapping:
+            result["power_schedule"] = managed.get("power_schedule")
+            if "timeseries" in managed and not managed["timeseries"].empty:
+                result["total_load"] = managed["timeseries"]["total_load_kw"].to_numpy()
             adapted = adapt_optimizer_output(result, effective_depot, mapping)
             result["adapted_run_id"] = adapted.get("run_id")
+            result.pop("power_schedule", None)
+            result.pop("total_load", None)
     except Exception as e:
         print(f"Schedule adapter failed (non-fatal): {e}")
 

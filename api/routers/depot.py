@@ -1,0 +1,273 @@
+"""
+Depot Router — Charger status, schedule history, and SSE live stream.
+"""
+
+import asyncio
+import json
+import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy.orm import Session
+
+from api.auth.dependencies import require_depot_admin, get_db, optional_current_user
+from api.auth.utils import decode_token
+from api.models.user import User
+from database.models import ChargerStatus, ScheduleRun, VehicleChargerMap
+from services.vehicle_mapping import seed_vehicle_charger_map, get_full_mapping
+from typing import Optional
+
+router = APIRouter(prefix="/depot", tags=["depot"])
+
+
+@router.get("/vehicles")
+def get_vehicles(
+    current_user: User = Depends(require_depot_admin),
+    db: Session = Depends(get_db),
+):
+    """Returns full vehicle-charger mapping for the user's depot."""
+    depot_id = current_user.depot_id or "depot-001"
+
+    # Seed if no records exist
+    count = db.query(VehicleChargerMap).filter(
+        VehicleChargerMap.depot_id == depot_id
+    ).count()
+    if count == 0:
+        seed_vehicle_charger_map(depot_id)
+
+    mapping = get_full_mapping(depot_id)
+    return {
+        "depot_id": depot_id,
+        "total": len(mapping),
+        "vehicles": mapping,
+    }
+
+
+@router.get("/chargers/status")
+def get_chargers_status(
+    depot_id: Optional[str] = Query(None),
+    current_user: User = Depends(require_depot_admin),
+    db: Session = Depends(get_db),
+):
+    """Returns current charger status for all vehicles in the depot."""
+    # Determine depot_id based on role
+    if current_user.role == "gridpilot_admin":
+        effective_depot = depot_id or "depot-001"
+    else:
+        effective_depot = current_user.depot_id or "depot-001"
+
+    chargers = (
+        db.query(ChargerStatus)
+        .filter(ChargerStatus.depot_id == effective_depot)
+        .order_by(ChargerStatus.vehicle_id)
+        .all()
+    )
+
+    # Build summary counts
+    status_counts = {"charging": 0, "queued": 0, "ready": 0, "fault": 0}
+    charger_list = []
+    last_updated = None
+
+    for c in chargers:
+        status_counts[c.status] = status_counts.get(c.status, 0) + 1
+        if c.updated_at and (last_updated is None or c.updated_at > last_updated):
+            last_updated = c.updated_at
+
+        charger_list.append({
+            "id": c.id,
+            "vehicle_id": c.vehicle_id,
+            "charger_id": c.charger_id,
+            "vehicle_model": c.vehicle_model,
+            "arrival_time": c.arrival_time.isoformat() if c.arrival_time else None,
+            "energy_needed_kwh": c.energy_needed_kwh,
+            "energy_delivered_kwh": c.energy_delivered_kwh,
+            "current_power_kw": c.current_power_kw,
+            "soc_percent": c.soc_percent,
+            "scheduled_start_slot": c.scheduled_start_slot,
+            "status": c.status,
+            "minutes_to_ready": c.minutes_to_ready,
+            "target_soc": c.target_soc,
+            "updated_at": c.updated_at.isoformat() if c.updated_at else None,
+            "run_id": c.run_id,
+        })
+
+    return {
+        "depot_id": effective_depot,
+        "last_updated": last_updated.isoformat() if last_updated else None,
+        "summary": {
+            "total": len(chargers),
+            **status_counts,
+        },
+        "chargers": charger_list,
+    }
+
+
+@router.get("/schedule/latest")
+def get_latest_schedule(
+    depot_id: Optional[str] = Query(None),
+    current_user: User = Depends(require_depot_admin),
+    db: Session = Depends(get_db),
+):
+    """Returns most recent ScheduleRun for the depot with full adapted output."""
+    effective_depot = (
+        depot_id if current_user.role == "gridpilot_admin" and depot_id
+        else current_user.depot_id or "depot-001"
+    )
+
+    run = (
+        db.query(ScheduleRun)
+        .filter(ScheduleRun.depot_id == effective_depot)
+        .order_by(ScheduleRun.run_at.desc())
+        .first()
+    )
+
+    if not run:
+        raise HTTPException(status_code=404, detail="No schedule run exists yet")
+
+    result = {
+        "run_id": run.id,
+        "depot_id": run.depot_id,
+        "run_at": run.run_at.isoformat() if run.run_at else None,
+        "solver_status": run.solver_status,
+        "solve_time_ms": run.solve_time_ms,
+        "peak_kw_managed": run.peak_kw_managed,
+        "peak_kw_unmanaged": run.peak_kw_unmanaged,
+        "peak_reduction_percent": run.peak_reduction_percent,
+        "saving_inr": run.saving_inr,
+        "carbon_saved_kg": run.carbon_saved_kg,
+        "vehicles_ready": run.vehicles_ready,
+        "vehicles_total": run.vehicles_total,
+        "overload_events": run.overload_events,
+    }
+
+    # Parse stored JSON
+    if run.load_curve_json:
+        try:
+            result["load_curve"] = json.loads(run.load_curve_json)
+        except Exception:
+            result["load_curve"] = []
+
+    if run.raw_schedule_json:
+        try:
+            result["vehicles"] = json.loads(run.raw_schedule_json)
+        except Exception:
+            result["vehicles"] = []
+
+    return result
+
+
+@router.get("/schedule/history")
+def get_schedule_history(
+    depot_id: Optional[str] = Query(None),
+    current_user: User = Depends(require_depot_admin),
+    db: Session = Depends(get_db),
+):
+    """Returns last 30 schedule runs for the depot (summary only, no raw JSON)."""
+    effective_depot = (
+        depot_id if current_user.role == "gridpilot_admin" and depot_id
+        else current_user.depot_id or "depot-001"
+    )
+
+    runs = (
+        db.query(ScheduleRun)
+        .filter(ScheduleRun.depot_id == effective_depot)
+        .order_by(ScheduleRun.run_at.desc())
+        .limit(30)
+        .all()
+    )
+
+    return {
+        "depot_id": effective_depot,
+        "total": len(runs),
+        "runs": [
+            {
+                "id": r.id,
+                "run_at": r.run_at.isoformat() if r.run_at else None,
+                "peak_kw_managed": r.peak_kw_managed,
+                "peak_reduction_percent": r.peak_reduction_percent,
+                "saving_inr": r.saving_inr,
+                "vehicles_ready": r.vehicles_ready,
+                "solver_status": r.solver_status,
+            }
+            for r in runs
+        ],
+    }
+
+
+@router.get("/live-stream")
+async def live_stream(
+    token: str = Query(...),
+    depot_id: Optional[str] = Query(None),
+):
+    """
+    Server-Sent Events endpoint for live charger status updates.
+    Streams updates every 5 seconds.
+
+    Uses query param token since EventSource cannot set Authorization headers.
+    """
+    from sse_starlette.sse import EventSourceResponse
+
+    # Validate token manually
+    try:
+        payload = decode_token(token)
+        email = payload.get("sub")
+        role = payload.get("role")
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    # Determine effective depot
+    user_depot_id = payload.get("depot_id")
+    if role == "gridpilot_admin":
+        effective_depot = depot_id or "depot-001"
+    else:
+        effective_depot = user_depot_id or "depot-001"
+
+    async def event_generator():
+        while True:
+            db = SessionLocal()
+            try:
+                chargers = (
+                    db.query(ChargerStatus)
+                    .filter(ChargerStatus.depot_id == effective_depot)
+                    .order_by(ChargerStatus.vehicle_id)
+                    .all()
+                )
+
+                status_counts = {"charging": 0, "queued": 0, "ready": 0, "fault": 0}
+                charger_list = []
+                last_updated = None
+
+                for c in chargers:
+                    status_counts[c.status] = status_counts.get(c.status, 0) + 1
+                    if c.updated_at and (last_updated is None or c.updated_at > last_updated):
+                        last_updated = c.updated_at
+                    charger_list.append({
+                        "vehicle_id": c.vehicle_id,
+                        "charger_id": c.charger_id,
+                        "vehicle_model": c.vehicle_model,
+                        "energy_needed_kwh": c.energy_needed_kwh,
+                        "energy_delivered_kwh": c.energy_delivered_kwh,
+                        "current_power_kw": c.current_power_kw,
+                        "soc_percent": c.soc_percent,
+                        "status": c.status,
+                        "minutes_to_ready": c.minutes_to_ready,
+                    })
+
+                data = {
+                    "depot_id": effective_depot,
+                    "last_updated": last_updated.isoformat() if last_updated else None,
+                    "summary": {"total": len(chargers), **status_counts},
+                    "chargers": charger_list,
+                }
+                yield {"event": "update", "data": json.dumps(data)}
+            except Exception as e:
+                yield {"event": "error", "data": json.dumps({"error": str(e)})}
+            finally:
+                db.close()
+
+            await asyncio.sleep(5)
+
+    # Need to import SessionLocal here since it's used in the generator
+    from database.models import SessionLocal
+
+    return EventSourceResponse(event_generator())

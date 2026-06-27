@@ -4,18 +4,13 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('gridpilot_token')?.value
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname === '/'
+  const isDashboardRoute = request.nextUrl.pathname.startsWith('/dashboard')
 
   if (!token && isDashboardRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Redirect root to dashboard if authenticated
-  if (token && request.nextUrl.pathname === '/') {
+  if (token && (isAuthPage || request.nextUrl.pathname === '/')) {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

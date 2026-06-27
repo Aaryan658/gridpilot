@@ -94,6 +94,11 @@ app = FastAPI(
 
 app.include_router(auth_router)
 
+from api.routers.depot import router as depot_router
+from api.routers.report import router as report_router
+app.include_router(depot_router)
+app.include_router(report_router)
+
 allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -226,6 +231,13 @@ async def startup_event() -> None:
 
     threading.Thread(target=_warm, daemon=True).start()
 
+    # Seed vehicle-charger mapping on startup
+    try:
+        from services.vehicle_mapping import seed_vehicle_charger_map
+        seed_vehicle_charger_map("depot-001")
+    except Exception as e:
+        print(f"Vehicle mapping seed skipped: {e}")
+
     print("API accepting requests. Cache warming in background.")
 
 
@@ -346,6 +358,20 @@ def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depe
         gridpilot_logger.log_optimizer_run(result)
     except Exception as e:
         print(f"DB save failed: {e}")
+
+    # Also persist structured data via schedule adapter
+    try:
+        from services.vehicle_mapping import get_full_mapping, seed_vehicle_charger_map
+        from services.schedule_adapter import adapt_optimizer_output
+        effective_depot = (current_user.depot_id if current_user else None) or "depot-001"
+        seed_vehicle_charger_map(effective_depot)
+        mapping = get_full_mapping(effective_depot)
+        if mapping:
+            adapted = adapt_optimizer_output(result, effective_depot, mapping)
+            result["adapted_run_id"] = adapted.get("run_id")
+    except Exception as e:
+        print(f"Schedule adapter failed (non-fatal): {e}")
+
     return result
 
 

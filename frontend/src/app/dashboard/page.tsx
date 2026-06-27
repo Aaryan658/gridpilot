@@ -135,7 +135,7 @@ export default function DashboardPage() {
       n_vehicles: 600,
       date: "2024-01-15",
       enable_v2g: false,
-    }, token);
+    }, token ?? undefined);
 
     let isApiDone = false;
     apiPromise.finally(() => isApiDone = true);

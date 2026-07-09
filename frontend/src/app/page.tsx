@@ -22,16 +22,19 @@ export default function Home() {
       <ParticleBackground />
       {/* Nav */}
       <nav style={{
-        position: "fixed", top: 0, left: 0,
-        right: 0, zIndex: 50,
-        padding: "0 32px",
+        position: "fixed", top: 24, left: "50%",
+        transform: "translateX(-50%)",
+        width: "calc(100% - 48px)", maxWidth: 1200, zIndex: 50,
+        padding: "0 24px",
         height: 56,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        background: "rgba(6,20,27,0.8)",
+        background: "rgba(6,20,27,0.6)",
         backdropFilter: "blur(20px)",
-        borderBottom: "1px solid rgba(74,92,106,0.15)",
+        border: "1px solid rgba(0,212,170,0.15)",
+        boxShadow: "0 0 8px rgba(0,212,170,0.04), inset 0 0 4px rgba(0,212,170,0.02)",
+        borderRadius: 100,
       }}>
         <span style={{
           fontSize: 16, fontWeight: 800,
@@ -93,18 +96,7 @@ export default function Home() {
             {isConnected ? "Backend connected" : (isConnected === false ? "Backend disconnected" : "Connecting...")}
           </div>
 
-          <span style={{
-            fontSize: 10, color: "#00D4AA",
-            padding: "3px 10px",
-            border: "1px solid rgba(0,212,170,0.3)",
-            borderRadius: 20,
-            background: "rgba(0,212,170,0.05)",
-            fontWeight: 600,
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-          }}>
-            Powered by FirstFlight
-          </span>
+
         </div>
       </nav>
 

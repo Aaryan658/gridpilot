@@ -5,6 +5,7 @@ import HeroSection from "@/components/HeroSection";
 import GridPilotCharts from "@/components/charts/GridPilotCharts";
 import FeatureSection from "@/components/FeatureSection";
 import LiveCalculator from "@/components/LiveCalculator";
+import ParticleBackground from "@/components/ParticleBackground";
 import { apiFetch } from "@/lib/api";
 
 export default function Home() {
@@ -18,6 +19,7 @@ export default function Home() {
 
   return (
     <>
+      <ParticleBackground />
       {/* Nav */}
       <nav style={{
         position: "fixed", top: 0, left: 0,
@@ -106,13 +108,13 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="min-h-screen bg-background">
+      <main className="relative z-10 min-h-screen bg-transparent">
         <HeroSection />
 
         <section id="live-demo" style={{
           width: "100%",
           padding: "80px 32px",
-          background: "var(--bg)",
+          background: "transparent",
           borderTop: "1px solid rgba(74,92,106,0.15)",
           position: "relative",
           zIndex: 20,
@@ -169,7 +171,7 @@ export default function Home() {
         <section style={{
           width: "100%",
           padding: "60px 32px",
-          background: "#06141B",
+          background: "transparent",
           borderTop: "1px solid rgba(74,92,106,0.1)",
         }}>
           <div style={{
@@ -443,7 +445,7 @@ export default function Home() {
         <section style={{
           width: "100%",
           padding: "60px 32px",
-          background: "#06141B",
+          background: "transparent",
           borderTop: "1px solid rgba(74,92,106,0.1)",
         }}>
           <div style={{
@@ -636,7 +638,7 @@ export default function Home() {
         <section style={{
           width: "100%",
           padding: "60px 32px",
-          background: "#06141B",
+          background: "transparent",
           borderTop: "1px solid rgba(74,92,106,0.1)",
         }}>
           <div style={{
@@ -772,7 +774,7 @@ export default function Home() {
         <section style={{
           width: "100%",
           padding: "60px 32px",
-          background: "#06141B",
+          background: "transparent",
           borderTop:
             "1px solid rgba(74,92,106,0.1)",
         }}>

@@ -40,7 +40,7 @@ export default function FeatureSection() {
     <section style={{
       width: "100%",
       padding: "80px 32px",
-      background: "var(--bg)",
+      background: "transparent",
     }}>
       <div style={{
         maxWidth: 1200,

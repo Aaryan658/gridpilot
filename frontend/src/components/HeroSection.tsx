@@ -13,16 +13,6 @@ export default function HeroSection() {
     <section className="relative w-full min-h-screen flex flex-col
       items-center justify-center overflow-hidden bg-transparent">
 
-      {/* Radial glow center */}
-      <div className="absolute inset-0 z-0"
-           style={{
-             background: `radial-gradient(ellipse 80% 60%
-               at 50% 50%,
-               rgba(124,92,191,0.08) 0%,
-               rgba(0,212,170,0.04) 40%,
-               transparent 70%)`
-           }} />
-
       {/* Content */}
       <div className="relative z-10 text-center
                       px-4 md:px-8 max-w-5xl mx-auto">

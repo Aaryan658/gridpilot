@@ -66,10 +66,6 @@ export default function ParticleBackground() {
                 <GridPoints />
             </Canvas>
 
-            {/* Background Glows (Persistent) */}
-            <div className="absolute top-1/4 -left-20 w-[500px] h-[500px] bg-[#00D4AA]/10 blur-[140px] rounded-full" />
-            <div className="absolute bottom-1/4 -right-20 w-[500px] h-[500px] bg-[#7C5CBF]/10 blur-[140px] rounded-full" />
-
             {/* Global Energy Network Lines */}
             <div className="absolute inset-0 opacity-10">
                 {[...Array(8)].map((_, i) => (

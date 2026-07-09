@@ -48,7 +48,18 @@ export default function HeroSection() {
           Grid Intelligence.
           <br />
           <span className="gradient-text">
-            For India&apos;s EV future.
+            For{" "}
+          </span>
+          <span style={{
+            background: "linear-gradient(180deg, #FF9933 15%, #FFFFFF 50%, #138808 85%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            display: "inline-block",
+          }}>
+            India&apos;s
+          </span>
+          <span className="gradient-text">
+            {" "}EV future.
           </span>
         </motion.h1>
 

@@ -17,25 +17,6 @@ export default function HeroSection() {
       <div className="relative z-10 text-center
                       px-4 md:px-8 max-w-5xl mx-auto">
 
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-1.5
-            rounded-full border mb-8"
-          style={{
-            borderColor: "rgba(0,212,170,0.3)",
-            background: "rgba(0,212,170,0.05)"
-          }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full
-            bg-[#00D4AA] animate-pulse" />
-          <span className="text-xs font-semibold tracking-widest
-            uppercase text-[#00D4AA]">
-            Powered by FirstFlight
-          </span>
-        </motion.div>
 
         {/* Main heading */}
         <motion.h1
@@ -128,17 +109,26 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + i * 0.08 }}
-              className="card-premium p-5 text-center"
+              className="relative overflow-hidden p-6 rounded-2xl
+                         bg-white/10 backdrop-blur-xl border border-white/10
+                         hover:-translate-y-1 transition-all duration-300
+                         shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
             >
+              {/* Subtle top glare */}
+              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              
+              {/* Background accent glow - now permanent */}
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#00D4AA]/10 opacity-100" />
+
               <div
-                className="text-3xl font-bold mb-1
-                  tabular-nums"
-                style={{ color: "#CCD0CF" }}
+                className="relative z-10 text-3xl md:text-4xl font-extrabold mb-2
+                  tabular-nums tracking-tight"
+                style={{ color: "#FFF", textShadow: "0 2px 15px rgba(255,255,255,0.2)" }}
               >
                 {stat.value}
               </div>
-              <div className="text-xs text-[#4A5C6A]
-                uppercase tracking-wider font-medium">
+              <div className="relative z-10 text-[10px] md:text-xs text-[#00D4AA]
+                uppercase tracking-widest font-semibold">
                 {stat.label}
               </div>
             </motion.div>

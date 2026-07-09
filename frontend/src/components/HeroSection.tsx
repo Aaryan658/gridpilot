@@ -24,7 +24,7 @@ export default function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.1 }}
           className="text-5xl md:text-7xl lg:text-8xl font-bold
-            tracking-tight text-white leading-none mb-6"
+            tracking-tight text-[#E2E8F0] leading-none mb-6"
         >
           Grid Intelligence.
           <br />

@@ -155,13 +155,38 @@ def adapt_optimizer_output(
             "charging_periods": charging_periods,
         })
 
-    # If we don't have a real schedule, mark all vehicles as ready (locked demo)
+    # If we don't have a real schedule, simulate realistic charging in progress
     if not has_schedule:
-        vehicles_ready_count = n_vehicles
-        for v in vehicles:
-            v["status"] = "ready"
-            v["soc_percent"] = 80.0
-            v["energy_delivered_kwh"] = v["energy_needed_kwh"]
+        import random
+        rng = random.Random(42)  # Seeded for consistent demo values
+        vehicles_ready_count = 0
+        for i, v in enumerate(vehicles):
+            # Generate a realistic SoC distribution: most vehicles mid-charge
+            soc = round(rng.uniform(55.0, 95.0), 1)
+            v["soc_percent"] = soc
+
+            # Derive energy delivered from SoC
+            battery_kwh = v.get("battery_kwh", 30.0)
+            starting_soc = 20.0
+            v["energy_delivered_kwh"] = round((soc - starting_soc) / 100.0 * battery_kwh, 2)
+
+            # Assign realistic statuses based on SoC
+            if soc >= 80.0:
+                v["status"] = "ready"
+                v["minutes_to_ready"] = 0
+                vehicles_ready_count += 1
+            else:
+                v["status"] = "charging"
+                # Estimate remaining time
+                remaining_kwh = (80.0 - soc) / 100.0 * battery_kwh
+                charger_kw = v.get("charger_kw", 1.7)
+                v["minutes_to_ready"] = round(remaining_kwh / charger_kw * 60) if charger_kw > 0 else None
+
+            # Assign varying power draw for charging vehicles
+            if v["status"] == "charging":
+                v["current_power_kw"] = round(rng.uniform(1.4, 2.0), 1)
+            else:
+                v["current_power_kw"] = 0.0
 
     # Build load curve
     if total_load is not None:

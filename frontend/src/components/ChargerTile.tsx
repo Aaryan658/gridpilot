@@ -44,19 +44,12 @@ export default function ChargerTile(props: Props) {
   else if (vehicle_model.includes("Curvv")) { charger_kw = 7.2; battery_kwh = 55.0; }
   else if (vehicle_model.includes("ZS")) { battery_kwh = 50.3; }
 
-  // Force a guaranteed mix of blue and green for the live demo
+  // On-the-fly recalculation with a demo boost so some cars hit the 80% target (turning blue)
   const base_soc = soc_percent || 20.0;
+  // Use vehicle_id to create a stable pseudo-random boost between 5 and 20
   const stable_hash = vehicle_id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  
-  // If hash is divisible by 3, guarantee the vehicle is "Ready" (blue)
-  const is_ready = stable_hash % 3 === 0;
-  let soc = base_soc;
-  if (is_ready) {
-    soc = Math.max(base_soc, 82.0 + (stable_hash % 10)); // Force above 80%
-  } else {
-    soc = Math.min(base_soc, 78.0); // Force below 80%
-  }
-  
+  const boost = 5 + (stable_hash % 15);
+  const soc = Math.min(base_soc + boost, 99.0);
   const target = 80.0;
 
   let status = initial_status;

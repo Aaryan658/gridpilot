@@ -31,38 +31,9 @@ type Props = {
 export default function ChargerTile(props: Props) {
   const {
     vehicle_id, vehicle_model, charger_id,
-    current_power_kw, soc_percent, status: initial_status,
-    energy_needed_kwh, energy_delivered_kwh,
+    current_power_kw, soc_percent, status,
+    minutes_to_ready,
   } = props;
-
-  // Extract specs based on model name (fallback to Nexon specs)
-  let charger_kw = 7.4;
-  let battery_kwh = 30.2;
-  if (vehicle_model.includes("Tiago")) { charger_kw = 3.3; battery_kwh = 19.2; }
-  else if (vehicle_model.includes("Windsor")) { battery_kwh = 38.0; }
-  else if (vehicle_model.includes("BE6")) { charger_kw = 7.2; battery_kwh = 59.0; }
-  else if (vehicle_model.includes("Curvv")) { charger_kw = 7.2; battery_kwh = 55.0; }
-  else if (vehicle_model.includes("ZS")) { battery_kwh = 50.3; }
-
-  // On-the-fly recalculation with a demo boost so some cars hit the 80% target (turning blue)
-  const base_soc = soc_percent || 20.0;
-  // Use vehicle_id to create a stable pseudo-random boost between 5 and 20
-  const stable_hash = vehicle_id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const boost = 5 + (stable_hash % 15);
-  const soc = Math.min(base_soc + boost, 99.0);
-  const target = 80.0;
-
-  let status = initial_status;
-  let minutes_to_ready = null;
-  
-  if (soc >= target) {
-    status = "ready";
-    minutes_to_ready = 0;
-  } else {
-    status = "charging";
-    const remaining_kwh = ((target - soc) / 100.0) * battery_kwh;
-    minutes_to_ready = Math.round((remaining_kwh / charger_kw) * 60);
-  }
 
   const tint = STATUS_TINTS[status] || STATUS_TINTS.queued;
   const barColor = SOC_COLORS[status] || SOC_COLORS.queued;

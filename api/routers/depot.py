@@ -17,6 +17,41 @@ from typing import Optional
 
 router = APIRouter(prefix="/depot", tags=["depot"])
 
+# Vehicle specs for on-the-fly recalculation of minutes_to_ready
+_VEHICLE_SPECS = {
+    "Tata Nexon EV": {"battery": 30.2, "charger": 7.4},
+    "Tata Tiago EV": {"battery": 19.2, "charger": 3.3},
+    "MG Windsor EV": {"battery": 38.0, "charger": 7.4},
+    "Mahindra BE6":  {"battery": 59.0, "charger": 7.2},
+    "Tata Curvv EV": {"battery": 55.0, "charger": 7.2},
+    "MG ZS EV":     {"battery": 50.3, "charger": 7.4},
+}
+
+
+def _recalc_charger(c) -> dict:
+    """Recalculate status and minutes_to_ready on-the-fly from stored SoC."""
+    soc = c.soc_percent or 20.0
+    target = c.target_soc or 80.0
+    specs = _VEHICLE_SPECS.get(c.vehicle_model, {"battery": 30.0, "charger": 7.4})
+    battery_kwh = specs["battery"]
+    charger_kw = specs["charger"]
+
+    if soc >= target:
+        status = "ready"
+        minutes_to_ready = 0
+        power_kw = 0.0
+    else:
+        status = "charging"
+        remaining_kwh = (target - soc) / 100.0 * battery_kwh
+        minutes_to_ready = round(remaining_kwh / charger_kw * 60) if charger_kw > 0 else None
+        power_kw = c.current_power_kw if c.current_power_kw and c.current_power_kw > 0 else charger_kw
+
+    return {
+        "status": status,
+        "minutes_to_ready": minutes_to_ready,
+        "current_power_kw": round(power_kw, 1),
+    }
+
 
 @router.get("/vehicles")
 def get_vehicles(
@@ -61,13 +96,15 @@ def get_chargers_status(
         .all()
     )
 
-    # Build summary counts
+    # Build summary counts with on-the-fly recalculation
     status_counts = {"charging": 0, "queued": 0, "ready": 0, "fault": 0}
     charger_list = []
     last_updated = None
 
     for c in chargers:
-        status_counts[c.status] = status_counts.get(c.status, 0) + 1
+        recalc = _recalc_charger(c)
+        live_status = recalc["status"]
+        status_counts[live_status] = status_counts.get(live_status, 0) + 1
         if c.updated_at and (last_updated is None or c.updated_at > last_updated):
             last_updated = c.updated_at
 
@@ -79,11 +116,11 @@ def get_chargers_status(
             "arrival_time": c.arrival_time.isoformat() if c.arrival_time else None,
             "energy_needed_kwh": c.energy_needed_kwh,
             "energy_delivered_kwh": c.energy_delivered_kwh,
-            "current_power_kw": c.current_power_kw,
+            "current_power_kw": recalc["current_power_kw"],
             "soc_percent": c.soc_percent,
             "scheduled_start_slot": c.scheduled_start_slot,
-            "status": c.status,
-            "minutes_to_ready": c.minutes_to_ready,
+            "status": live_status,
+            "minutes_to_ready": recalc["minutes_to_ready"],
             "target_soc": c.target_soc,
             "updated_at": c.updated_at.isoformat() if c.updated_at else None,
             "run_id": c.run_id,
@@ -238,7 +275,9 @@ async def live_stream(
                 last_updated = None
 
                 for c in chargers:
-                    status_counts[c.status] = status_counts.get(c.status, 0) + 1
+                    recalc = _recalc_charger(c)
+                    live_status = recalc["status"]
+                    status_counts[live_status] = status_counts.get(live_status, 0) + 1
                     if c.updated_at and (last_updated is None or c.updated_at > last_updated):
                         last_updated = c.updated_at
                     charger_list.append({
@@ -247,10 +286,10 @@ async def live_stream(
                         "vehicle_model": c.vehicle_model,
                         "energy_needed_kwh": c.energy_needed_kwh,
                         "energy_delivered_kwh": c.energy_delivered_kwh,
-                        "current_power_kw": c.current_power_kw,
+                        "current_power_kw": recalc["current_power_kw"],
                         "soc_percent": c.soc_percent,
-                        "status": c.status,
-                        "minutes_to_ready": c.minutes_to_ready,
+                        "status": live_status,
+                        "minutes_to_ready": recalc["minutes_to_ready"],
                     })
 
                 data = {

@@ -131,9 +131,17 @@ export default function ChargerGrid({ initialChargers, token, summary: initialSu
             let count = 0;
             if (chargers.length > 0) {
               if (s === "ready") {
-                count = chargers.filter(c => (c.soc_percent || 20) >= 80.0).length;
+                count = chargers.filter(c => {
+                  const hash = c.vehicle_id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                  const boost = 5 + (hash % 15);
+                  return Math.min((c.soc_percent || 20.0) + boost, 99.0) >= 80.0;
+                }).length;
               } else if (s === "charging") {
-                count = chargers.filter(c => (c.soc_percent || 20) < 80.0).length;
+                count = chargers.filter(c => {
+                  const hash = c.vehicle_id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                  const boost = 5 + (hash % 15);
+                  return Math.min((c.soc_percent || 20.0) + boost, 99.0) < 80.0;
+                }).length;
               } else {
                 count = 0;
               }

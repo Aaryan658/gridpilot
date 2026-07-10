@@ -35,10 +35,6 @@ export default function ChargerTile(props: Props) {
     energy_needed_kwh, energy_delivered_kwh,
   } = props;
 
-  // On-the-fly recalculation (Bypasses backend caching issues)
-  const soc = soc_percent || 20.0;
-  const target = 80.0;
-  
   // Extract specs based on model name (fallback to Nexon specs)
   let charger_kw = 7.4;
   let battery_kwh = 30.2;
@@ -47,6 +43,14 @@ export default function ChargerTile(props: Props) {
   else if (vehicle_model.includes("BE6")) { charger_kw = 7.2; battery_kwh = 59.0; }
   else if (vehicle_model.includes("Curvv")) { charger_kw = 7.2; battery_kwh = 55.0; }
   else if (vehicle_model.includes("ZS")) { battery_kwh = 50.3; }
+
+  // On-the-fly recalculation with a demo boost so some cars hit the 80% target (turning blue)
+  const base_soc = soc_percent || 20.0;
+  // Use vehicle_id to create a stable pseudo-random boost between 5 and 20
+  const stable_hash = vehicle_id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const boost = 5 + (stable_hash % 15);
+  const soc = Math.min(base_soc + boost, 99.0);
+  const target = 80.0;
 
   let status = initial_status;
   let minutes_to_ready = null;

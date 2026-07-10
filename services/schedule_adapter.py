@@ -119,18 +119,19 @@ def adapt_optimizer_output(
         active_slots = np.where(vehicle_power > 0.1)[0]
         scheduled_start_slot = int(active_slots[0]) if len(active_slots) > 0 else None
 
-        # Find last active slot for minutes_to_ready
-        last_active_slot = int(active_slots[-1]) if len(active_slots) > 0 else None
-        minutes_to_ready = (last_active_slot * 15) if last_active_slot is not None else None
-
-        # Status determination
+        # Status determination and realistic minutes_to_ready
         if energy_delivered >= energy_needed * 0.95:
             status = "ready"
             vehicles_ready_count += 1
+            minutes_to_ready = 0
         elif scheduled_start_slot is not None:
             status = "charging"
+            # Calculate realistic time remaining based on actual charger power
+            remaining_kwh = (80.0 - soc) / 100.0 * battery_kwh
+            minutes_to_ready = round(remaining_kwh / charger_kw * 60) if charger_kw > 0 else None
         else:
             status = "queued"
+            minutes_to_ready = None
 
         # Charging periods
         charging_periods = [

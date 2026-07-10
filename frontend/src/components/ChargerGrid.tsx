@@ -126,15 +126,31 @@ export default function ChargerGrid({ initialChargers, token, summary: initialSu
       {/* Summary bar */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-6 text-sm">
-          {(["charging", "queued", "ready", "fault"] as const).map((s) => (
-            <span key={s} className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full" style={{ background: STATUS_COLORS[s] }} />
-              <span className="text-gray-400 capitalize">{s}:</span>
-              <span className="font-semibold" style={{ color: STATUS_COLORS[s] }}>
-                {summary[s] || 0}
+          {(["charging", "queued", "ready", "fault"] as const).map((s) => {
+            // Recalculate summary dynamically on the frontend based on SoC to bypass backend cache
+            let count = 0;
+            if (chargers.length > 0) {
+              if (s === "ready") {
+                count = chargers.filter(c => (c.soc_percent || 20) >= 80.0).length;
+              } else if (s === "charging") {
+                count = chargers.filter(c => (c.soc_percent || 20) < 80.0).length;
+              } else {
+                count = 0;
+              }
+            } else {
+              count = summary[s] || 0;
+            }
+
+            return (
+              <span key={s} className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full" style={{ background: STATUS_COLORS[s] }} />
+                <span className="text-gray-400 capitalize">{s}:</span>
+                <span className="font-semibold" style={{ color: STATUS_COLORS[s] }}>
+                  {count}
+                </span>
               </span>
-            </span>
-          ))}
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-4 text-xs text-gray-500">

@@ -346,25 +346,51 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <button
+          <motion.button
             onClick={handleRunSchedule}
             disabled={solving}
+            whileHover={!solving ? { scale: 1.02 } : {}}
+            whileTap={!solving ? { scale: 0.98 } : {}}
             style={{
+              position: "relative",
               width: "100%",
               padding: "12px",
               borderRadius: 10,
-              background: solving ? "#253745" : "#7C5CBF",
+              background: solving 
+                ? "linear-gradient(90deg, #1A1D2D, #2D1A3D, #1A1D2D)"
+                : "linear-gradient(135deg, #7C5CBF, #5b3fa6)",
+              backgroundSize: solving ? "200% 100%" : "auto",
               color: "white",
-              border: "none",
+              border: solving ? "1px solid rgba(124,92,191,0.5)" : "1px solid rgba(255,255,255,0.1)",
               fontSize: 13,
               fontWeight: 600,
               cursor: solving ? "not-allowed" : "pointer",
-              boxShadow: solving ? "none" : "0 4px 16px rgba(124,92,191,0.4)",
-              transition: "all 0.2s",
+              boxShadow: solving 
+                ? "0 0 15px rgba(124,92,191,0.3)"
+                : "0 4px 16px rgba(124,92,191,0.4)",
+              transition: "all 0.3s ease",
+              overflow: "hidden",
             }}
+            animate={solving ? {
+              backgroundPosition: ["200% 0", "-200% 0"]
+            } : {}}
+            transition={solving ? {
+              repeat: Infinity,
+              duration: 2.5,
+              ease: "linear"
+            } : {}}
           >
-            {solving ? "Solving..." : solved ? "▶ Run Again" : "▶ Run Schedule"}
-          </button>
+            {solving ? (
+              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+                <motion.span
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }}
+                />
+                Optimizing 600 vehicles...
+              </span>
+            ) : solved ? "▶ Run Again" : "▶ Run Schedule"}
+          </motion.button>
 
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import HomeButton from "@/components/HomeButton";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className={`${spaceGrotesk.className} min-h-full flex flex-col`}>
         <AuthProvider>
           {children}
+          <HomeButton />
         </AuthProvider>
       </body>
     </html>

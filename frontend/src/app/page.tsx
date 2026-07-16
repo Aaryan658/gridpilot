@@ -13,13 +13,16 @@ import { apiFetch } from "@/lib/api";
 export default function Home() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const router = useRouter();
-  const { login, setViewAsAdmin } = useAuth();
+  const { login, setViewAsAdmin, token } = useAuth();
 
   const handleLiveDashboardClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     try {
-      // Auto-login as demo admin and force Depot Mode view
-      await login("admin2@gridpilot.in", "test");
+      // If not already logged in, auto-login as demo admin
+      if (!token) {
+        await login("admin2@gridpilot.in", "test");
+      }
+      // Force Depot Mode view
       setViewAsAdmin(false);
       router.push("/dashboard");
     } catch (err) {

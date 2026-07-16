@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Calendar, Activity, FileText, Settings, LogOut, User as UserIcon } from 'lucide-react'
 
 export default function DashboardLayout({
@@ -12,6 +12,7 @@ export default function DashboardLayout({
 }) {
   const { user, logout, isLoading, viewAsAdmin, setViewAsAdmin } = useAuth()
   const pathname = usePathname()
+  const router = useRouter()
 
   if (isLoading) {
     return <div className="min-h-screen bg-[#0F1117] flex items-center justify-center text-[#00C851]">Loading...</div>
@@ -95,7 +96,10 @@ export default function DashboardLayout({
                 {user.email}
               </div>
               <button
-                onClick={() => setViewAsAdmin(false)}
+                onClick={() => {
+                  setViewAsAdmin(false)
+                  router.push('/dashboard')
+                }}
                 className="ml-4 px-3 py-1.5 bg-[#7C5CBF] hover:bg-[#6A4E9E] rounded-lg text-xs font-semibold transition-colors"
               >
                 View as Depot Mode

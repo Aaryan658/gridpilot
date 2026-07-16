@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import HeroSection from "@/components/HeroSection";
 import GridPilotCharts from "@/components/charts/GridPilotCharts";
 import FeatureSection from "@/components/FeatureSection";
@@ -10,6 +12,21 @@ import { apiFetch } from "@/lib/api";
 
 export default function Home() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
+  const router = useRouter();
+  const { login, setViewAsAdmin } = useAuth();
+
+  const handleLiveDashboardClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      // Auto-login as demo admin and force Depot Mode view
+      await login("admin2@gridpilot.in", "test");
+      setViewAsAdmin(false);
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Auto login failed", err);
+      router.push("/login");
+    }
+  };
 
   useEffect(() => {
     apiFetch("/ping")
@@ -61,21 +78,23 @@ export default function Home() {
           >
             Admin Login
           </a>
-          <a
-            href="/dashboard"
+          <button
+            onClick={handleLiveDashboardClick}
             style={{
               fontSize: 12,
               fontWeight: 600,
               color: "#9BA8AB",
+              background: "transparent",
               textDecoration: "none",
               padding: "6px 14px",
               borderRadius: 20,
               border: "1px solid rgba(74,92,106,0.3)",
+              cursor: "pointer",
               transition: "all 0.15s",
             }}
           >
             Live Dashboard →
-          </a>
+          </button>
           
           <div style={{
             display: "flex",

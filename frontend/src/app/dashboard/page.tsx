@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
 import {
@@ -69,6 +70,7 @@ type CarbonSignal = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, token, viewAsAdmin, setViewAsAdmin } = useAuth();
   const isAdmin = user?.role === "gridpilot_admin" && viewAsAdmin;
   const isFirstRun = useRef(true);
@@ -98,110 +100,8 @@ export default function DashboardPage() {
     });
   }, []);
 
-  const handleRunSchedule = async () => {
-    setSolving(true);
-    setSolved(false);
-    setResult(null);
-    setIsLive(false);
-    setWasWarmup(false);
-
-    const start = Date.now();
-
-    const firstRun = isFirstRun.current;
-    isFirstRun.current = false;
-
-    const STEPS = firstRun
-      ? [
-          { ms: 2000,  t: "Loading 600 EV sessions..." },
-          { ms: 5000,  t: "Building constraint matrix (57,600 vars)..." },
-          { ms: 8000,  t: "JIT compiling CVXPY constraints..." },
-          { ms: 14000, t: "Running CVXPY convex QP..." },
-          { ms: 24000, t: "CLARABEL interior-point solving..." },
-          { ms: 28000, t: "pandapower AC validation..." },
-          { ms: 32000, t: "Computing DVVNL savings..." },
-          { ms: 35000, t: "Optimal solution found ✓" },
-        ]
-      : [
-          { ms: 300,  t: "Loading 600 EV sessions..." },
-          { ms: 700,  t: "Building constraint matrix (57,600 vars)..." },
-          { ms: 1200, t: "Running CVXPY convex QP..." },
-          { ms: 3200, t: "CLARABEL interior-point solving..." },
-          { ms: 4200, t: "pandapower AC validation..." },
-          { ms: 5000, t: "Computing DVVNL savings..." },
-          { ms: 5500, t: "Optimal solution found ✓" },
-        ];
-
-    const apiPromise = runSchedule({
-      n_vehicles: 600,
-      date: "2024-01-15",
-      enable_v2g: false,
-    }, token ?? undefined);
-
-    let isApiDone = false;
-    apiPromise.finally(() => isApiDone = true);
-
-    const animPromise = new Promise<null>(resolve => {
-      const start = Date.now();
-      (async () => {
-        for (const step of STEPS) {
-          if (isApiDone) break;
-          setSolveStep(step.t);
-          
-          const targetTime = start + step.ms;
-          while (Date.now() < targetTime) {
-            if (isApiDone) break;
-            await new Promise(r => setTimeout(r, 100)); // check every 100ms
-          }
-        }
-        resolve(null);
-      })();
-    });
-
-    await animPromise;
-    const data = await apiPromise;
-
-    const totalMs = Date.now() - start;
-    if (totalMs > 5000) {
-      setWasWarmup(true);
-    }
-
-    const DEMO = {
-      peak_reduction_pct: 55.1,
-      dvvnl_monthly_saving_inr: 860000,
-      carbon_saved_kg: 2072,
-      solve_time_ms: 3000,
-      all_ready: true,
-      source: "demo" as const,
-    };
-
-    if (data?.comparison?.peak_reduction_pct || data?.depot?.schedule_summary?.comparison?.peak_reduction_pct) {
-      const c: ScheduleComparison = data.comparison || data.depot?.schedule_summary?.comparison;
-      const rawMs = data.managed?.solve_time_ms
-        || data.depot?.schedule_summary?.managed?.solve_time_ms
-        || data.solve_time_ms
-        || DEMO.solve_time_ms;
-      
-      const hasCarbon = c.unmanaged_carbon_kg !== undefined && c.scheduled_carbon_kg !== undefined;
-      const carbonSaved = hasCarbon
-        ? Math.max(0, Number(c.unmanaged_carbon_kg) - Number(c.scheduled_carbon_kg))
-        : DEMO.carbon_saved_kg;
-
-      setResult({
-        peak_reduction_pct: c.peak_reduction_pct || DEMO.peak_reduction_pct,
-        dvvnl_monthly_saving_inr: c.dvvnl_monthly_saving_inr || DEMO.dvvnl_monthly_saving_inr,
-        carbon_saved_kg: carbonSaved,
-        solve_time_ms: rawMs,
-        all_ready: data.all_ready_on_time ?? data.managed?.fleet_summary?.all_ready_on_time ?? true,
-        source: "live",
-      });
-      setIsLive(true);
-    } else {
-      setResult(DEMO);
-      setIsLive(false);
-    }
-
-    setSolving(false);
-    setSolved(true);
+  const handleRunSchedule = () => {
+    router.push('/dashboard/optimizer');
   };
 
   const peakReduction =
@@ -348,48 +248,23 @@ export default function DashboardPage() {
 
           <motion.button
             onClick={handleRunSchedule}
-            disabled={solving}
-            whileHover={!solving ? { scale: 1.02 } : {}}
-            whileTap={!solving ? { scale: 0.98 } : {}}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             style={{
-              position: "relative",
               width: "100%",
-              padding: "12px",
-              borderRadius: 10,
-              background: solving 
-                ? "linear-gradient(90deg, #1A1D2D, #2D1A3D, #1A1D2D)"
-                : "linear-gradient(135deg, #7C5CBF, #5b3fa6)",
-              backgroundSize: solving ? "200% 100%" : "auto",
+              padding: "14px",
+              borderRadius: 12,
+              background: "linear-gradient(135deg, #7C5CBF, #5b3fa6)",
               color: "white",
-              border: solving ? "1px solid rgba(124,92,191,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: solving ? "not-allowed" : "pointer",
-              boxShadow: solving 
-                ? "0 0 15px rgba(124,92,191,0.3)"
-                : "0 4px 16px rgba(124,92,191,0.4)",
-              transition: "all 0.3s ease",
-              overflow: "hidden",
+              border: "1px solid rgba(255,255,255,0.1)",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: "0 4px 16px rgba(124,92,191,0.4)",
+              transition: "all 0.2s",
             }}
-            animate={solving ? {
-              backgroundPosition: ["200% 0", "-200% 0"]
-            } : {}}
-            transition={solving ? {
-              repeat: Infinity,
-              duration: 2.5,
-              ease: "linear"
-            } : {}}
           >
-            {solving ? (
-              <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-                <motion.span
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%" }}
-                />
-                Optimizing 600 vehicles...
-              </span>
-            ) : solved ? "▶ Run Again" : "▶ Run Schedule"}
+            ▶ Run Schedule
           </motion.button>
 
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6 }}>

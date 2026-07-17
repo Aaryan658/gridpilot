@@ -43,6 +43,7 @@ from ocpp_mock.central_system import (
 )
 from api.config import settings
 from api.routers.auth import router as auth_router
+from api.routers.hardware import router as hardware_router
 from api.auth.dependencies import require_depot_admin, get_current_user, optional_current_user
 from typing import Optional
 from api.models.user import User
@@ -98,6 +99,7 @@ from api.routers.depot import router as depot_router
 from api.routers.report import router as report_router
 app.include_router(depot_router)
 app.include_router(report_router)
+app.include_router(hardware_router)
 
 allowed_origins = [
     "http://localhost:3000",

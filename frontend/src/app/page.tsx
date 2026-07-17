@@ -56,14 +56,7 @@ export default function Home() {
         boxShadow: "0 0 8px rgba(0,212,170,0.04), inset 0 0 4px rgba(0,212,170,0.02)",
         borderRadius: 100,
       }}>
-        <span style={{
-          fontSize: 16, fontWeight: 800,
-          background: "linear-gradient(90deg,#7C5CBF,#00D4AA)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}>
-          ⚡ GridPilot
-        </span>
+        <img src="/logo.png" alt="GridPilot" style={{ height: 52, width: "auto" }} />
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <a
             href="/login"

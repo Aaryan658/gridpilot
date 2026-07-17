@@ -141,18 +141,7 @@ export default function DashboardPage() {
         }}
       >
         <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontSize: 18,
-              fontWeight: 800,
-              background: "linear-gradient(90deg,#7C5CBF,#00D4AA)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              marginBottom: 4,
-            }}
-          >
-            ⚡ GridPilot
-          </div>
+          <img src="/logo.png" alt="GridPilot" style={{ height: 56, width: "auto", marginBottom: 4 }} />
           <div style={{ fontSize: 10, color: "#00D4AA" }}>Powered by FirstFlight</div>
           <div style={{ fontSize: 10, color: "#4A5C6A", marginTop: 2 }}>
             📍 Corporate EV Depot, Gurugram

@@ -26,9 +26,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
         <div className="px-8 pt-10 pb-8 border-b border-gray-100">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#00C851] tracking-tight font-space">
-              GridPilot
-            </h1>
+            <img src="/logo.png" alt="GridPilot" className="h-24 w-auto mx-auto" />
             <p className="text-gray-500 mt-2 text-sm">
               Depot Management Platform
             </p>

@@ -37,9 +37,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <div className="w-64 bg-[#161821] border-r border-[#2A2D3D] flex flex-col">
         <div className="h-16 flex items-center px-6 border-b border-[#2A2D3D]">
-          <h1 className="text-xl font-bold text-[#00C851] tracking-tight font-space">
-            GridPilot
-          </h1>
+          <img src="/logo.png" alt="GridPilot" className="h-14 w-auto" />
         </div>
         
         <nav className="flex-1 py-6 px-4 space-y-1">

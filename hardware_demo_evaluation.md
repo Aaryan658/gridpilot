@@ -4,17 +4,21 @@
 
 | Parameter | Value |
 |---|---|
-| Fleet size | 40 vehicles (mixed Vahan CY2025 fleet, 3.3-7.4 kW chargers) |
-| Scale ratio | 1:8 (5 physical bays → 40 vehicles) |
+| Fleet size (dashboard) | 40 vehicles (mixed Vahan CY2025 fleet, 3.3-7.4 kW chargers) |
+| Rig model | **1:1 — 5 physical bays run their own live 5-vehicle GridPilotScheduler instance**, not a scaled slice of the 40-vehicle dashboard run (see `ocpp_mock/gridpilot_bridge.py`) |
 | CEA grid intensity | 710 gCO₂/kWh (0.710 kg CO₂/kWh) |
-| Transformer limit | 270 kW (real) → 2.4A (demo threshold) |
-| Managed target | 135 kW |
-| Optimizer | CVXPY/CLARABEL, 3,840 decision variables |
+| Transformer limit | 270 kW (real, 40-vehicle dashboard figure) |
+| Managed target | 135 kW (40-vehicle dashboard figure) |
+| Optimizer | CVXPY/CLARABEL, 3,840 decision variables (dashboard) / 480 (rig's 5-vehicle run) |
 | Backend | FastAPI on Render |
 
-> **Note:** the fleet was rescaled from 600 → 40 vehicles. The transformer/target
-> limits were rescaled by the same ~15x factor (4,000→270 kW, 2,000→135 kW),
-> which keeps the bay-current math below essentially unchanged — see §3.
+> **Note:** the dashboard's flagship fleet was rescaled from 600 → 40 vehicles. The
+> transformer/target limits were rescaled by the same ~15x factor (4,000→270 kW,
+> 2,000→135 kW). The physical rig does **not** inherit these 40-vehicle figures by
+> scaling them down 1:8 — it runs the identical optimizer fresh, for exactly 5
+> vehicles, with its own proportionally-scaled transformer/DVVNL limits
+> (`n_vehicles_for_capacity=5`). Two independent, truthful runs of the same
+> software, not one number stretched to cover both.
 
 ---
 
@@ -55,14 +59,22 @@ These are things already on the board that need correcting:
 |---|---|---|
 | ESP32 label | "GridPilot Controller" | **"OCPP Dispatch Node"** — the optimizer runs on Render, not on the ESP32 |
 | LCD CO₂ display | 62 gCO₂/kWh | **710 gCO₂/kWh** |
-| Scale context | Not shown | Add label: **"5 bays represent 40-vehicle simulation (1:8 scale)"** |
+| Scale context | Not shown | Add label: **"5 bays = live 5-vehicle GridPilot run (1:1)"** |
 | LED behavior | Appears hardcoded | Must be driven by **real INA219 readings** vs. threshold — pulling a resistor wire must change LED state |
 | Relay terminals | Exposed contacts | **Heat-shrink or hot-glue** all output terminals |
 | Resistor/Bulb area | No warning | Add **"⚠️ HOT SURFACE"** label near load elements |
 
 ---
 
-## 3. How the Scaling Works
+## 3. How the Rig Relates to the Software (1:1, Not Scaled)
+
+The rig does not try to reproduce the dashboard's 40-vehicle kW figures in amps —
+it runs its own live 5-vehicle optimization (`ocpp_mock/gridpilot_bridge.py`) and
+each bay's ON/OFF state comes straight from that run's real per-vehicle power
+schedule. The 12V/100Ω current draw below is only there to prove closed-loop
+physical feedback (relay switches → sensor confirms it) — it is not an electrical
+stand-in for the vehicles' actual 7.4kW charger draw, which a 12V DC bench supply
+was never meant to reproduce.
 
 ### Current at Each Bay Count (With 100Ω Resistors)
 
@@ -79,15 +91,11 @@ These are things already on the board that need correcting:
 | 2 | **0.24 A** | 🟢 SAFE |
 | 1 | **0.12 A** | 🟢 SAFE |
 
-### Current at Each Bay Count (With 12V 10W Indicator Bulbs)
-
-| Bays ON | Current (0.83A / bay) | Scales To (×8) | Demo State |
-|---|---|---|---|
-| 5 (unmanaged) | **4.17 A** | 400 kW | 🔴 OVERLOAD |
-| 4 | **3.33 A** | 320 kW | 🔴 OVERLOAD |
-| 3 | **2.50 A** | 240 kW | 🟢 SAFE (under 2.81A / 270kW scaled limit) |
-| 2 | **1.66 A** | 159 kW | 🟢 SAFE |
-| 1 | **0.83 A** | 80 kW | 🟢 SAFE |
+> **Superseded — kept for history only:** an earlier draft of this doc scaled a
+> 12V/10W-bulb current ×8 to claim direct kW-equivalence with the 40-vehicle
+> dashboard figures (400kW, 320kW, etc.). That table has been dropped — it
+> implied a 1:8 electrical scale-up this rig does not do. The 100Ω table above,
+> with its threshold picked directly from measured currents, is the actual build.
 
 ### Threshold: 0.54A (100Ω Resistors)
 
@@ -210,7 +218,7 @@ void loop() {
 
 | They Ask | You Say |
 |---|---|
-| "Why only 5 bays?" | "1:8 scale. 5 × 8 = 40 vehicles. The full 3,840-variable QP runs on Render. ESP32 is just an actuation endpoint receiving OCPP commands." |
+| "Why only 5 bays?" | "1:1 — it's its own live 5-vehicle GridPilotScheduler run, not a slice of the 40-vehicle dashboard. The same optimizer that drives the 40-vehicle dashboard (3,840 decision variables) runs a separate 480-variable instance for these 5 bays. ESP32 is just an actuation endpoint receiving OCPP commands from that run." |
 | "Isn't this just 5 LEDs?" | "No — INA219 measures real current through real loads switched by real relays. Disconnect a wire, the current drop displays instantly. It's closed-loop physical feedback." |
 | "How does this prove the optimizer works?" | "Unmanaged: 5 relays on, current exceeds limit, LCD shows OVERLOAD. Optimizer: staggers bays, keeps total current below threshold, LCD shows SAFE. Software logic solving a physical constraint." |
 | "Why 0.54A?" | "With 100Ω resistors, 4 bays draw 0.48A and 5 bays draw 0.60A — the threshold sits between them, so the 5th vehicle charging unmanaged is exactly what trips it." |
@@ -234,13 +242,13 @@ void loop() {
 
 ## 9. Should the 5 Bays Use Real 9V Batteries Instead of Resistors?
 
-**Short answer: no — keep the 22Ω resistors as the electrical load. Use real 9V batteries only as a visual prop next to each bay, not wired into the current path.**
+**Short answer: no — keep the 100Ω resistors as the electrical load. Use real 9V batteries only as a visual prop next to each bay, not wired into the current path.**
 
 ### Why not wire a relay straight to a rechargeable 9V pack
 
-- **No current limiting.** The 22Ω resistor is what makes bay current predictable (0.545A/bay, the whole §3 table depends on it). A rechargeable 9V pack (NiMH ~7.2-8.4V nominal, or a protected Li-ion equivalent) has internal resistance of a fraction of an ohm — a bare relay across 12V into that pack with nothing else in the path pulls far more current than the adapter, wiring, and battery are rated for. That's an overheating/venting/fire risk, not a demo tweak.
+- **No current limiting.** The 100Ω resistor is what makes bay current predictable (0.12A/bay, the whole §3 table depends on it). A rechargeable 9V pack (NiMH ~7.2-8.4V nominal, or a protected Li-ion equivalent) has internal resistance of a fraction of an ohm — a bare relay across 12V into that pack with nothing else in the path pulls far more current than the adapter, wiring, and battery are rated for. That's an overheating/venting/fire risk, not a demo tweak.
 - **Ordinary alkaline 9V batteries are not rechargeable at all.** Forcing current into one risks rupture or leakage. Only use a battery explicitly rated NiMH-rechargeable or a protected Li-ion "9V" pack — never a standard Duracell/Eveready-style alkaline block.
-- **It breaks the current-scaling math.** Battery charge current isn't fixed like a resistor's — it depends on state of charge and battery chemistry, so the amps-to-kW table in §3 (and the 2.4A OVERLOAD threshold) would no longer be a reliable, repeatable number.
+- **It breaks the current-scaling math.** Battery charge current isn't fixed like a resistor's — it depends on state of charge and battery chemistry, so the current table in §3 (and the 0.54A OVERLOAD threshold) would no longer be a reliable, repeatable number.
 - **Same safety category the doc already flags for the 18650 cells** (§1, item 10, §5 failure mode 5): exposed rechargeable cells with no protection circuit are a judge/safety-marshal disqualification risk at a public event.
 
 ### Recommended option: batteries as decoration, resistors as the load
@@ -249,4 +257,4 @@ Mount a 9V battery (any kind, doesn't need to be functional) visually beside/on 
 
 ### If you actually want to charge real 9V rechargeables
 
-Only do this with a dedicated current-limiting charge circuit per bay — e.g. a small constant-current module (an LM317 CC circuit or an off-the-shelf single-cell NiMH charge board) set to a safe trickle rate (~50-100 mA for a small 9V NiMH block), wired in series between the relay and the battery, plus a hard-backstop series resistor. This means: 5 extra charge-control modules (cost + one more thing that can fail live), and the entire §3 current table would need to be recomputed around whatever current the charge modules are set to, not 0.545A. Given the short prep window before the demo, the decorative-battery approach above is the lower-risk choice.
+Only do this with a dedicated current-limiting charge circuit per bay — e.g. a small constant-current module (an LM317 CC circuit or an off-the-shelf single-cell NiMH charge board) set to a safe trickle rate (~50-100 mA for a small 9V NiMH block), wired in series between the relay and the battery, plus a hard-backstop series resistor. This means: 5 extra charge-control modules (cost + one more thing that can fail live), and the entire §3 current table would need to be recomputed around whatever current the charge modules are set to, not 0.60A. Given the short prep window before the demo, the decorative-battery approach above is the lower-risk choice.

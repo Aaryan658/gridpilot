@@ -29,7 +29,7 @@ const FEATURES = [
 ];
 
 const RESULTS = [
-  { before: "294 kW", after: "135 kW", label: "Peak Load", delta: "-54.0%" },
+  { before: "294 kW", after: "173 kW", label: "Peak Load", delta: "-41.2%" },
   { before: "8 events", after: "0 events", label: "Overloads/night", delta: "-100%" },
   { before: "₹26,900", after: "₹0", label: "DVVNL Penalty", delta: "-100%" },
   { before: "768 kg", after: "629 kg", label: "CO₂ Emissions/night", delta: "-18.0%" },
@@ -150,8 +150,8 @@ export default function FeatureSection() {
           </div>
           <div style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
-            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+            gap: 24,
           }}>
             {FEATURES.map((f, i) => (
               <motion.div
@@ -160,26 +160,27 @@ export default function FeatureSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="card-premium p-6 group cursor-default"
-                style={{ position: "relative", overflow: "hidden" }}
+                className="card-premium group cursor-default"
+                style={{ position: "relative", overflow: "hidden", padding: "32px 28px" }}
               >
                 <div style={{
                   position: "absolute",
                   top: 0, left: 0, right: 0,
-                  height: 2,
+                  height: 3,
                   background: f.accent,
                 }} />
-                <div style={{ fontSize: 28, marginBottom: 12 }}>
+                <div style={{ fontSize: 44, marginBottom: 18 }}>
                   {f.icon}
                 </div>
                 <div style={{
-                  fontSize: 15, fontWeight: 600,
-                  color: "#CCD0CF", marginBottom: 8,
+                  fontSize: 22, fontWeight: 700,
+                  color: "#CCD0CF", marginBottom: 14,
+                  letterSpacing: "-0.01em",
                 }}>
                   {f.title}
                 </div>
                 <div style={{
-                  fontSize: 13, color: "#9BA8AB", lineHeight: 1.6,
+                  fontSize: 17, color: "#9BA8AB", lineHeight: 1.75,
                 }}>
                   {f.desc}
                 </div>

@@ -54,32 +54,34 @@ const char* LAPTOP_IP = "192.168.1.42";
 const uint16_t OCPP_PORT    = 9000; // scripts/start_ocpp.py --ocpp-port
 const uint16_t TRIGGER_PORT = 9001; // scripts/start_ocpp.py --trigger-port
 
-// --- GPIO pin assignments — taken from the actual Cirkit wiring project
-//     (relay IN pins are confirmed real). Relay order below matches the
-//     order given for the 5 relay instances: 57753f04, d772674f, c829ff04,
-//     566f5bed, eb11e8f5 -> bays 1-5. VERIFY this order matches which
-//     physical bay each relay actually switches on your board.
+// --- GPIO pin assignments — re-confirmed via the latest Cirkit wiring
+//     export (relay IN pins are confirmed real). Relay order below matches
+//     the order given for the 5 relay instances: 57753f04, d772674f,
+//     c829ff04, 566f5bed, eb11e8f5 -> bays 1-5. VERIFY this order matches
+//     which physical bay each relay actually switches on your board.
+//     NOTE: the wiring export still shows all 5 relay modules wired to the
+//     ESP32 (RX2/TX2/D18/D19/D23) -- if you physically removed 2 relays,
+//     double-check bays 4-5 (D19/D23) are still actually populated before
+//     relying on this array as-is.
 int RELAY_PINS[5] = {16, 17, 18, 19, 23}; // RX2, TX2, D18, D19, D23
 
-// --- Per-bay indicator LEDs — UNRESOLVED. The real wiring has 12 separate
-//     GPIO-driven LED/resistor channels (D4, D5, D12, D13, D14, D15, D2,
-//     D25, D26, D27, D32, D33 -> 6 green + 4 blue + 1 red + 1 unclear-color
-//     LED), not 5. There is no electrical link between any relay's N.O.
-//     output and any of these LEDs -- each is independently driven by its
-//     own GPIO, so which LED is "next to" (i.e. meant to represent) which
-//     bay is a labeling/layout fact only knowable from the physical board,
-//     not from the wiring list. The 5 values below are a PLACEHOLDER (first
-//     5 of the 12 in listed order) -- confirm/replace with the real
-//     bay-to-LED mapping before the demo, or some bay's LED will light up
-//     while a different bay's LED stays dark.
-int BAY_LED_PINS[5] = {4, 5, 12, 13, 14};
+// --- Per-bay indicator LEDs — re-confirmed via the latest Cirkit wiring
+//     export. Real wiring has 11 GPIO-driven LED/resistor channels: 5
+//     green, 5 blue, 1 red -- one GREEN (idle) + BLUE (charging) pair per
+//     bay, plus a single system-wide RED (overload). There is no separate
+//     "system ready" green LED anymore: pin 27 (previously that role) is
+//     now bay 1's green LED, and bay 1's blue LED moved from pin 5 (no
+//     longer wired to anything) to pin 4.
+//     Bay order assumes left-to-right physical position matches bay 1-5,
+//     same assumption as the relay instance order -- confirm against the
+//     physical board before the demo if any bay's LEDs look swapped.
+//     (Three more LEDs are wired directly to relay N.O. contacts as mains-
+//     side pilot lights, not to any ESP32 GPIO -- those aren't in this list
+//     and can't be controlled from firmware.)
+int BAY_GREEN_PINS[5] = {27, 33, 13, 25, 2}; // idle indicator per bay
+int BAY_BLUE_PINS[5]  = {4, 12, 14, 26, 32}; // charging indicator per bay
 
-// No dedicated SAFE/WARNING/OVERLOAD status LEDs are wired -- all GPIOs
-// this board has 3.3V-tolerant output access to are already spoken for by
-// the 5 relays + 12 LED channels + I2C bus + BOOT button (20 pins total).
-// SAFE/WARNING/OVERLOAD status is shown on the LCD's second line only
-// (see updateLcd()). If you free up a GPIO (e.g. by dropping one of the 12
-// LED channels) a dedicated status LED can be added back.
+const int SYSTEM_RED_PIN = 15; // lone red LED -- lit on OVERLOAD (see readSensorsAndUpdateDisplay)
 
 const int BOOT_BUTTON_PIN = 0; // fixed — this is the ESP32's built-in BOOT button
 
@@ -131,7 +133,8 @@ float lastCurrentA = 0.0f;
 void setBayRelay(int bay, bool on) {
   bool level = RELAY_ACTIVE_LOW ? !on : on;
   digitalWrite(RELAY_PINS[bay], level ? HIGH : LOW);
-  digitalWrite(BAY_LED_PINS[bay], on ? HIGH : LOW);
+  digitalWrite(BAY_GREEN_PINS[bay], on ? LOW : HIGH); // idle green off while charging
+  digitalWrite(BAY_BLUE_PINS[bay], on ? HIGH : LOW);  // blue on while charging
   bayState[bay] = on;
   Serial.printf("[BAY %d] -> %s\n", bay + 1, on ? "ON" : "OFF");
 }
@@ -338,6 +341,7 @@ void readSensorsAndUpdateDisplay() {
   lastCurrentA = amps;
 
   updateLcd(amps);
+  digitalWrite(SYSTEM_RED_PIN, amps > THRESHOLD_WARN_MAX ? HIGH : LOW); // OVERLOAD indicator
 
   unsigned long now = millis();
   if (now - lastStatusPrintMs >= SERIAL_STATUS_INTERVAL_MS) {
@@ -388,8 +392,10 @@ void setup() {
 
   for (int i = 0; i < 5; i++) {
     pinMode(RELAY_PINS[i], OUTPUT);
-    pinMode(BAY_LED_PINS[i], OUTPUT);
+    pinMode(BAY_GREEN_PINS[i], OUTPUT);
+    pinMode(BAY_BLUE_PINS[i], OUTPUT);
   }
+  pinMode(SYSTEM_RED_PIN, OUTPUT);
   allRelaysOff();
 
   pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);

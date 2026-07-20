@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import HeroSection from "@/components/HeroSection";
 import GridPilotCharts from "@/components/charts/GridPilotCharts";
 import FeatureSection from "@/components/FeatureSection";
-import LiveCalculator from "@/components/LiveCalculator";
 import ParticleBackground from "@/components/ParticleBackground";
 import { apiFetch } from "@/lib/api";
 
@@ -282,8 +281,8 @@ export default function Home() {
               <div style={{
                 display: "grid",
                 gridTemplateColumns:
-                  "repeat(auto-fit,minmax(180px,1fr))",
-                gap: 12,
+                  "repeat(auto-fit,minmax(260px,1fr))",
+                gap: 18,
                 marginTop: 24,
               }}>
                 {[
@@ -317,31 +316,32 @@ export default function Home() {
                   },
                 ].map(item => (
                   <div key={item.term} style={{
-                    padding: "12px 14px",
+                    padding: "20px 22px",
                     background: "rgba(37,55,69,0.4)",
-                    borderRadius: 8,
+                    borderRadius: 10,
                     borderLeft:
-                      `3px solid ${item.color}`,
+                      `4px solid ${item.color}`,
                   }}>
                     <div style={{
-                      fontSize: 12, fontWeight: 700,
+                      fontSize: 17, fontWeight: 700,
                       color: item.color,
                       fontFamily: "var(--font-mono)",
-                      marginBottom: 4,
+                      marginBottom: 8,
                     }}>
                       {item.sym} · {item.term}
                     </div>
                     <div style={{
-                      fontSize: 12, fontWeight: 600,
+                      fontSize: 16, fontWeight: 600,
                       color: "#CCD0CF",
-                      marginBottom: 3,
+                      marginBottom: 6,
                     }}>
                       {item.name}
                     </div>
                     <div style={{
-                      fontSize: 11,
-                      color: "#4A5C6A",
+                      fontSize: 14,
+                      color: "#9BA8AB",
                       fontFamily: "var(--font-mono)",
+                      lineHeight: 1.6,
                     }}>
                       {item.desc}
                     </div>
@@ -483,8 +483,8 @@ export default function Home() {
             <div style={{
               display: "grid",
               gridTemplateColumns:
-                "repeat(auto-fit,minmax(260px,1fr))",
-              gap: 12,
+                "repeat(auto-fit,minmax(340px,1fr))",
+              gap: 20,
             }}>
               {[
                 {
@@ -572,8 +572,8 @@ export default function Home() {
                 <div key={d.source} style={{
                   background: "#11212D",
                   border: "1px solid rgba(74,92,106,0.2)",
-                  borderRadius: 12,
-                  padding: "16px",
+                  borderRadius: 14,
+                  padding: "24px",
                   boxShadow:
                     "0 4px 16px rgba(0,0,0,0.3)",
                 }}>
@@ -581,20 +581,20 @@ export default function Home() {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
-                    marginBottom: 10,
+                    marginBottom: 16,
                   }}>
                     <span style={{
-                      fontSize: 18,
+                      fontSize: 28,
                     }}>
                       {d.icon}
                     </span>
                     <span style={{
-                      fontSize: 9,
+                      fontSize: 11,
                       fontWeight: 700,
                       color: d.typeColor,
                       textTransform: "uppercase",
                       letterSpacing: "0.08em",
-                      padding: "2px 8px",
+                      padding: "3px 10px",
                       borderRadius: 12,
                       background:
                         `${d.typeColor}15`,
@@ -605,34 +605,35 @@ export default function Home() {
                     </span>
                   </div>
                   <div style={{
-                    fontSize: 13,
+                    fontSize: 18,
                     fontWeight: 700,
                     color: "#CCD0CF",
-                    marginBottom: 4,
+                    marginBottom: 6,
                   }}>
                     {d.source}
                   </div>
                   <div style={{
-                    fontSize: 13,
+                    fontSize: 17,
                     fontWeight: 600,
                     color: "#7C5CBF",
                     fontFamily: "var(--font-mono)",
-                    marginBottom: 8,
+                    marginBottom: 12,
                   }}>
                     {d.value}
                   </div>
                   <div style={{
-                    fontSize: 11,
+                    fontSize: 15,
                     color: "#9BA8AB",
-                    lineHeight: 1.5,
-                    marginBottom: 8,
+                    lineHeight: 1.65,
+                    marginBottom: 12,
                   }}>
                     {d.usage}
                   </div>
                   <div style={{
-                    fontSize: 10,
+                    fontSize: 12,
                     color: "#4A5C6A",
                     fontStyle: "italic",
+                    lineHeight: 1.5,
                   }}>
                     {d.citation}
                   </div>
@@ -775,55 +776,6 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* SECTION 4: Interactive Calculator */}
-        <section style={{
-          width: "100%",
-          padding: "60px 32px",
-          background: "transparent",
-          borderTop:
-            "1px solid rgba(74,92,106,0.1)",
-        }}>
-          <div style={{
-            maxWidth: 900, margin: "0 auto",
-          }}>
-            <div style={{
-              textAlign: "center",
-              marginBottom: 40,
-            }}>
-              <span style={{
-                fontSize: 10, fontWeight: 600,
-                textTransform: "uppercase",
-                letterSpacing: "0.12em",
-                color: "#7C5CBF",
-                display: "block", marginBottom: 12,
-              }}>
-                Interactive calculator
-              </span>
-              <h2 style={{
-                fontSize: "clamp(22px,3vw,36px)",
-                fontWeight: 700, color: "#CCD0CF",
-                letterSpacing: "-0.02em",
-                marginBottom: 12,
-              }}>
-                Change the inputs.
-                Watch the math update.
-              </h2>
-              <p style={{
-                fontSize: 14, color: "#9BA8AB",
-                maxWidth: 520,
-                margin: "0 auto",
-                lineHeight: 1.6,
-              }}>
-                Drag the sliders to see how fleet size,
-                tariff rates, and charger mix affect the
-                optimizer output. Every calculation is
-                shown step by step.
-              </p>
-            </div>
-            <LiveCalculator />
           </div>
         </section>
 

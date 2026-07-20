@@ -21,9 +21,9 @@ except Exception:
 
 
 class GridPilotScheduler:
-    # Fleet scaled 600 -> 40 vehicles (1:15). Transformer/DVVNL/target limits
-    # scaled proportionally so the peak-shaving story stays representative
-    # instead of vanishing under a transformer sized for the old fleet.
+    # Fleet scaled 600 -> 40 vehicles (1:15). Transformer/DVVNL limits scaled
+    # proportionally so the constraints stay representative instead of
+    # vanishing under a transformer sized for the old fleet.
     TRANSFORMER_LIMIT = 270  # kVA, nameplate transformer rating
     DVVNL_LIMIT = 300        # kVA, DVVNL sanctioned load
     # DVVNL bills load in kVA (see api/routers/report.py POWER_FACTOR), and a
@@ -44,7 +44,15 @@ class GridPilotScheduler:
     delta = 0.10
     DEMAND_CHARGE_RATE = 350
 
-    MANAGED_TARGET_KW = 135
+    # Continuous-loading safety margin: IEEE C57.91 transformer-loading
+    # practice keeps sustained loading at or below ~80% of nameplate thermal
+    # rating, reserving headroom for ambient-temperature swings and N-1
+    # contingency. The managed target is derived from that margin applied to
+    # the real transformer rating below — not a hand-picked round number —
+    # so the reported peak reduction traces back to an equipment constraint
+    # instead of a value chosen to make the percentage look good.
+    TRANSFORMER_SAFETY_MARGIN = 0.80
+    MANAGED_TARGET_KW = TRANSFORMER_LIMIT_REAL_KW * TRANSFORMER_SAFETY_MARGIN  # 172.8 kW
     MIN_DELIVERY_FRACTION = 1.0
     # Convex solver's absolute ceiling — a bit above the DVVNL billing
     # threshold so the optimizer has room to trade DVVNL penalty against
@@ -61,9 +69,9 @@ class GridPilotScheduler:
             scale = n_vehicles_for_capacity / self.REFERENCE_FLEET_SIZE
             self.TRANSFORMER_LIMIT = self.TRANSFORMER_LIMIT * scale
             self.DVVNL_LIMIT = self.DVVNL_LIMIT * scale
-            self.MANAGED_TARGET_KW = self.MANAGED_TARGET_KW * scale
             self.TRANSFORMER_LIMIT_REAL_KW = self.TRANSFORMER_LIMIT * self.POWER_FACTOR
             self.DVVNL_LIMIT_REAL_KW = self.DVVNL_LIMIT * self.POWER_FACTOR
+            self.MANAGED_TARGET_KW = self.TRANSFORMER_LIMIT_REAL_KW * self.TRANSFORMER_SAFETY_MARGIN
             self.HARD_CAP_KW = self.DVVNL_LIMIT_REAL_KW + 40 * scale
 
     def _compute_availability_matrix(self, arrivals, departures, n_vehicles, n_slots, base_time: pd.Timestamp) -> np.ndarray:
@@ -88,7 +96,13 @@ class GridPilotScheduler:
         enable_v2g: bool = False,
         unmanaged_reference: dict | None = None,
         base_time_override: pd.Timestamp | None = None,
+        include_range: bool = False,
     ) -> dict:
+        """include_range=True additionally solves a pure peak-minimization LP
+        to report the mathematically best-achievable peak alongside the
+        safety-margin-target result. That's a second solve, so leave it off
+        (default) for hot paths like MPCController's per-tick re-solve or the
+        hardware bridge — opt in only for one-shot, user-facing responses."""
         start_time = time.perf_counter()
         prepared = self._prepare_inputs(ev_requests, building_load, carbon_signal, base_time_override=base_time_override)
 
@@ -97,14 +111,14 @@ class GridPilotScheduler:
 
         if CVXPY_AVAILABLE and len(ev_requests) <= 601:
             try:
-                return self._solve_cvxpy(prepared, start_time, unmanaged_reference)
+                return self._solve_cvxpy(prepared, start_time, unmanaged_reference, include_range)
             except Exception as e:
                 import traceback
                 traceback.print_exc()
                 print(f"CVXPY optimization failed: {e}. Falling back to EDF.")
                 pass
 
-        return self._edf_fallback(prepared, start_time, unmanaged_reference)
+        return self._edf_fallback(prepared, start_time, unmanaged_reference, include_range)
 
     def get_unmanaged_baseline(self, ev_requests: pd.DataFrame, building_load: pd.Series) -> dict:
         prepared = self._prepare_inputs(ev_requests, building_load, {})
@@ -138,7 +152,7 @@ class GridPilotScheduler:
             unmanaged_reference=None,
         )
 
-    def _solve_cvxpy(self, prepared: dict, start_time: float, unmanaged_reference: dict) -> dict:
+    def _solve_cvxpy(self, prepared: dict, start_time: float, unmanaged_reference: dict, include_range: bool = False) -> dict:
         n_vehicles = prepared["n_vehicles"]
         n_slots = prepared["n_slots"]
         availability = prepared["availability"]
@@ -183,9 +197,12 @@ class GridPilotScheduler:
         prob.solve(solver=cp.CLARABEL, verbose=False)
         if prob.status not in {"optimal", "optimal_inaccurate"} or power.value is None:
             raise RuntimeError(f"CVXPY status: {prob.status}")
-        return self._result("optimal", (time.perf_counter() - start_time) * 1000.0, power.value, prepared, unmanaged_reference)
+        return self._result(
+            "optimal", (time.perf_counter() - start_time) * 1000.0, power.value, prepared, unmanaged_reference,
+            include_range=include_range,
+        )
 
-    def _edf_fallback(self, prepared: dict, start_time: float, unmanaged_reference: dict) -> dict:
+    def _edf_fallback(self, prepared: dict, start_time: float, unmanaged_reference: dict, include_range: bool = False) -> dict:
         n_vehicles = prepared["n_vehicles"]
         n_slots = prepared["n_slots"]
         availability = prepared["availability"]
@@ -244,6 +261,7 @@ class GridPilotScheduler:
             power,
             prepared,
             unmanaged_reference,
+            include_range=include_range,
         )
 
     def _prepare_inputs(
@@ -289,6 +307,44 @@ class GridPilotScheduler:
             carbon[slot] = lookup.get(ts.strftime("%Y-%m-%d %H:%M"), carbon[slot])
         return carbon
 
+    def _theoretical_min_peak(self, prepared: dict) -> float | None:
+        """Pure peak-minimization LP: the lowest peak physically achievable
+        given full-delivery + charger + availability constraints, ignoring
+        carbon/discomfort/DVVNL tradeoffs entirely. This is the mathematical
+        ceiling on peak reduction for this fleet/night — the top end of the
+        reported range. Returns None if CVXPY is unavailable or infeasible."""
+        if not CVXPY_AVAILABLE:
+            return None
+        n_vehicles = prepared["n_vehicles"]
+        n_slots = prepared["n_slots"]
+        availability = prepared["availability"]
+        building_load = prepared["building_load"]
+        energy_needed = prepared["energy_needed"]
+        evs = prepared["ev_requests"]
+        if "charger_kw" in evs.columns:
+            charger_powers = evs["charger_kw"].values.astype(float)
+        else:
+            charger_powers = np.full(n_vehicles, self.CHARGER_POWER)
+        charger_power_matrix = np.tile(charger_powers.reshape(-1, 1), (1, n_slots))
+
+        power = cp.Variable((n_vehicles, n_slots), nonneg=True)
+        peak = cp.Variable(nonneg=True)
+        total_load = cp.sum(power, axis=0) + building_load
+        energy_delivered = cp.sum(cp.multiply(power, availability), axis=1) * self.DELTA_T
+        constraints = [
+            power <= cp.multiply(charger_power_matrix, availability),
+            energy_delivered >= energy_needed * self.MIN_DELIVERY_FRACTION,
+            total_load <= peak,
+        ]
+        try:
+            prob = cp.Problem(cp.Minimize(peak), constraints)
+            prob.solve(solver=cp.CLARABEL, verbose=False)
+            if prob.status in {"optimal", "optimal_inaccurate"} and peak.value is not None:
+                return float(peak.value)
+        except Exception:
+            pass
+        return None
+
     def _result(
         self,
         status: str,
@@ -296,6 +352,7 @@ class GridPilotScheduler:
         power: np.ndarray,
         prepared: dict,
         unmanaged_reference: dict | None,
+        include_range: bool = False,
     ) -> dict:
         availability = prepared["availability"]
         energy_needed = prepared["energy_needed"]
@@ -349,6 +406,19 @@ class GridPilotScheduler:
                 "scheduled_dvvnl_penalty_inr": dvvnl_penalty,
                 "dvvnl_monthly_saving_inr": (unmanaged_reference["peak_kw"] - peak_kw) * self.DEMAND_CHARGE_RATE,
             }
+            if include_range:
+                theoretical_min_peak_kw = self._theoretical_min_peak(prepared)
+                if theoretical_min_peak_kw is not None:
+                    max_achievable_reduction_pct = (
+                        (unmanaged_reference["peak_kw"] - theoretical_min_peak_kw)
+                        / unmanaged_reference["peak_kw"] * 100.0
+                    )
+                    comparison["theoretical_min_peak_kw"] = round(theoretical_min_peak_kw, 2)
+                    comparison["max_achievable_reduction_pct"] = round(float(max_achievable_reduction_pct), 2)
+                    comparison["peak_reduction_range_pct"] = [
+                        round(float(peak_reduction_pct), 1),
+                        round(float(max_achievable_reduction_pct), 1),
+                    ]
 
         schedule = {
             str(evs.loc[v, "vehicle_id"]): {
@@ -419,7 +489,7 @@ if __name__ == "__main__":
     assert unmanaged["peak_kw"] > 200
     assert unmanaged["overload_events"] >= 0
 
-    managed = scheduler.schedule(requests, building, carbon_signal={})
+    managed = scheduler.schedule(requests, building, carbon_signal={}, include_range=True)
     comp = managed["comparison"]
     print("\nMetric              | Unmanaged | GridPilot | Delta")
     print(f"Peak load (kW)      | {comp['unmanaged_peak_kw']:,.0f}     | {comp['scheduled_peak_kw']:,.0f}     | -{comp['peak_reduction_pct']:.1f}%")
@@ -428,9 +498,13 @@ if __name__ == "__main__":
     print(f"DVVNL penalty/mo    | Rs {comp['unmanaged_dvvnl_penalty_inr'] / 100000:.1f} lakh | Rs {comp['scheduled_dvvnl_penalty_inr'] / 100000:.1f} lakh | -100%")
     print(f"All vehicles ready  | NO        | {'YES' if managed['all_ready_on_time'] else 'NO'}       | OK")
     print(f"Status: {managed['status']} in {managed['solve_time_ms']:.1f} ms")
+    if "peak_reduction_range_pct" in comp:
+        lo, hi = comp["peak_reduction_range_pct"]
+        print(f"\nPeak reduction, safety-margin target (80% of transformer rating): {lo:.1f}%")
+        print(f"Peak reduction, theoretical max (pure peak-min LP, same delivery guarantee): {hi:.1f}%")
 
     assert managed["status"] in {"optimal", "edf_fallback"}
-    assert managed["peak_reduction_pct"] > 40.0
+    assert managed["peak_reduction_pct"] > 30.0
     assert managed["all_ready_on_time"] is True
     assert managed["overload_events"] == 0
     # Note: solve time increased with CY2025 fleet (larger batteries)

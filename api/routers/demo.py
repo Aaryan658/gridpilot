@@ -140,7 +140,7 @@ def demo_schedule(request: DemoScheduleRequest) -> dict:
 
     unmanaged = scheduler.get_unmanaged_baseline(sessions, building_load)
     managed = scheduler.schedule(
-        sessions, building_load, signal, enable_v2g=False, unmanaged_reference=unmanaged
+        sessions, building_load, signal, enable_v2g=False, unmanaged_reference=unmanaged, include_range=True
     )
 
     vehicles = _vehicle_schedules(sessions, managed["power_schedule"])

@@ -47,8 +47,8 @@ export default function OptimizerPage() {
         }
 
         setResult({
-          peak_reduction_pct: c?.peak_reduction_pct || 54.0,
-          dvvnl_monthly_saving_inr: c?.dvvnl_monthly_saving_inr || 55573,
+          peak_reduction_pct: c?.peak_reduction_pct || 41.2,
+          dvvnl_monthly_saving_inr: c?.dvvnl_monthly_saving_inr || 42343,
           carbon_saved_kg: carbonSaved,
           solve_time_ms: rawMs,
           all_ready: data?.all_ready_on_time ?? data?.managed?.fleet_summary?.all_ready_on_time ?? true,
@@ -59,8 +59,8 @@ export default function OptimizerPage() {
         console.error("Optimization failed", err);
         // Fallback to demo result if API fails so presentation doesn't break
         setResult({
-          peak_reduction_pct: 54.0,
-          dvvnl_monthly_saving_inr: 55573,
+          peak_reduction_pct: 41.2,
+          dvvnl_monthly_saving_inr: 42343,
           carbon_saved_kg: 138,
           solve_time_ms: Date.now() - startTime,
           all_ready: true,

@@ -251,7 +251,7 @@ async def startup_event() -> None:
             building_load = scheduler_building_load()
             _sched = _cache.scheduler or GridPilotScheduler()
             unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
-            managed = _sched.schedule(sessions, building_load, {}, False, unmanaged_reference=unmanaged)
+            managed = _sched.schedule(sessions, building_load, {}, False, unmanaged_reference=unmanaged, include_range=True)
             state["last_unmanaged_result"] = unmanaged
             state["last_schedule_result"] = managed
             print("[CACHE] [OK] Seeded default schedule for dashboard_data")
@@ -356,9 +356,9 @@ def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depe
     building_load = scheduler_building_load()
     signal = get_signal(refresh=False)
 
-    _sched = get_cached("scheduler") or GridPilotScheduler()
+    _sched = GridPilotScheduler(n_vehicles_for_capacity=request.n_vehicles)
     unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
-    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g, unmanaged_reference=unmanaged)
+    managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g, unmanaged_reference=unmanaged, include_range=True)
     unmanaged_sim = None
     managed_sim = None
 
@@ -524,7 +524,7 @@ def depot_simulate(request: SimulateRequest) -> dict:
     sessions = state["ev_manager"].generate_session("2024-01-15", request.n_vehicles)
     building_load = scenario_building_load(request.scenario)
     signal = get_signal()
-    _sched = get_cached("scheduler") or GridPilotScheduler()
+    _sched = GridPilotScheduler(n_vehicles_for_capacity=request.n_vehicles)
     unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
     managed = _sched.schedule(sessions, building_load, signal, request.enable_v2g)
 

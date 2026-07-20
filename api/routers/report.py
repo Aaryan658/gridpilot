@@ -57,8 +57,8 @@ def get_latest_report(
             ),
         )
 
-    peak_managed = run.peak_kw_managed or 2000.0
-    peak_unmanaged = run.peak_kw_unmanaged or 4456.0
+    peak_managed = run.peak_kw_managed or 135.0
+    peak_unmanaged = run.peak_kw_unmanaged or 293.8
     demand_managed = _compute_demand_charge(peak_managed)
     demand_unmanaged = _compute_demand_charge(peak_unmanaged)
 
@@ -76,18 +76,18 @@ def get_latest_report(
         "run_at": run.run_at.isoformat() if run.run_at else None,
         "peak_kw_managed": peak_managed,
         "peak_kw_unmanaged": peak_unmanaged,
-        "peak_reduction_percent": run.peak_reduction_percent or 55.1,
+        "peak_reduction_percent": run.peak_reduction_percent or 54.0,
         "demand_charge_managed_inr": demand_managed,
         "demand_charge_unmanaged_inr": demand_unmanaged,
-        "saving_inr": run.saving_inr or 860000,
-        "saving_monthly_inr": run.saving_inr or 860000,
-        "carbon_saved_kg": run.carbon_saved_kg or 2072,
-        "trees_equivalent": int((run.carbon_saved_kg or 2072) / 4.8),
-        "vehicles_ready": run.vehicles_ready or 600,
-        "vehicles_total": run.vehicles_total or 600,
+        "saving_inr": run.saving_inr or 55573,
+        "saving_monthly_inr": run.saving_inr or 55573,
+        "carbon_saved_kg": run.carbon_saved_kg or 138,
+        "trees_equivalent": int((run.carbon_saved_kg or 138) / 4.8),
+        "vehicles_ready": run.vehicles_ready or 40,
+        "vehicles_total": run.vehicles_total or 40,
         "overload_events": run.overload_events or 0,
         "solver_status": run.solver_status or "optimal",
-        "solve_time_ms": run.solve_time_ms or 3000,
+        "solve_time_ms": run.solve_time_ms or 161,
         "load_curve": load_curve,
     }
 

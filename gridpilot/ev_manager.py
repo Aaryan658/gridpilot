@@ -13,7 +13,7 @@ from pipeline.acn_loader import ACNDataLoader
 
 
 class EVRequestManager:
-    FLEET_SIZE = 600
+    FLEET_SIZE = 40
     OPERATOR_CONTEXT = (
         "Corporate EV Fleet Depot, Gurugram (modeled on Lithium Urban Technologies "
         "fleet profile)"
@@ -23,10 +23,18 @@ class EVRequestManager:
         self.loader = ACNDataLoader()
         self._active_requests: list[dict] = []
 
-    def generate_session(self, date: str | None = None, n: int = 600) -> pd.DataFrame:
+    def generate_session(
+        self,
+        date: str | None = None,
+        n: int = 40,
+        soc_override_pct: float | dict | None = None,
+        target_soc_pct: float = 80.0,
+    ) -> pd.DataFrame:
         from pipeline.acn_loader import ACNDataLoader
         loader = ACNDataLoader()
-        sessions = loader.get_corporate_depot_night(date=date, n_vehicles=n)
+        sessions = loader.get_corporate_depot_night(
+            date=date, n_vehicles=n, soc_override_pct=soc_override_pct, target_soc_pct=target_soc_pct
+        )
 
         records = sessions.to_dict("records")
         for session in records:
@@ -69,10 +77,10 @@ class EVRequestManager:
 
 if __name__ == "__main__":
     manager = EVRequestManager()
-    sessions = manager.generate_session(date="2024-03-15", n=600)
+    sessions = manager.generate_session(date="2024-03-15", n=40)
     summary = manager.get_fleet_summary(sessions)
 
-    print("Generated 600 sessions")
+    print("Generated 40 sessions")
     print("Fleet summary:")
     for key, value in summary.items():
         print(f"  {key}: {value}")
@@ -81,11 +89,11 @@ if __name__ == "__main__":
     deadlines = pd.to_datetime(sessions["departure_deadline"])
     arrival_hours = arrivals.dt.hour + arrivals.dt.minute / 60.0
 
-    assert summary["total_evs"] == 600
+    assert summary["total_evs"] == 40
     assert "Tata Nexon EV" in sessions["vehicle_model"].values
     assert ((arrival_hours >= 20.0) & (arrival_hours <= 22.0)).all()
     assert (deadlines.dt.strftime("%H:%M") == "07:00").all()
     assert summary["all_deadline"] == "07:00"
-    assert summary["zone_breakdown"] == {"A": 150, "B": 150, "C": 150, "D": 150}
-    assert len(manager.get_active_requests()) == 600
+    assert summary["zone_breakdown"] == {"A": 10, "B": 10, "C": 10, "D": 10}
+    assert len(manager.get_active_requests()) == 40
     print("All EVRequestManager tests passed.")

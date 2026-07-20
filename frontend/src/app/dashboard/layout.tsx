@@ -3,7 +3,7 @@
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Calendar, Activity, FileText, Settings, LogOut, User as UserIcon } from 'lucide-react'
+import { Calendar, Activity, FileText, Settings, LogOut, User as UserIcon, PlayCircle } from 'lucide-react'
 
 export default function DashboardLayout({
   children,
@@ -29,6 +29,7 @@ export default function DashboardLayout({
     { name: "Tonight's Schedule", href: '/dashboard', icon: Calendar },
     { name: 'Live Status', href: '/dashboard/live', icon: Activity },
     { name: 'Nightly Report', href: '/dashboard/report', icon: FileText },
+    { name: 'Demo Mode', href: '/dashboard/demo', icon: PlayCircle },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ]
 
@@ -80,6 +81,7 @@ export default function DashboardLayout({
             {pathname === '/dashboard' && "Schedule Overview"}
             {pathname === '/dashboard/live' && "Charger Grid Live Status"}
             {pathname === '/dashboard/report' && "Nightly Performance Report"}
+            {pathname === '/dashboard/demo' && "Demo Mode — Overload → Optimize → Zero Overloads"}
             {pathname === '/dashboard/settings' && "System Settings"}
           </div>
           

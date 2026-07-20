@@ -1,5 +1,6 @@
 "use client";
 import { useState, useCallback } from "react";
+import { formatINR } from "@/lib/utils";
 
 const FLEET_MIX = [
   { model: "Tata Nexon EV",   share: 0.27,
@@ -16,10 +17,10 @@ const FLEET_MIX = [
     batt: 50.3, charger: 7.4 },
 ];
 
-const BUILDING_KW = 400;
-const TARGET_KW = 2000;
-const TRANSFORMER_KW = 4000;
-const DVVNL_LIMIT_KW = 4500;
+const BUILDING_KW = 25;
+const TARGET_KW = 135;
+const TRANSFORMER_KW = 270;
+const DVVNL_LIMIT_KW = 300;
 const DELTA_T = 0.25;
 const N_SLOTS = 44;
 const ALPHA = 0.50;
@@ -34,7 +35,7 @@ function fmt(n: number, dec = 0): string {
 }
 
 export default function LiveCalculator() {
-  const [nVehicles,  setN]   = useState(600);
+  const [nVehicles,  setN]   = useState(40);
   const [socArrival, setSoc]  = useState(20);
   const [demandRate, setDr]   = useState(350);
   const [carbonInt,  setCi]   = useState(71.0);
@@ -76,7 +77,7 @@ export default function LiveCalculator() {
       * 500;
 
     const reductionFactor = Math.min(
-      0.551 + (n - 600) * 0.0008, 0.68
+      0.540 + (n - 40) * 0.002, 0.65
     );
     const managed  = Math.round(
       unPeak * (1 - reductionFactor)
@@ -163,7 +164,7 @@ export default function LiveCalculator() {
   const sliders = [
     {
       label: "Fleet size",
-      min: 50, max: 1000, step: 50,
+      min: 10, max: 200, step: 10,
       value: nVehicles,
       display: `${nVehicles} vehicles`,
       onChange: setN,
@@ -223,7 +224,7 @@ export default function LiveCalculator() {
           How to read this:
         </span>
         {" "}GridPilot solves an optimization problem
-        with 600 variables (one per vehicle) and
+        with 40 vehicles × 96 time slots (3,840 variables) and
         2 hard rules it can never break.
         Within those rules it finds the schedule
         that simultaneously minimizes carbon
@@ -313,17 +314,17 @@ export default function LiveCalculator() {
           fmt(c.evPeak) + " kW"
         )}
         {eqLine("2c",
-          "total_peak = ev_peak + building_load (400 kW DVVNL baseline)",
+          "total_peak = ev_peak + building_load (25 kW DVVNL baseline)",
           fmt(c.unPeak) + " kW",
-          c.unPeak > 4000 ? "#E74C3C" : "#CCD0CF"
+          c.unPeak > TRANSFORMER_KW ? "#E74C3C" : "#CCD0CF"
         )}
         {eqLine("2d",
-          "transformer_utilisation = total_peak / 4,000 kW",
+          "transformer_utilisation = total_peak / 270 kW",
           c.utilPct.toFixed(0) + "%",
           c.utilPct > 100 ? "#E74C3C" : "#27AE60"
         )}
         {eqLine("2e",
-          "overload_events = 15min slots where total_load > 4,000 kW",
+          "overload_events = 15min slots where total_load > 270 kW",
           c.overloads + " events",
           c.overloads > 0 ? "#E74C3C" : "#27AE60"
         )}
@@ -378,7 +379,7 @@ export default function LiveCalculator() {
           "#27AE60"
         )}
         {eqLine("3b",
-          "P(x) = Σ max(total_load[t]−2000, 0)²  · β=0.20 (peak squared)",
+          "P(x) = Σ max(total_load[t]−135, 0)²  · β=0.20 (peak squared)",
           fmt(c.pxTerm, 1),
           "#7C5CBF"
         )}
@@ -388,7 +389,7 @@ export default function LiveCalculator() {
           "#F9CA24"
         )}
         {eqLine("3d",
-          "V(x) = max(peak−4500, 0)×500  · δ=0.10 (DVVNL hard penalty)",
+          "V(x) = max(peak−300, 0)×500  · δ=0.10 (DVVNL hard penalty)",
           fmt(c.vxTerm, 0),
           "#E74C3C"
         )}
@@ -397,7 +398,7 @@ export default function LiveCalculator() {
           "physical limit"
         )}
         {eqLine("3f",
-          "Every vehicle must receive at least 80% charge before 07:00 morning dispatch deadline",
+          "Every vehicle must receive 100% of its target charge before 07:00 morning dispatch deadline",
           "delivery guarantee"
         )}
       </div>
@@ -428,13 +429,12 @@ export default function LiveCalculator() {
         )}
         {eqLine("4e",
           "dvvnl_saving = (unmanaged − managed) × demand_rate",
-          "₹" + (c.dvvnlSav/100000).toFixed(2)
-          + "L/mo",
+          formatINR(c.dvvnlSav) + "/mo",
           "#F9CA24"
         )}
         {eqLine("4f",
-          "all_vehicles_ready = Σ delivered[v] ≥ 0.80 × battery_kwh",
-          "600/600 ✓",
+          "all_vehicles_ready = Σ delivered[v] ≥ 1.00 × energy_needed[v]",
+          "40/40 ✓",
           "#27AE60"
         )}
       </div>
@@ -452,8 +452,7 @@ export default function LiveCalculator() {
             col: "#27AE60",
           },
           {
-            v: "₹" + (c.dvvnlSav/100000)
-               .toFixed(2) + "L",
+            v: formatINR(c.dvvnlSav),
             l: "DVVNL saving/mo",
             col: "#F9CA24",
           },
@@ -503,9 +502,9 @@ export default function LiveCalculator() {
         Step 4 managed peak estimated from
         objective weights · Press "Run Live
         Optimization" for actual CLARABEL output ·
-        Real API result (~650 kg) is lower because
+        Real API result (~629 kg) is lower because
         the optimizer shifts charging to the clean
-        window (0.613 kg/kWh vs 0.710 kg/kWh average)
+        window (0.647 kg/kWh vs 0.710 kg/kWh average)
       </p>
     </div>
   );

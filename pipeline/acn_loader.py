@@ -94,7 +94,7 @@ class ACNDataLoader:
         }
 
     def get_corporate_depot_night(
-        self, date=None, n_vehicles=500
+        self, date=None, n_vehicles=500, soc_override_pct=None, target_soc_pct=80.0
     ):
         if isinstance(date, int):
             n_vehicles = date
@@ -165,17 +165,26 @@ class ACNDataLoader:
             r_km = VEHICLE_RANGES[model]
 
             for _ in range(count):
-                if r_km < 280:
+                vehicle_id = model.replace(" ", "_") + f"_{vehicle_num:04d}"
+
+                if isinstance(soc_override_pct, dict):
+                    override = soc_override_pct.get(vehicle_id)
+                else:
+                    override = soc_override_pct
+
+                if override is not None:
+                    initial_soc = max(0.0, min(1.0, override / 100.0))
+                elif r_km < 280:
                     soc_min, soc_max = 0.10, 0.20
+                    initial_soc = np.random.uniform(soc_min, soc_max)
                 elif r_km < 350:
                     soc_min, soc_max = 0.15, 0.25
+                    initial_soc = np.random.uniform(soc_min, soc_max)
                 else:
                     soc_min, soc_max = 0.20, 0.35
+                    initial_soc = np.random.uniform(soc_min, soc_max)
 
-                initial_soc = np.random.uniform(
-                    soc_min, soc_max
-                )
-                energy_needed = (0.80 - initial_soc) * battery
+                energy_needed = max(0.0, (target_soc_pct / 100.0 - initial_soc) * battery)
 
                 zone = ["A", "B", "C", "D"][
                     (vehicle_num - 1) % 4
@@ -184,10 +193,7 @@ class ACNDataLoader:
                 vehicles.append({
                     "session_id":
                         f"GP_{vehicle_num:04d}",
-                    "vehicle_id": (
-                        model.replace(" ", "_") +
-                        f"_{vehicle_num:04d}"
-                    ),
+                    "vehicle_id": vehicle_id,
                     "vehicle_model": model,
                     "battery_kwh": battery,
                     "charger_kw": charger,
@@ -199,7 +205,7 @@ class ACNDataLoader:
                     "current_soc_pct": round(
                         initial_soc * 100, 1
                     ),
-                    "target_soc_pct": 80.0,
+                    "target_soc_pct": target_soc_pct,
                     "energy_needed_kwh": round(
                         energy_needed, 1
                     ),

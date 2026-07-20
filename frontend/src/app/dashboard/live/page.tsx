@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { getToken } from "@/lib/auth";
 import ChargerGrid from "@/components/ChargerGrid";
+import AlertsFeed from "@/components/AlertsFeed";
 import EmptyState from "@/components/ui/EmptyState";
 
 export default function LivePage() {
@@ -70,7 +71,7 @@ export default function LivePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Live Charger Status</h1>
-          <p className="text-xs text-gray-500 mt-1">600 vehicles — Gurugram Hub 1</p>
+          <p className="text-xs text-gray-500 mt-1">40 vehicles — Gurugram Hub 1</p>
         </div>
       </div>
       <ChargerGrid
@@ -78,6 +79,7 @@ export default function LivePage() {
         token={token}
         summary={initialData.summary}
       />
+      <AlertsFeed token={token} />
     </div>
   );
 }

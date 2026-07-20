@@ -76,6 +76,7 @@ export default function Home() {
           </a>
           <button
             onClick={handleLiveDashboardClick}
+            suppressHydrationWarning
             style={{
               fontSize: 12,
               fontWeight: 600,
@@ -164,8 +165,8 @@ export default function Home() {
                 margin: "0 auto",
                 lineHeight: 1.6,
               }}>
-                CVXPY convex QP solved in 35s for
-                600 vehicles. pandapower AC power flow
+                CVXPY convex QP solved in 0.2s for
+                40 vehicles. pandapower AC power flow
                 validates every result. CEA India
                 2024-25 carbon data.
               </p>
@@ -214,7 +215,7 @@ export default function Home() {
                 guaranteed optimal schedule using
                 CVXPY with the CLARABEL interior-point
                 solver. Four competing objectives.
-                One hard constraint. 57,600 variables.
+                One hard constraint. 3,840 variables.
               </p>
             </div>
 
@@ -297,7 +298,7 @@ export default function Home() {
                     sym: "β = 0.20",
                     term: "P(x)",
                     name: "Peak penalty",
-                    desc: "sum(max(load − 2000, 0)²)",
+                    desc: "sum(max(load − 135, 0)²)",
                     color: "#7C5CBF",
                   },
                   {
@@ -311,7 +312,7 @@ export default function Home() {
                     sym: "δ = 0.10",
                     term: "V(x)",
                     name: "DVVNL penalty",
-                    desc: "max(peak − 4500, 0) × 500",
+                    desc: "max(peak − 300, 0) × 500",
                     color: "#E74C3C",
                   },
                 ].map(item => (
@@ -394,9 +395,9 @@ export default function Home() {
                   color: "#7C5CBF",
                 },
                 {
-                  value: "35s",
+                  value: "0.2s",
                   label: "Total solve time",
-                  sub: "600 vehicles, 96 timeslots (full pipeline)",
+                  sub: "40 vehicles, 96 timeslots (full pipeline)",
                   color: "#00D4AA",
                 },
                 {
@@ -406,9 +407,9 @@ export default function Home() {
                   color: "#27AE60",
                 },
                 {
-                  value: "57,600",
+                  value: "3,840",
                   label: "Variables",
-                  sub: "600 vehicles × 96 slots",
+                  sub: "40 vehicles × 96 slots",
                   color: "#9BA8AB",
                 },
               ].map(s => (

@@ -57,18 +57,19 @@ class GridPilotCentralSystem:
                 "duration":
                     duration_minutes * 60,
                 "startSchedule": start_time,
-                "chargingRateUnit": "kW",
+                # OCPP 1.6J's schema only allows 'A' or 'W' here, not 'kW'.
+                "chargingRateUnit": "W",
                 "chargingSchedulePeriod": [
                     {
                         "startPeriod": 0,
-                        "limit": power_kw
+                        "limit": power_kw * 1000
                     }
                 ]
             }
         }
         try:
             response = await charger.call(
-                call.SetChargingProfilePayload(
+                call.SetChargingProfile(
                     connector_id=1,
                     cs_charging_profiles=profile
                 )

@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import ChargerTile from "./ChargerTile";
 import { config } from "@/lib/config";
+import { apiFetch } from "@/lib/api";
 
 type ChargerData = {
   vehicle_id: string;
@@ -101,23 +102,47 @@ export default function ChargerGrid({ initialChargers, token, summary: initialSu
     };
   }, [connectSSE]);
 
-  /* Simulate update button for development */
-  const simulateUpdate = () => {
-    const statuses = ["charging", "queued", "ready", "fault"];
-    setChargers((prev) => {
-      const updated = [...prev];
-      for (let i = 0; i < 10; i++) {
-        const idx = Math.floor(Math.random() * updated.length);
-        updated[idx] = {
-          ...updated[idx],
-          status: statuses[Math.floor(Math.random() * statuses.length)],
-          soc_percent: Math.round(Math.random() * 80 + 20),
-          current_power_kw: parseFloat((Math.random() * 7.4).toFixed(1)),
-        };
-      }
-      return updated;
-    });
-  };
+  /* Dev-only: ask the backend to advance every actively-charging vehicle by
+     a real time-step (same energy physics as schedule_adapter.py), mutating
+     the persisted ChargerStatus rows. Must go through the API, not local
+     state — the live SSE feed re-reads those same rows every 5s and would
+     otherwise silently revert any client-only change on the next tick.
+
+     Auto-play re-issues this call on a fixed cadence, matching how real
+     receding-horizon MPC EV-charging controllers operate: re-check actual
+     state, advance one control step, apply it, repeat — never a one-off
+     manual action. (5-min re-solve step is standard in production systems;
+     we tick faster in wall-clock time here purely so the demo animates.) */
+  const TICK_MINUTES = 5;
+  const AUTOPLAY_INTERVAL_MS = 1200;
+  const [advancing, setAdvancing] = useState(false);
+  const [autoPlaying, setAutoPlaying] = useState(false);
+  const advancingRef = useRef(false);
+
+  const simulateUpdate = useCallback(async () => {
+    if (advancingRef.current) return;
+    advancingRef.current = true;
+    setAdvancing(true);
+    try {
+      const res = await apiFetch(`/depot/chargers/advance?minutes=${TICK_MINUTES}`, { method: "POST" }, token);
+      setChargers(res.chargers || []);
+      setSummary(res.summary || summary);
+      setLastUpdated(res.last_updated ?? lastUpdated);
+      if (res.summary && res.summary.charging === 0) setAutoPlaying(false);
+    } catch (err) {
+      console.error("Advance failed:", err);
+      setAutoPlaying(false);
+    } finally {
+      advancingRef.current = false;
+      setAdvancing(false);
+    }
+  }, [token, summary, lastUpdated]);
+
+  useEffect(() => {
+    if (!autoPlaying) return;
+    const id = setInterval(simulateUpdate, AUTOPLAY_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [autoPlaying, simulateUpdate]);
 
   const isDev = process.env.NEXT_PUBLIC_ENV === "development" || process.env.NODE_ENV === "development";
 
@@ -144,12 +169,25 @@ export default function ChargerGrid({ initialChargers, token, summary: initialSu
             <span>Updated: {new Date(lastUpdated).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" })}</span>
           )}
           {isDev && (
-            <button
-              onClick={simulateUpdate}
-              className="px-3 py-1 bg-[#2A2D3D] hover:bg-[#3A3D4D] rounded text-gray-300 transition-colors"
-            >
-              Simulate Update
-            </button>
+            <>
+              <button
+                onClick={() => setAutoPlaying((p) => !p)}
+                className={`px-3 py-1 rounded transition-colors ${
+                  autoPlaying
+                    ? "bg-emerald-600/20 text-emerald-400 border border-emerald-600/40"
+                    : "bg-[#2A2D3D] hover:bg-[#3A3D4D] text-gray-300"
+                }`}
+              >
+                {autoPlaying ? "⏸ Pause MPC re-solve" : "▶ Auto-run MPC"}
+              </button>
+              <button
+                onClick={simulateUpdate}
+                disabled={advancing || autoPlaying}
+                className="px-3 py-1 bg-[#2A2D3D] hover:bg-[#3A3D4D] disabled:opacity-50 rounded text-gray-300 transition-colors"
+              >
+                {advancing ? "Advancing…" : `Advance +${TICK_MINUTES} min`}
+              </button>
+            </>
           )}
         </div>
       </div>

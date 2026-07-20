@@ -21,8 +21,18 @@ except Exception:
 
 
 class GridPilotScheduler:
-    TRANSFORMER_LIMIT = 4000
-    DVVNL_LIMIT = 4500
+    # Fleet scaled 600 -> 40 vehicles (1:15). Transformer/DVVNL/target limits
+    # scaled proportionally so the peak-shaving story stays representative
+    # instead of vanishing under a transformer sized for the old fleet.
+    TRANSFORMER_LIMIT = 270  # kVA, nameplate transformer rating
+    DVVNL_LIMIT = 300        # kVA, DVVNL sanctioned load
+    # DVVNL bills load in kVA (see api/routers/report.py POWER_FACTOR), and a
+    # transformer's thermal rating is a kVA figure too — but total_load below
+    # is real power (kW). Convert: kva_limit * power_factor = the equivalent
+    # kW cap, since kw = kva * power_factor.
+    POWER_FACTOR = 0.8
+    TRANSFORMER_LIMIT_REAL_KW = TRANSFORMER_LIMIT * POWER_FACTOR  # 216.0 kW
+    DVVNL_LIMIT_REAL_KW = DVVNL_LIMIT * POWER_FACTOR              # 240.0 kW
     DVVNL_PENALTY_RATE = 500
     CHARGER_POWER = 7.4
     DELTA_T = 0.25
@@ -34,14 +44,33 @@ class GridPilotScheduler:
     delta = 0.10
     DEMAND_CHARGE_RATE = 350
 
-    MANAGED_TARGET_KW = 2000
+    MANAGED_TARGET_KW = 135
+    MIN_DELIVERY_FRACTION = 1.0
+    # Convex solver's absolute ceiling — a bit above the DVVNL billing
+    # threshold so the optimizer has room to trade DVVNL penalty against
+    # peak/discomfort instead of being flatly infeasible.
+    HARD_CAP_KW = DVVNL_LIMIT_REAL_KW + 40  # 280.0 kW
 
-    def _compute_availability_matrix(self, arrivals, departures, n_vehicles, n_slots) -> np.ndarray:
+    # Reference depot: 40 chargers on a 270 kVA transformer. Demo mode scales
+    # capacity off this ratio so a judge-chosen fleet size gets a depot sized
+    # to match it, instead of every fleet size sharing one fixed transformer.
+    REFERENCE_FLEET_SIZE = 40
+
+    def __init__(self, n_vehicles_for_capacity: int | None = None) -> None:
+        if n_vehicles_for_capacity is not None and n_vehicles_for_capacity > 0:
+            scale = n_vehicles_for_capacity / self.REFERENCE_FLEET_SIZE
+            self.TRANSFORMER_LIMIT = self.TRANSFORMER_LIMIT * scale
+            self.DVVNL_LIMIT = self.DVVNL_LIMIT * scale
+            self.MANAGED_TARGET_KW = self.MANAGED_TARGET_KW * scale
+            self.TRANSFORMER_LIMIT_REAL_KW = self.TRANSFORMER_LIMIT * self.POWER_FACTOR
+            self.DVVNL_LIMIT_REAL_KW = self.DVVNL_LIMIT * self.POWER_FACTOR
+            self.HARD_CAP_KW = self.DVVNL_LIMIT_REAL_KW + 40 * scale
+
+    def _compute_availability_matrix(self, arrivals, departures, n_vehicles, n_slots, base_time: pd.Timestamp) -> np.ndarray:
         arrivals = pd.to_datetime(pd.Series(arrivals)).reset_index(drop=True)
         departures = pd.to_datetime(pd.Series(departures)).reset_index(drop=True)
         mask = departures < arrivals
         departures[mask] += pd.Timedelta(days=1)
-        base_time = self._base_time(arrivals)
         availability = np.zeros((n_vehicles, n_slots), dtype=float)
         for vehicle in range(n_vehicles):
             start = int(np.floor((arrivals.iloc[vehicle] - base_time).total_seconds() / 900.0))
@@ -58,9 +87,10 @@ class GridPilotScheduler:
         carbon_signal: dict,
         enable_v2g: bool = False,
         unmanaged_reference: dict | None = None,
+        base_time_override: pd.Timestamp | None = None,
     ) -> dict:
         start_time = time.perf_counter()
-        prepared = self._prepare_inputs(ev_requests, building_load, carbon_signal)
+        prepared = self._prepare_inputs(ev_requests, building_load, carbon_signal, base_time_override=base_time_override)
 
         if unmanaged_reference is None:
             unmanaged_reference = self.get_unmanaged_baseline(ev_requests, building_load)
@@ -132,7 +162,7 @@ class GridPilotScheduler:
         peak_penalty = cp.sum(cp.square(cp.pos(total_load - self.MANAGED_TARGET_KW)))
         energy_delivered = cp.sum(cp.multiply(power, availability), axis=1) * self.DELTA_T
         discomfort = cp.sum(cp.pos(energy_needed - energy_delivered))
-        dvvnl_penalty = cp.pos(cp.max(total_load) - self.DVVNL_LIMIT) * self.DVVNL_PENALTY_RATE
+        dvvnl_penalty = cp.pos(cp.max(total_load) - self.DVVNL_LIMIT_REAL_KW) * self.DVVNL_PENALTY_RATE
         objective = cp.Minimize(
             self.alpha * carbon_cost
             + self.beta * peak_penalty
@@ -146,8 +176,8 @@ class GridPilotScheduler:
             ),
             cp.sum(
                 cp.multiply(power, availability), axis=1
-            ) * self.DELTA_T >= energy_needed * 0.80,
-            total_load <= 5000,
+            ) * self.DELTA_T >= energy_needed * self.MIN_DELIVERY_FRACTION,
+            total_load <= self.HARD_CAP_KW,
         ]
         prob = cp.Problem(objective, constraints)
         prob.solve(solver=cp.CLARABEL, verbose=False)
@@ -178,12 +208,12 @@ class GridPilotScheduler:
         for slot in clean_order:
             if total_load[slot] >= self.MANAGED_TARGET_KW:
                 continue
-            capacity = max(0.0, min(self.MANAGED_TARGET_KW, self.TRANSFORMER_LIMIT) - total_load[slot])
-            active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * 0.80]
+            capacity = max(0.0, min(self.MANAGED_TARGET_KW, self.TRANSFORMER_LIMIT_REAL_KW) - total_load[slot])
+            active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * self.MIN_DELIVERY_FRACTION]
             for vehicle in active:
                 if capacity <= 1e-9:
                     break
-                remaining_kw = (energy_needed[vehicle] * 0.95 - delivered[vehicle]) / self.DELTA_T
+                remaining_kw = (energy_needed[vehicle] * self.MIN_DELIVERY_FRACTION - delivered[vehicle]) / self.DELTA_T
                 charge_kw = min(charger_powers[vehicle], capacity, remaining_kw)
                 if charge_kw <= 0:
                     continue
@@ -192,14 +222,14 @@ class GridPilotScheduler:
                 total_load[slot] += charge_kw
                 capacity -= charge_kw
 
-        if np.any(delivered < energy_needed * 0.95):
+        if np.any(delivered < energy_needed * self.MIN_DELIVERY_FRACTION):
             for slot in range(n_slots):
-                capacity = max(0.0, self.TRANSFORMER_LIMIT - total_load[slot])
-                active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * 0.95]
+                capacity = max(0.0, self.TRANSFORMER_LIMIT_REAL_KW - total_load[slot])
+                active = [v for v in order if availability[v, slot] > 0 and delivered[v] < energy_needed[v] * self.MIN_DELIVERY_FRACTION]
                 for vehicle in active:
                     if capacity <= 1e-9:
                         break
-                    remaining_kw = (energy_needed[vehicle] * 0.95 - delivered[vehicle]) / self.DELTA_T
+                    remaining_kw = (energy_needed[vehicle] * self.MIN_DELIVERY_FRACTION - delivered[vehicle]) / self.DELTA_T
                     charge_kw = min(charger_powers[vehicle], capacity, remaining_kw)
                     if charge_kw <= 0:
                         continue
@@ -216,14 +246,21 @@ class GridPilotScheduler:
             unmanaged_reference,
         )
 
-    def _prepare_inputs(self, ev_requests: pd.DataFrame, building_load: pd.Series, carbon_signal: dict) -> dict:
+    def _prepare_inputs(
+        self,
+        ev_requests: pd.DataFrame,
+        building_load: pd.Series,
+        carbon_signal: dict,
+        base_time_override: pd.Timestamp | None = None,
+    ) -> dict:
         evs = ev_requests.reset_index(drop=True).copy()
         arrivals = pd.to_datetime(evs["arrival_time"])
         departures = pd.to_datetime(evs["departure_deadline"])
         n_vehicles = len(evs)
+        base_time = base_time_override if base_time_override is not None else self._base_time(arrivals)
         building = np.resize(np.asarray(building_load, dtype=float), self.N_SLOTS)
-        availability = self._compute_availability_matrix(arrivals, departures, n_vehicles, self.N_SLOTS)
-        carbon = self._carbon_array(carbon_signal, self._base_time(arrivals))
+        availability = self._compute_availability_matrix(arrivals, departures, n_vehicles, self.N_SLOTS, base_time)
+        carbon = self._carbon_array(carbon_signal, base_time)
         return {
             "ev_requests": evs,
             "n_vehicles": n_vehicles,
@@ -232,7 +269,7 @@ class GridPilotScheduler:
             "building_load": building,
             "carbon_intensity": carbon,
             "energy_needed": evs["energy_needed_kwh"].to_numpy(dtype=float),
-            "base_time": self._base_time(arrivals),
+            "base_time": base_time,
         }
 
     def _carbon_array(self, carbon_signal: dict, base_time: pd.Timestamp) -> np.ndarray:
@@ -272,9 +309,17 @@ class GridPilotScheduler:
         total_energy = float(delivered.sum())
         total_carbon = float(np.sum(ev_load * carbon * self.DELTA_T))
         peak_kw = float(total_load.max())
-        overload_events = int(np.sum(total_load > self.TRANSFORMER_LIMIT + 1e-6))
-        dvvnl_penalty = max(0.0, peak_kw - self.DVVNL_LIMIT) * self.DVVNL_PENALTY_RATE
-        all_ready = bool(np.all(delivered >= energy_needed * 0.80 - 1e-6))
+        over_mask = total_load > self.TRANSFORMER_LIMIT_REAL_KW + 1e-6
+        overload_events = int(np.sum(over_mask))
+        # overload_events counts individual 15-min slots over the limit, so one
+        # continuous 3-hour overload reads as "12 events" even though it's a
+        # single episode. overload_excursions counts distinct contiguous runs
+        # (rising edges of over_mask) instead, for an honest "how many separate
+        # times did this happen" figure alongside the slot tally.
+        padded = np.concatenate(([False], over_mask, [False]))
+        overload_excursions = int(np.sum(~padded[:-1] & padded[1:]))
+        dvvnl_penalty = max(0.0, peak_kw - self.DVVNL_LIMIT_REAL_KW) * self.DVVNL_PENALTY_RATE
+        all_ready = bool(np.all(delivered >= energy_needed * self.MIN_DELIVERY_FRACTION - 1e-6))
 
         n_vehicles = len(evs)
         if unmanaged_reference is None:
@@ -295,6 +340,8 @@ class GridPilotScheduler:
                 "peak_reduction_pct": float(peak_reduction_pct),
                 "unmanaged_overload_events": unmanaged_reference["overload_events"],
                 "scheduled_overload_events": overload_events,
+                "unmanaged_overload_excursions": unmanaged_reference.get("overload_excursions", 0),
+                "scheduled_overload_excursions": overload_excursions,
                 "unmanaged_carbon_kg": unmanaged_carbon,
                 "scheduled_carbon_kg": total_carbon,
                 "carbon_reduction_pct": float(carbon_reduction_pct),
@@ -307,7 +354,7 @@ class GridPilotScheduler:
             str(evs.loc[v, "vehicle_id"]): {
                 "energy_delivered_kwh": round(float(delivered[v]), 3),
                 "required_kwh": round(float(energy_needed[v]), 3),
-                "on_time": bool(delivered[v] >= energy_needed[v] * 0.95 - 1e-6),
+                "on_time": bool(delivered[v] >= energy_needed[v] * self.MIN_DELIVERY_FRACTION - 1e-6),
                 "ready_at": "07:00",
             }
             for v in range(len(evs))
@@ -318,12 +365,14 @@ class GridPilotScheduler:
             "solve_time_ms": round(float(solve_time_ms), 2),
             "peak_kw": round(peak_kw, 2),
             "overload_events": overload_events,
+            "overload_excursions": overload_excursions,
             "total_energy_kwh": round(total_energy, 2),
             "total_carbon_kg": round(total_carbon, 2),
             "dvvnl_penalty_inr": round(float(dvvnl_penalty), 2),
             "all_ready_on_time": all_ready,
             "power_schedule": power,
             "schedule": schedule,
+            "power_schedule": power,
             "timeseries": pd.DataFrame(
                 {
                     "slot": np.arange(prepared["n_slots"]),
@@ -339,9 +388,10 @@ class GridPilotScheduler:
             ),
             "fleet_summary": {
                 "all_ready_on_time": all_ready,
-                "vehicles_delayed": int(np.sum(delivered < energy_needed * 0.95 - 1e-6)),
+                "vehicles_delayed": int(np.sum(delivered < energy_needed * self.MIN_DELIVERY_FRACTION - 1e-6)),
                 "peak_load_kw": round(peak_kw, 2),
                 "overload_events": overload_events,
+                "overload_excursions": overload_excursions,
                 "total_energy_kwh": round(total_energy, 2),
                 "total_carbon_kg": round(total_carbon, 2),
             },
@@ -359,14 +409,14 @@ if __name__ == "__main__":
     from gridpilot.ev_manager import EVRequestManager
 
     manager = EVRequestManager()
-    requests = manager.generate_session("2024-03-15", n=600)
-    building = pd.Series([400.0] * GridPilotScheduler.N_SLOTS)
+    requests = manager.generate_session("2024-03-15", n=40)
+    building = pd.Series([25.0] * GridPilotScheduler.N_SLOTS)
     scheduler = GridPilotScheduler()
 
     unmanaged = scheduler.get_unmanaged_baseline(requests, building)
     print(f"Unmanaged: {unmanaged['peak_kw']:,.0f} kW peak")
     print(f"Unmanaged overload events: {unmanaged['overload_events']}")
-    assert unmanaged["peak_kw"] > 3500
+    assert unmanaged["peak_kw"] > 200
     assert unmanaged["overload_events"] >= 0
 
     managed = scheduler.schedule(requests, building, carbon_signal={})
@@ -385,4 +435,13 @@ if __name__ == "__main__":
     assert managed["overload_events"] == 0
     # Note: solve time increased with CY2025 fleet (larger batteries)
     assert managed["solve_time_ms"] < 20000
+
+    # base_time_override must reproduce the default-path result exactly when
+    # set to exactly what the default path would compute — regression guard
+    # for MPCController, which relies on base_time staying stable across ticks.
+    default_base_time = GridPilotScheduler._base_time(pd.to_datetime(requests["arrival_time"]))
+    overridden = scheduler.schedule(requests, building, carbon_signal={}, base_time_override=default_base_time)
+    assert overridden["comparison"]["scheduled_peak_kw"] == managed["comparison"]["scheduled_peak_kw"], (
+        "base_time_override with the natural base_time must reproduce the default-path result exactly"
+    )
     print("All GridPilotScheduler tests passed.")

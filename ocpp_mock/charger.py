@@ -35,8 +35,10 @@ class MockCharger(cp):
             "chargingSchedulePeriod", []
         )
         if periods:
+            # limit is in Watts (OCPP 1.6J's chargingRateUnit schema only
+            # allows 'A'/'W', see central_system.py::send_charging_profile).
             self.current_power_kw = (
-                periods[0].get("limit", 7.4)
+                periods[0].get("limit", 7400) / 1000
             )
         self.status = "Charging"
         log_entry = {
@@ -57,7 +59,7 @@ class MockCharger(cp):
         )
         return (
             call_result
-            .SetChargingProfilePayload(
+            .SetChargingProfile(
                 status="Accepted"
             )
         )
@@ -69,7 +71,7 @@ class MockCharger(cp):
         self.status = type
         return (
             call_result
-            .ChangeAvailabilityPayload(
+            .ChangeAvailability(
                 status="Accepted"
             )
         )

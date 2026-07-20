@@ -7,9 +7,17 @@ import time
 from datetime import datetime
 from typing import Any
 
+try:
+    import cvxpy  # noqa: F401  (must load before pandas: see below)
+except Exception:
+    pass
+# cvxpy pulls in solver backends (osqp/ecos/clarabel) with their own bundled
+# OpenMP runtimes. On Windows, importing pandas/pyarrow first and cvxpy
+# later causes a native access violation (no Python exception, just a
+# crash) when those runtimes collide. Importing cvxpy before pandas avoids it.
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI, Query, Request, Depends
+from fastapi import FastAPI, Query, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -28,6 +36,7 @@ from firstflight.national_opt import NationalLoadOptimizer
 from firstflight.signal_bus import GridSignalBus
 from gridpilot.depot_sim import CorporateEVDepotSimulator
 from gridpilot.ev_manager import EVRequestManager
+from gridpilot.mpc_controller import MPCController
 from gridpilot.scheduler import GridPilotScheduler
 from gridpilot.v2g import V2GDispatcher
 from pipeline.acn_loader import ACNDataLoader
@@ -44,6 +53,7 @@ from ocpp_mock.central_system import (
 from api.config import settings
 from api.routers.auth import router as auth_router
 from api.routers.hardware import router as hardware_router
+from api.routers.demo import router as demo_router
 from api.auth.dependencies import require_depot_admin, get_current_user, optional_current_user
 from typing import Optional
 from api.models.user import User
@@ -61,12 +71,12 @@ _ocpp_central = None
 
 class ScheduleRequest(BaseModel):
     date: str = "2024-01-15"
-    n_vehicles: int = 600
+    n_vehicles: int = 40
     enable_v2g: bool = False
 
 
 class SimulateRequest(BaseModel):
-    n_vehicles: int = 600
+    n_vehicles: int = 40
     solar_kw: float = 0.0
     enable_v2g: bool = False
     scenario: str = "normal"
@@ -100,6 +110,7 @@ from api.routers.report import router as report_router
 app.include_router(depot_router)
 app.include_router(report_router)
 app.include_router(hardware_router)
+app.include_router(demo_router)
 
 allowed_origins = [
     "http://localhost:3000",
@@ -234,6 +245,19 @@ async def startup_event() -> None:
         except Exception as e:
             print(f"[CACHE] [ERR] Depot sim: {e}")
 
+        try:
+            sessions = state["ev_manager"].generate_session("2024-01-15", 40)
+            state["last_sessions"] = sessions
+            building_load = scheduler_building_load()
+            _sched = _cache.scheduler or GridPilotScheduler()
+            unmanaged = _sched.get_unmanaged_baseline(sessions, building_load)
+            managed = _sched.schedule(sessions, building_load, {}, False, unmanaged_reference=unmanaged)
+            state["last_unmanaged_result"] = unmanaged
+            state["last_schedule_result"] = managed
+            print("[CACHE] [OK] Seeded default schedule for dashboard_data")
+        except Exception as e:
+            print(f"[CACHE] [ERR] Seed schedule: {e}")
+
         _cache.ready = True
         ms = round((time.time() - t0) * 1000)
         print(f"[CACHE] Ready in {ms}ms\n")
@@ -282,7 +306,7 @@ def health() -> dict:
             "solver_ready": bool(state["solver_ready"]),
             "depot": DEPOT_NAME,
             "operator_context": OPERATOR_CONTEXT,
-            "fleet_size": 600,
+            "fleet_size": 40,
             "timestamp": timestamp_now(),
         }
     )
@@ -299,10 +323,10 @@ def depot_status() -> dict:
         baseline = float(latest_row["building_load_kw"])
     else:
         ev_load = 0.0
-        baseline = 400.0
+        baseline = 25.0
     solar_kw = 0.0
     net_load = ev_load + baseline - solar_kw
-    transformer_pct = net_load / 2000.0 * 100.0
+    transformer_pct = net_load / GridPilotScheduler.MANAGED_TARGET_KW * 100.0
     grid_status = "CRITICAL" if transformer_pct >= 110 else "WARNING" if transformer_pct >= 90 else "STABLE"
     return clean_json(
         {
@@ -315,7 +339,7 @@ def depot_status() -> dict:
             "carbon_intensity_now": signal["carbon_intensity_now"],
             "carbon_signal": carbon_signal_label(signal["carbon_intensity_now"]),
             "ev_action": signal["ev_action_now"],
-            "dvvnl_penalty_risk": net_load > GridPilotScheduler.DVVNL_LIMIT,
+            "dvvnl_penalty_risk": net_load > GridPilotScheduler.DVVNL_LIMIT_REAL_KW,
             "grid_status": grid_status,
             "timestamp": timestamp_now(),
         }
@@ -379,6 +403,8 @@ def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depe
             result["power_schedule"] = managed.get("power_schedule")
             if "timeseries" in managed and not managed["timeseries"].empty:
                 result["total_load"] = managed["timeseries"]["total_load_kw"].to_numpy()
+            if result["power_schedule"] is not None and isinstance(result["power_schedule"], np.ndarray):
+                result["power_schedule"] = result["power_schedule"].tolist()
             adapted = adapt_optimizer_output(result, effective_depot, mapping)
             result["adapted_run_id"] = adapted.get("run_id")
             result.pop("power_schedule", None)
@@ -387,6 +413,46 @@ def depot_schedule(request: ScheduleRequest, current_user: Optional[User] = Depe
         print(f"Schedule adapter failed (non-fatal): {e}")
 
     return result
+
+
+def _run_mpc_background(controller: MPCController) -> None:
+    try:
+        while not controller.is_complete:
+            controller.step()
+            time.sleep(0.3)  # demo pacing — real re-solve cadence would be 15 min, not 0.3s
+    except Exception as e:
+        print(f"MPC background run failed: {e}")
+
+
+@app.post("/depot/mpc/start")
+def start_mpc(request: ScheduleRequest, current_user: Optional[User] = Depends(optional_current_user)) -> dict:
+    ensure_ready()
+    sessions = state["ev_manager"].generate_session(request.date, request.n_vehicles)
+    building_load = scheduler_building_load()
+    signal = get_signal(refresh=False)
+    _sched = get_cached("scheduler") or GridPilotScheduler()
+
+    controller = MPCController(_sched, sessions, building_load, signal)
+    state["mpc_controller"] = controller
+
+    thread = threading.Thread(target=_run_mpc_background, args=(controller,), daemon=True)
+    thread.start()
+
+    return {
+        "status": "started",
+        "start_slot": controller.start_slot,
+        "end_slot": controller.end_slot,
+        "n_vehicles": controller.n_vehicles,
+    }
+
+
+@app.get("/depot/mpc/status")
+def mpc_status() -> dict:
+    ensure_ready()
+    controller: Optional[MPCController] = state.get("mpc_controller")
+    if controller is None:
+        raise HTTPException(status_code=404, detail="No MPC run started — call POST /depot/mpc/start first")
+    return clean_json(controller.get_status())
 
 
 @app.get("/depot/carbon_signal")
@@ -612,6 +678,7 @@ def dashboard_data() -> dict:
     signal = get_signal()
     sessions = get_or_create_sessions()
     last = state.get("last_schedule_result")
+    last_unmanaged = state.get("last_unmanaged_result")
     forecast_all = {
         region: state["forecaster"].forecast(region, 24).to_dict("records") for region in REGIONS
     }
@@ -627,6 +694,7 @@ def dashboard_data() -> dict:
             "depot": {
                 "status": depot_status(),
                 "schedule_summary": summarize_schedule(last) if last else None,
+                "unmanaged_schedule_summary": summarize_schedule(last_unmanaged) if last_unmanaged else None,
                 "carbon_signal": signal,
                 "fleet_summary": state["ev_manager"].get_fleet_summary(sessions),
                 "v2g_status": depot_v2g(),
@@ -664,24 +732,24 @@ def get_signal(refresh: bool = False) -> dict:
 
 def active_evs_count() -> int:
     sessions = state.get("last_sessions")
-    return int(len(sessions)) if sessions is not None else 600
+    return int(len(sessions)) if sessions is not None else 40
 
 
 def get_or_create_sessions() -> pd.DataFrame:
     if state.get("last_sessions") is None:
-        state["last_sessions"] = state["ev_manager"].generate_session("2024-01-15", 600)
+        state["last_sessions"] = state["ev_manager"].generate_session("2024-01-15", 40)
     return state["last_sessions"]
 
 
 def scheduler_building_load() -> pd.Series:
-    return pd.Series([400.0] * GridPilotScheduler.N_SLOTS)
+    return pd.Series([25.0] * GridPilotScheduler.N_SLOTS)
 
 
 def scenario_building_load(scenario: str) -> pd.Series:
     if scenario == "worst_case":
-        return pd.Series([900.0] * GridPilotScheduler.N_SLOTS)
+        return pd.Series([60.0] * GridPilotScheduler.N_SLOTS)
     if scenario == "monsoon":
-        return pd.Series([520.0] * GridPilotScheduler.N_SLOTS)
+        return pd.Series([35.0] * GridPilotScheduler.N_SLOTS)
     return scheduler_building_load()
 
 
@@ -711,17 +779,31 @@ def summarize_simulation(simulation: pd.DataFrame) -> dict:
 def summarize_schedule(result: dict | None) -> dict | None:
     if result is None:
         return None
+    timeseries = result.get("timeseries")
+    load_curve = []
+    if timeseries is not None and not timeseries.empty:
+        load_curve = [
+            {
+                "t": row["timestamp"].strftime("%H:%M"),
+                "ev_kw": round(float(row["ev_load_kw"]), 1),
+                "building_kw": round(float(row["building_load_kw"]), 1),
+                "total_kw": round(float(row["total_load_kw"]), 1),
+            }
+            for _, row in timeseries.iloc[::2].iterrows()
+        ]
     return {
         "status": result["status"],
         "solve_time_ms": result["solve_time_ms"],
         "peak_kw": result["peak_kw"],
         "overload_events": result["overload_events"],
+        "overload_excursions": result.get("overload_excursions", 0),
         "total_energy_kwh": result["total_energy_kwh"],
         "total_carbon_kg": result["total_carbon_kg"],
         "dvvnl_penalty_inr": result["dvvnl_penalty_inr"],
         "all_ready_on_time": result["all_ready_on_time"],
         "fleet_summary": result["fleet_summary"],
         "comparison": result.get("comparison", {}),
+        "load_curve": load_curve,
     }
 
 

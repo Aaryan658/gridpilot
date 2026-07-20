@@ -8,34 +8,56 @@ import {
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { fetchDashboardData, MOCK_DATA } from "@/lib/api";
+import { formatINR } from "@/lib/utils";
 
-const LOAD_DATA = [
-  {t:"20:00", u:1100,  m:2000, s:0},
-  {t:"20:30", u:2200,  m:2000, s:0},
-  {t:"21:00", u:3400,  m:2000, s:0},
-  {t:"21:30", u:4200,  m:2000, s:0},
-  {t:"22:00", u:4456,  m:2000, s:0},
-  {t:"22:30", u:4380,  m:2000, s:0},
-  {t:"23:00", u:4100,  m:2000, s:0},
-  {t:"23:30", u:3700,  m:2000, s:0},
-  {t:"00:00", u:3200,  m:2000, s:0},
-  {t:"00:30", u:2800,  m:2000, s:0},
-  {t:"01:00", u:2500,  m:2000, s:20},
-  {t:"01:30", u:2200,  m:2000, s:50},
-  {t:"02:00", u:1950,  m:2000, s:100},
-  {t:"02:30", u:1750,  m:1980, s:180},
-  {t:"03:00", u:1600,  m:1940, s:280},
-  {t:"03:30", u:1450,  m:1880, s:380},
-  {t:"04:00", u:1300,  m:1780, s:460},
-  {t:"04:30", u:1150,  m:1600, s:520},
-  {t:"05:00", u:1050,  m:1350, s:560},
-  {t:"05:30", u:950,   m:1050, s:580},
-  {t:"06:00", u:900,   m:700,  s:540},
-  {t:"06:30", u:870,   m:380,  s:450},
-  {t:"07:00", u:850,   m:150,  s:320},
-  {t:"07:30", u:830,   m:80,   s:180},
-  {t:"08:00", u:800,   m:50,   s:60},
+// Fallback mock curve (API offline) — pulled from an actual seeded 40-vehicle
+// optimizer run (see gridpilot/scheduler.py) so unmanaged (u) and managed (m)
+// integrate to the same total delivered energy, same as the live API always
+// enforces via the energy_needed >= delivered constraint for every vehicle.
+const FALLBACK_LOAD_DATA = [
+  {t:"20:00", u:54.6,  m:25,    s:0},
+  {t:"20:30", u:116.3, m:25,    s:0},
+  {t:"21:00", u:199.6, m:25,    s:0},
+  {t:"21:30", u:264.4, m:25,    s:0},
+  {t:"22:00", u:293.8, m:124.7, s:0},
+  {t:"22:30", u:254.2, m:124.7, s:0},
+  {t:"23:00", u:216.4, m:124.7, s:0},
+  {t:"23:30", u:211.2, m:124.7, s:0},
+  {t:"00:00", u:166.9, m:124.7, s:0},
+  {t:"00:30", u:147.4, m:124.7, s:1},
+  {t:"01:00", u:138.0, m:124.7, s:3},
+  {t:"01:30", u:93.2,  m:124.7, s:7},
+  {t:"02:00", u:31.4,  m:135,   s:12},
+  {t:"02:30", u:25,    m:135,   s:19},
+  {t:"03:00", u:25,    m:135,   s:26},
+  {t:"03:30", u:25,    m:135,   s:31},
+  {t:"04:00", u:25,    m:135,   s:35},
+  {t:"04:30", u:25,    m:135,   s:38},
+  {t:"05:00", u:25,    m:124.7, s:39},
+  {t:"05:30", u:25,    m:124.7, s:36},
+  {t:"06:00", u:25,    m:124.7, s:30},
+  {t:"06:30", u:25,    m:124.7, s:22},
+  {t:"07:00", u:25,    m:25,    s:12},
+  {t:"07:30", u:25,    m:25,    s:4},
+  {t:"08:00", u:25,    m:25,    s:0},
 ];
+
+type LoadCurveRow = { t: string; ev_kw: number; building_kw: number; total_kw: number };
+
+function buildLiveChartData(
+  managedCurve: LoadCurveRow[] | undefined,
+  unmanagedCurve: LoadCurveRow[] | undefined
+): { t: string; u: number; m: number; s: number }[] | null {
+  if (!managedCurve?.length || !unmanagedCurve?.length) return null;
+  const n = Math.min(managedCurve.length, unmanagedCurve.length);
+  return Array.from({ length: n }, (_, i) => ({
+    t: managedCurve[i].t,
+    m: managedCurve[i].total_kw,
+    u: unmanagedCurve[i].total_kw,
+    // Backend doesn't model per-slot solar generation yet — decorative only.
+    s: 0,
+  }));
+}
 
 const CARBON_DATA = [
   {h:"00",i:0.72,sig:"NEUTRAL"},
@@ -68,6 +90,12 @@ const SIG_COLORS: Record<string, string> = {
   CLEAN: "#27AE60",
   NEUTRAL: "#F39C12",
   DIRTY: "#C0392B",
+};
+
+const SIG_EXPLANATIONS: Record<string, string> = {
+  CLEAN: "Haryana grid carbon intensity is at its lowest for the day — more of the mix comes from renewables and off-peak generation. GridPilot's carbon-cost term favors scheduling EV charging into these hours.",
+  NEUTRAL: "Average grid carbon intensity — a mix of thermal and renewable generation. Charging here is acceptable but not preferred; the optimizer only schedules load in this window if it's needed to meet a vehicle's ready-by-07:00 deadline.",
+  DIRTY: "Peak evening demand hours — the grid leans harder on thermal generation to meet demand, pushing carbon intensity to its highest point. GridPilot's objective function actively penalizes drawing power here.",
 };
 
 function CustomTooltip({
@@ -133,6 +161,7 @@ function CustomLegend() {
 export default function GridPilotCharts() {
   const [mounted, setMounted] = useState(false);
   const [currentHour, setCurrentHour] = useState(0);
+  const [hoveredHour, setHoveredHour] = useState<string | null>(null);
   useEffect(() => { 
     setMounted(true); 
     setCurrentHour(new Date().getHours());
@@ -183,6 +212,12 @@ export default function GridPilotCharts() {
       }
     : MOCK_DATA.kpis;
 
+  const chartData =
+    buildLiveChartData(
+      apiData?.depot?.schedule_summary?.load_curve,
+      apiData?.depot?.unmanaged_schedule_summary?.load_curve
+    ) ?? FALLBACK_LOAD_DATA;
+
   const KPI_CARDS = [
     {
       value: `${kpis.peak_reduction_pct.toFixed(1)}%`,
@@ -197,13 +232,13 @@ export default function GridPilotCharts() {
       accent: "#00D4AA",
     },
     {
-      value: `₹${(kpis.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L`,
+      value: formatINR(kpis.dvvnl_monthly_saving_inr),
       label: "DVVNL Saving/Month",
       sub: "demand charge reduction",
       accent: "#F9CA24",
     },
     {
-      value: kpis.all_ready ? "600/600" : "543/600",
+      value: kpis.all_ready ? "40/40" : "Check",
       label: "Vehicles Ready",
       sub: "by 07:00 IST deadline",
       accent: "#27AE60",
@@ -276,7 +311,7 @@ export default function GridPilotCharts() {
               Depot Load Profile
             </h3>
             <p style={{ fontSize: 11, color: "#4A5C6A" }}>
-              600 Mixed EVs (Vahan CY2025) | Corporate Fleet, Gurugram | DVVNL HT-2
+              40 Mixed EVs (Vahan CY2025) | Corporate Fleet, Gurugram | DVVNL HT-2
             </p>
           </div>
           <div style={{
@@ -344,7 +379,7 @@ export default function GridPilotCharts() {
         <div style={{ height: 360, minWidth: 0, minHeight: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart
-              data={LOAD_DATA}
+              data={chartData}
               margin={{ top: 8, right: 160, bottom: 4, left: 10 }}
             >
               <CartesianGrid
@@ -355,7 +390,7 @@ export default function GridPilotCharts() {
 
               {/* Overload zone */}
               <ReferenceArea
-                y1={4000} y2={4600}
+                y1={216} y2={260}
                 fill="rgba(231,76,60,0.07)"
                 label={{
                   value: "⚠ Overload Zone",
@@ -381,13 +416,13 @@ export default function GridPilotCharts() {
 
               {/* Transformer limit */}
               <ReferenceLine
-                y={4000}
+                y={216}
                 stroke="#FF6B35"
                 strokeOpacity={0.6}
                 strokeWidth={1}
                 strokeDasharray="10 6"
                 label={{
-                  value: "4,000 kW limit",
+                  value: "216 kW limit",
                   position: "insideTopRight",
                   fill: "rgba(255,107,53,0.85)",
                   fontSize: 10,
@@ -398,13 +433,13 @@ export default function GridPilotCharts() {
 
               {/* DVVNL penalty */}
               <ReferenceLine
-                y={4600}
+                y={240}
                 stroke="#F9CA24"
                 strokeOpacity={0.4}
                 strokeWidth={1}
                 strokeDasharray="5 5"
                 label={{
-                  value: "4,600 kW penalty",
+                  value: "240 kW DVVNL billing threshold",
                   position: "insideTopRight",
                   fill: "rgba(249,202,36,0.7)",
                   fontSize: 10,
@@ -422,7 +457,7 @@ export default function GridPilotCharts() {
                 tick={{ fill: "#4A5C6A", fontSize: 10 }}
                 axisLine={false}
                 tickLine={false}
-                domain={[0, 5000]}
+                domain={[0, 350]}
                 tickFormatter={(v: number) => v >= 1000 ? (v / 1000).toFixed(0) + "k" : String(v)}
                 tickCount={6}
               />
@@ -517,25 +552,48 @@ export default function GridPilotCharts() {
           {CARBON_DATA.map((d, i) => (
             <div
               key={d.h}
-              title={`${d.h}:00 — ${d.i} kg CO₂/kWh — ${d.sig}`}
               style={{
+                position: "relative",
                 flex: 1,
-                borderRadius: 6,
-                background: SIG_COLORS[d.sig],
-                opacity: d.sig === "NEUTRAL" ? 0.5 : 0.8,
-                cursor: "pointer",
-                outline: i === currentHour ? "1.5px solid #00D4AA" : "none",
-                transition: "transform 0.15s, opacity 0.15s",
               }}
-              onMouseEnter={e => {
-                (e.target as HTMLDivElement).style.transform = "scaleY(1.15)";
-                (e.target as HTMLDivElement).style.opacity = "1";
-              }}
-              onMouseLeave={e => {
-                (e.target as HTMLDivElement).style.transform = "scaleY(1)";
-                (e.target as HTMLDivElement).style.opacity = d.sig === "NEUTRAL" ? "0.5" : "0.8";
-              }}
-            />
+              onMouseEnter={() => setHoveredHour(d.h)}
+              onMouseLeave={() => setHoveredHour(prev => (prev === d.h ? null : prev))}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  borderRadius: 6,
+                  background: SIG_COLORS[d.sig],
+                  opacity: d.sig === "NEUTRAL" ? 0.5 : 0.8,
+                  cursor: "help",
+                  outline: i === currentHour ? "1.5px solid #00D4AA" : "none",
+                  transform: hoveredHour === d.h ? "scaleY(1.15)" : "scaleY(1)",
+                  transition: "transform 0.15s, opacity 0.15s",
+                  ...(hoveredHour === d.h ? { opacity: 1 } : {}),
+                }}
+              />
+
+              {/* Full hover explanation, replacing the native single-line title tooltip */}
+              {hoveredHour === d.h && (
+                <div
+                  className="pointer-events-none absolute left-1/2 bottom-[calc(100%+10px)] z-30
+                    w-56 -translate-x-1/2 text-left"
+                >
+                  <div className="rounded-xl border border-white/10 bg-[#0B1620]/95
+                    backdrop-blur-xl p-4 shadow-2xl shadow-black/60">
+                    <p className="text-white text-xs font-bold mb-1">
+                      {d.h}:00 IST &middot; <span style={{ color: SIG_COLORS[d.sig] }}>{d.sig}</span>
+                    </p>
+                    <p className="text-[#9BA8AB] text-[11px] font-mono mb-1.5">
+                      {d.i} kg CO₂/kWh
+                    </p>
+                    <p className="text-[#9BA8AB] text-[11px] leading-relaxed">
+                      {SIG_EXPLANATIONS[d.sig]}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
           {/* Current time line */}
           <div style={{

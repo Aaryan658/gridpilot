@@ -137,6 +137,52 @@ def get_chargers_status(
     }
 
 
+@router.post("/chargers/advance")
+def advance_chargers(
+    minutes: int = Query(5, ge=1, le=60),
+    depot_id: Optional[str] = Query(None),
+    current_user: User = Depends(require_depot_admin),
+    db: Session = Depends(get_db),
+):
+    """
+    Advances every actively-charging vehicle by `minutes` of real charging
+    time, mutating the persisted ChargerStatus rows (the same rows
+    /chargers/status and /live-stream read from) so the change survives the
+    next live-feed poll instead of being a client-only illusion.
+    """
+    if current_user.role == "gridpilot_admin":
+        effective_depot = depot_id or "depot-001"
+    else:
+        effective_depot = current_user.depot_id or "depot-001"
+
+    chargers = (
+        db.query(ChargerStatus)
+        .filter(ChargerStatus.depot_id == effective_depot, ChargerStatus.status == "charging")
+        .all()
+    )
+
+    for c in chargers:
+        specs = _VEHICLE_SPECS.get(c.vehicle_model, {"battery": 30.0, "charger": 7.4})
+        battery_kwh = (c.energy_needed_kwh / 0.6) if c.energy_needed_kwh else specs["battery"]
+        power_kw = c.current_power_kw if c.current_power_kw and c.current_power_kw > 0 else specs["charger"]
+        target = c.target_soc or 80.0
+
+        delivered = min(c.energy_needed_kwh, (c.energy_delivered_kwh or 0.0) + power_kw * (minutes / 60.0))
+        soc = min(100.0, 20.0 + (delivered / battery_kwh * 100.0 if battery_kwh > 0 else 0.0))
+        is_ready = soc >= target - 0.05
+        remaining_kwh = max(0.0, (target - soc) / 100.0 * battery_kwh)
+
+        c.energy_delivered_kwh = round(delivered, 2)
+        c.soc_percent = round(soc, 1)
+        c.status = "ready" if is_ready else "charging"
+        c.current_power_kw = 0.0 if is_ready else round(power_kw, 1)
+        c.minutes_to_ready = 0 if is_ready else (round(remaining_kwh / power_kw * 60) if power_kw > 0 else None)
+        c.updated_at = datetime.datetime.utcnow()
+
+    db.commit()
+    return get_chargers_status(depot_id=depot_id, current_user=current_user, db=db)
+
+
 @router.get("/schedule/latest")
 def get_latest_schedule(
     depot_id: Optional[str] = Query(None),

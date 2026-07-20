@@ -2,10 +2,26 @@
 import { motion } from "framer-motion";
 
 const stats = [
-  { value: "55.1%", label: "Peak Load Reduced" },
-  { value: "₹8.60L", label: "Monthly Savings" },
-  { value: "600", label: "EVs Orchestrated" },
-  { value: "0", label: "Overload Events" },
+  {
+    value: "54.0%",
+    label: "Peak Load Reduced",
+    detail: "Drop in the depot's peak transformer draw between an unmanaged night (every EV charges at full power on arrival) and GridPilot's optimized schedule, for the reference 40-vehicle depot run: (unmanaged peak − optimized peak) ÷ unmanaged peak.",
+  },
+  {
+    value: "₹56k",
+    label: "Monthly Savings",
+    detail: "Demand-charge savings from shaving that peak, at DVVNL's ₹350/kW demand charge rate: kW of peak avoided × ₹350, extrapolated over a month.",
+  },
+  {
+    value: "40",
+    label: "EVs Orchestrated",
+    detail: "Vehicles charging simultaneously in the reference depot run behind this number. Try the live Demo mode to see anywhere from 10 to 200 vehicles — depot capacity scales with fleet size.",
+  },
+  {
+    value: "0",
+    label: "Overload Events",
+    detail: "15-minute intervals where total load exceeded the transformer's safe limit under GridPilot's schedule — zero, because the optimizer enforces that limit as a hard constraint, not a target.",
+  },
 ];
 
 export default function HeroSection() {
@@ -53,8 +69,8 @@ export default function HeroSection() {
             max-w-2xl mx-auto mb-10 leading-relaxed"
         >
           GridPilot prevents transformer overloads at EV
-          depots using convex optimization. 600 vehicles.
-          Zero overloads. ₹8.60 lakh saved every month.
+          depots using convex optimization. 40 vehicles.
+          Zero overloads. ₹0.56 lakh saved every month.
         </motion.p>
 
         {/* CTA buttons */}
@@ -104,34 +120,50 @@ export default function HeroSection() {
             max-w-3xl mx-auto"
         >
           {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 + i * 0.08 }}
-              className="relative overflow-hidden p-6 rounded-2xl
-                         bg-white/10 backdrop-blur-xl border border-white/10
-                         hover:-translate-y-1 transition-all duration-300
-                         shadow-[0_8px_32px_rgba(0,0,0,0.5)]"
-            >
-              {/* Subtle top glare */}
-              <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
-              
-              {/* Background accent glow - now permanent */}
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#00D4AA]/10 opacity-100" />
-
-              <div
-                className="relative z-10 text-3xl md:text-4xl font-extrabold mb-2
-                  tabular-nums tracking-tight"
-                style={{ color: "#FFF", textShadow: "0 2px 15px rgba(255,255,255,0.2)" }}
+            <div key={stat.label} className="relative group">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 + i * 0.08 }}
+                className="relative overflow-hidden p-6 rounded-2xl
+                           bg-white/10 backdrop-blur-xl border border-white/10
+                           hover:-translate-y-1 transition-all duration-300
+                           shadow-[0_8px_32px_rgba(0,0,0,0.5)] cursor-help"
               >
-                {stat.value}
+                {/* Subtle top glare */}
+                <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+
+                {/* Background accent glow - now permanent */}
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#00D4AA]/10 opacity-100" />
+
+                <div
+                  className="relative z-10 text-3xl md:text-4xl font-extrabold mb-2
+                    tabular-nums tracking-tight"
+                  style={{ color: "#FFF", textShadow: "0 2px 15px rgba(255,255,255,0.2)" }}
+                >
+                  {stat.value}
+                </div>
+                <div className="relative z-10 text-[10px] md:text-xs text-[#00D4AA]
+                  uppercase tracking-widest font-semibold">
+                  {stat.label}
+                </div>
+              </motion.div>
+
+              {/* Hover explanation dropdown */}
+              <div
+                className="pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-30
+                  w-56 sm:w-64 max-w-[80vw] -translate-x-1/2 translate-y-1 opacity-0 scale-95
+                  transition-all duration-200 ease-out
+                  group-hover:opacity-100 group-hover:scale-100 group-hover:translate-y-0
+                  group-hover:pointer-events-auto"
+              >
+                <div className="rounded-xl border border-white/10 bg-[#0B1620]/95
+                  backdrop-blur-xl p-4 shadow-2xl shadow-black/60 text-left">
+                  <p className="text-white text-xs font-bold mb-1.5">{stat.label}</p>
+                  <p className="text-[#9BA8AB] text-[11px] leading-relaxed">{stat.detail}</p>
+                </div>
               </div>
-              <div className="relative z-10 text-[10px] md:text-xs text-[#00D4AA]
-                uppercase tracking-widest font-semibold">
-                {stat.label}
-              </div>
-            </motion.div>
+            </div>
           ))}
         </motion.div>
       </div>

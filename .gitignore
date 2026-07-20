@@ -39,6 +39,9 @@ frontend/node_modules/
 frontend/dist/
 frontend/.vite/
 
+# PlatformIO build cache
+.pio/
+
 # IDE
 .vscode/
 .idea/

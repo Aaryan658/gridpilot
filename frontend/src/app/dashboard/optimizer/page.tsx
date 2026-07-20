@@ -33,22 +33,22 @@ export default function OptimizerPage() {
       const startTime = Date.now();
       try {
         const data = await runSchedule({
-          n_vehicles: 600,
+          n_vehicles: 40,
           date: "2024-01-15",
           enable_v2g: false,
         }, token ?? undefined);
-        
+
         const rawMs = data?.managed?.solve_time_ms || data?.solve_time_ms || (Date.now() - startTime);
         const c = data?.comparison || data?.depot?.schedule_summary?.comparison;
-        
-        let carbonSaved = 2072;
+
+        let carbonSaved = 138;
         if (c && c.unmanaged_carbon_kg !== undefined && c.scheduled_carbon_kg !== undefined) {
           carbonSaved = Math.max(0, Number(c.unmanaged_carbon_kg) - Number(c.scheduled_carbon_kg));
         }
 
         setResult({
-          peak_reduction_pct: c?.peak_reduction_pct || 55.1,
-          dvvnl_monthly_saving_inr: c?.dvvnl_monthly_saving_inr || 860000,
+          peak_reduction_pct: c?.peak_reduction_pct || 54.0,
+          dvvnl_monthly_saving_inr: c?.dvvnl_monthly_saving_inr || 55573,
           carbon_saved_kg: carbonSaved,
           solve_time_ms: rawMs,
           all_ready: data?.all_ready_on_time ?? data?.managed?.fleet_summary?.all_ready_on_time ?? true,
@@ -59,9 +59,9 @@ export default function OptimizerPage() {
         console.error("Optimization failed", err);
         // Fallback to demo result if API fails so presentation doesn't break
         setResult({
-          peak_reduction_pct: 55.1,
-          dvvnl_monthly_saving_inr: 860000,
-          carbon_saved_kg: 2072,
+          peak_reduction_pct: 54.0,
+          dvvnl_monthly_saving_inr: 55573,
+          carbon_saved_kg: 138,
           solve_time_ms: Date.now() - startTime,
           all_ready: true,
           source: "demo",
@@ -109,7 +109,7 @@ export default function OptimizerPage() {
             </div>
 
             <h1 className="text-3xl font-bold text-white mb-4 tracking-tight font-space">
-              Optimizing 600 Vehicles
+              Optimizing 40 Vehicles
             </h1>
             
             <div className="h-6 overflow-hidden">
@@ -201,7 +201,7 @@ export default function OptimizerPage() {
               <div className="bg-[#06141B]/50 rounded-2xl p-6 border border-white/5">
                 <p className="text-[#4A5C6A] text-sm font-semibold mb-2 uppercase tracking-wider">Fleet Status</p>
                 <div className="text-4xl font-bold text-[#27AE60] font-mono">
-                  {result.all_ready ? "600/600" : "Check"}
+                  {result.all_ready ? "40/40" : "Check"}
                 </div>
               </div>
             </div>

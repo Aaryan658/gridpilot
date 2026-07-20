@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { formatINR } from "@/lib/utils";
 import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer,
   Tooltip, XAxis, YAxis, Bar, BarChart,
@@ -39,6 +40,23 @@ type HistoryEntry = {
   carbon_saved_kg: number;
   vehicles_ready: number;
 };
+
+// CSV export — framed for the downstream uses real operators actually pull
+// this data for (utility demand-response / carbon-credit program enrollment,
+// ESG reporting), not generic "download my data" (see docs/research/
+// 2026-07-19-customer-facing-surface-ev-charging-software.md §5).
+function exportHistoryCsv(history: HistoryEntry[], depotName: string) {
+  const header = ["date", "saving_inr", "peak_kw_managed", "carbon_saved_kg", "vehicles_ready"];
+  const rows = history.map((h) => [h.date, h.saving_inr, h.peak_kw_managed, h.carbon_saved_kg, h.vehicles_ready]);
+  const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `gridpilot-${depotName.toLowerCase().replace(/\s+/g, "-")}-session-history.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -115,9 +133,9 @@ export default function ReportPage() {
     `${report.peak_kw_managed?.toLocaleString()} kW — a ${report.peak_reduction_percent?.toFixed(1)}% reduction — ` +
     `with ${report.overload_events === 0 ? "zero" : report.overload_events} transformer overload events. ` +
     `All ${report.vehicles_ready} vehicles reached 80% State of Charge by 07:00 IST. ` +
-    `The DVVNL demand charge for tonight amounts to ₹${(report.demand_charge_managed_inr / 100000).toFixed(2)}L ` +
-    `versus ₹${(report.demand_charge_unmanaged_inr / 100000).toFixed(2)}L unmanaged — ` +
-    `a saving of ₹${(report.saving_inr / 100000).toFixed(2)}L this month. ` +
+    `The DVVNL demand charge for tonight amounts to ${formatINR(report.demand_charge_managed_inr)} ` +
+    `versus ${formatINR(report.demand_charge_unmanaged_inr)} unmanaged — ` +
+    `a saving of ${formatINR(report.saving_inr)} this month. ` +
     `Carbon emissions avoided: ${report.carbon_saved_kg?.toLocaleString()} kg CO₂, ` +
     `equivalent to ${report.trees_equivalent} trees.`;
 
@@ -125,7 +143,7 @@ export default function ReportPage() {
     { label: "Managed Peak",   value: `${report.peak_kw_managed?.toLocaleString()} kW`, color: "#00C851" },
     { label: "Unmanaged Peak", value: `${report.peak_kw_unmanaged?.toLocaleString()} kW`, color: "#EF4444" },
     { label: "Peak Reduction",  value: `${report.peak_reduction_percent?.toFixed(1)}%`, color: "#00C851" },
-    { label: "Monthly Saving",  value: `₹${(report.saving_inr / 100000).toFixed(2)}L`, color: "#00C851" },
+    { label: "Monthly Saving",  value: formatINR(report.saving_inr), color: "#00C851" },
     { label: "CO₂ Avoided",     value: `${report.carbon_saved_kg?.toLocaleString()} kg`, color: "#00C851" },
     { label: "Fleet Ready",     value: `${report.vehicles_ready}/${report.vehicles_total}`, color: "#00C851" },
   ];
@@ -145,12 +163,22 @@ export default function ReportPage() {
           </p>
           <p className="text-xs text-gray-500 mt-0.5">Generated at 07:00 IST</p>
         </div>
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-[#2A2D3D] hover:bg-[#3A3D4D] rounded-lg text-sm text-gray-300 transition-colors print:hidden"
-        >
-          Download PDF
-        </button>
+        <div className="flex items-center gap-2 print:hidden">
+          <button
+            onClick={() => exportHistoryCsv(history, report.depot_name)}
+            disabled={history.length === 0}
+            title="Session history CSV — for demand-response / carbon-credit / ESG reporting"
+            className="px-4 py-2 bg-[#2A2D3D] hover:bg-[#3A3D4D] disabled:opacity-40 disabled:cursor-not-allowed rounded-lg text-sm text-gray-300 transition-colors"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => window.print()}
+            className="px-4 py-2 bg-[#2A2D3D] hover:bg-[#3A3D4D] rounded-lg text-sm text-gray-300 transition-colors"
+          >
+            Download PDF
+          </button>
+        </div>
       </div>
 
       {/* Metric cards — 2 rows of 3 */}
@@ -183,7 +211,7 @@ export default function ReportPage() {
               <AreaChart data={report.load_curve} margin={{ top: 8, right: 20, bottom: 4, left: 10 }}>
                 <CartesianGrid stroke="rgba(42,45,61,0.6)" vertical={false} />
                 <XAxis dataKey="time_label" tick={{ fill: "#4A5C6A", fontSize: 10 }} tickLine={false} interval={7} />
-                <YAxis tick={{ fill: "#4A5C6A", fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 5000]} />
+                <YAxis tick={{ fill: "#4A5C6A", fontSize: 10 }} axisLine={false} tickLine={false} domain={[0, 350]} />
                 <Tooltip contentStyle={{ background: "#0D1B26", border: "1px solid rgba(74,92,106,0.4)", borderRadius: 8, fontSize: 12 }} />
                 <Area dataKey="unmanaged_kw" stroke="#E74C3C" fill="#E74C3C" fillOpacity={0.15} strokeWidth={2} name="Unmanaged" dot={false} />
                 <Area dataKey="managed_kw" stroke="#00C851" fill="#00C851" fillOpacity={0.25} strokeWidth={2} name="Managed" dot={false} />
@@ -206,7 +234,7 @@ export default function ReportPage() {
                   tick={{ fill: "#4A5C6A", fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(v: number) => `₹${(v / 100000).toFixed(1)}L`}
+                  tickFormatter={(v: number) => formatINR(v)}
                 />
                 <Tooltip contentStyle={{ background: "#0D1B26", border: "1px solid rgba(74,92,106,0.4)", borderRadius: 8, fontSize: 12 }} />
                 <Bar dataKey="saving_inr" fill="#00C851" radius={[4, 4, 0, 0]} name="Saving (₹)" />

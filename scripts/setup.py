@@ -2,6 +2,15 @@ import sys
 import os
 import time
 import subprocess
+
+try:
+    import cvxpy  # noqa: F401  (must load before pandas: see below)
+except Exception:
+    pass
+# cvxpy pulls in solver backends (osqp/ecos/clarabel) with their own bundled
+# OpenMP runtimes. On Windows, importing pandas/pyarrow first and cvxpy
+# later causes a native access violation (no Python exception, just a
+# crash) when those runtimes collide. Importing cvxpy before pandas avoids it.
 import pandas as pd
 import numpy as np
 
@@ -45,16 +54,16 @@ def main():
     scheduler = GridPilotScheduler()
     simulator = CorporateEVDepotSimulator()
     
-    # Generate 500 EV sessions
-    sessions = ev_manager.generate_session("2024-01-15", 500)
+    # Generate 40 EV sessions
+    sessions = ev_manager.generate_session("2024-01-15", 40)
     print(f"[OK] Generated {len(sessions)} EV sessions")
-    
+
     # Run unmanaged baseline
-    building_load = pd.Series([400.0] * 96)
+    building_load = pd.Series([25.0] * 96)
     unmanaged = scheduler.get_unmanaged_baseline(sessions, building_load)
     print(f"[OK] Unmanaged peak: {unmanaged['peak_kw']:,.0f} kW")
-    if unmanaged['peak_kw'] <= 3500:
-        print(f"WARNING: Unmanaged peak {unmanaged['peak_kw']} is not > 3500kW as expected.")
+    if unmanaged['peak_kw'] <= 200:
+        print(f"WARNING: Unmanaged peak {unmanaged['peak_kw']} is not > 200kW as expected.")
     
     # Run GridPilot schedule
     managed = scheduler.schedule(sessions, building_load, carbon_signal={})
@@ -92,7 +101,7 @@ def print_summary_table(forecast_summary, anomaly_summary, managed):
     print("+" + "-" * 58 + "+")
     print("| SCENARIO: Corporate EV Fleet Depot, Gurugram             |")
     print("| Reference: Lithium Urban Technologies fleet profile      |")
-    print("| Fleet: 500 x Tata Nexon EV | Arrival: 20:00-22:00       |")
+    print("| Fleet: 40 x mixed Vahan CY2025 EVs | Arrival: 20:00-22:00 |")
     print("+" + "-" * 58 + "+")
     print("| DATA SOURCES                                             |")
     print("|  EV sessions:  ACN-Data (Caltech, adapted)               |")
@@ -105,12 +114,12 @@ def print_summary_table(forecast_summary, anomaly_summary, managed):
     print(f"|  WR MAPE: {wr_metrics['mape']:.2f}% | NER: {ner_metrics['mape']:.2f}%                            |")
     print(f"|  Anomaly F1 avg: {f1_avg:.2f}                                    |")
     print("+" + "-" * 58 + "+")
-    print("| GRIDPILOT RESULT (500 EVs, Gurugram depot)               |")
-    print(f"|  Unmanaged peak:    {comp['unmanaged_peak_kw']:,.0f} kW  (185% transformer)        |")
+    print("| GRIDPILOT RESULT (40 EVs, Gurugram depot)                |")
+    print(f"|  Unmanaged peak:    {comp['unmanaged_peak_kw']:,.0f} kW                                |")
     print(f"|  GridPilot peak:    {comp['scheduled_peak_kw']:,.0f} kW  (-{comp['peak_reduction_pct']:.1f}%)                    |")
     print(f"|  Overloads avoided: {comp['unmanaged_overload_events']} events                             |")
     print(f"|  Carbon saved:      {comp['unmanaged_carbon_kg'] - comp['scheduled_carbon_kg']:,.0f} kg CO2 (-{comp['carbon_reduction_pct']:.1f}%)                 |")
-    print(f"|  All 500 ready:     {'YES (500/500)' if managed['all_ready_on_time'] else 'NO'}                        |")
+    print(f"|  All 40 ready:      {'YES (40/40)' if managed['all_ready_on_time'] else 'NO'}                         |")
     print(f"|  DVVNL saving:      Rs {comp['dvvnl_monthly_saving_inr']/100000:.2f} lakh/month                      |")
     print(f"|  Solver time:       {managed['solve_time_ms']:.0f}ms                                |")
     print("+" + "-" * 58 + "+")

@@ -16,35 +16,42 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { fetchCarbonSignal, MOCK_DATA, runSchedule } from "@/lib/api";
+import { fetchCarbonSignal, fetchDashboardData, MOCK_DATA, runSchedule } from "@/lib/api";
+import { formatINR } from "@/lib/utils";
+import MpcLivePanel from "@/components/MpcLivePanel";
 
+// Fallback mock curve (used until a live schedule run returns data) — pulled
+// from an actual seeded 40-vehicle optimizer run so unmanaged (u) and
+// managed (m) integrate to the same total delivered energy.
 const LOAD_DATA = [
-  { t: "20:00", u: 1100,  m: 2000, s: 0 },
-  { t: "20:30", u: 2200,  m: 2000, s: 0 },
-  { t: "21:00", u: 3400,  m: 2000, s: 0 },
-  { t: "21:30", u: 4200,  m: 2000, s: 0 },
-  { t: "22:00", u: 4456,  m: 2000, s: 0 },
-  { t: "22:30", u: 4380,  m: 2000, s: 0 },
-  { t: "23:00", u: 4100,  m: 2000, s: 0 },
-  { t: "23:30", u: 3700,  m: 2000, s: 0 },
-  { t: "00:00", u: 3200,  m: 2000, s: 0 },
-  { t: "00:30", u: 2800,  m: 2000, s: 0 },
-  { t: "01:00", u: 2500,  m: 2000, s: 20 },
-  { t: "01:30", u: 2200,  m: 2000, s: 50 },
-  { t: "02:00", u: 1950,  m: 2000, s: 100 },
-  { t: "02:30", u: 1750,  m: 1980, s: 180 },
-  { t: "03:00", u: 1600,  m: 1940, s: 280 },
-  { t: "03:30", u: 1450,  m: 1880, s: 380 },
-  { t: "04:00", u: 1300,  m: 1780, s: 460 },
-  { t: "04:30", u: 1150,  m: 1600, s: 520 },
-  { t: "05:00", u: 1050,  m: 1350, s: 560 },
-  { t: "05:30", u: 950,   m: 1050, s: 580 },
-  { t: "06:00", u: 900,   m: 700,  s: 540 },
-  { t: "06:30", u: 870,   m: 380,  s: 450 },
-  { t: "07:00", u: 850,   m: 150,  s: 320 },
-  { t: "07:30", u: 830,   m: 80,   s: 180 },
-  { t: "08:00", u: 800,   m: 50,   s: 60 },
+  { t: "20:00", u: 54.6,  m: 25,    s: 0 },
+  { t: "20:30", u: 116.3, m: 25,    s: 0 },
+  { t: "21:00", u: 199.6, m: 25,    s: 0 },
+  { t: "21:30", u: 264.4, m: 25,    s: 0 },
+  { t: "22:00", u: 293.8, m: 124.7, s: 0 },
+  { t: "22:30", u: 254.2, m: 124.7, s: 0 },
+  { t: "23:00", u: 216.4, m: 124.7, s: 0 },
+  { t: "23:30", u: 211.2, m: 124.7, s: 0 },
+  { t: "00:00", u: 166.9, m: 124.7, s: 0 },
+  { t: "00:30", u: 147.4, m: 124.7, s: 1 },
+  { t: "01:00", u: 138.0, m: 124.7, s: 3 },
+  { t: "01:30", u: 93.2,  m: 124.7, s: 7 },
+  { t: "02:00", u: 31.4,  m: 135,   s: 12 },
+  { t: "02:30", u: 25,    m: 135,   s: 19 },
+  { t: "03:00", u: 25,    m: 135,   s: 26 },
+  { t: "03:30", u: 25,    m: 135,   s: 31 },
+  { t: "04:00", u: 25,    m: 135,   s: 35 },
+  { t: "04:30", u: 25,    m: 135,   s: 38 },
+  { t: "05:00", u: 25,    m: 124.7, s: 39 },
+  { t: "05:30", u: 25,    m: 124.7, s: 36 },
+  { t: "06:00", u: 25,    m: 124.7, s: 30 },
+  { t: "06:30", u: 25,    m: 124.7, s: 22 },
+  { t: "07:00", u: 25,    m: 25,    s: 12 },
+  { t: "07:30", u: 25,    m: 25,    s: 4 },
+  { t: "08:00", u: 25,    m: 25,    s: 0 },
 ];
+
+type LoadCurveRow = { t: string; ev_kw: number; building_kw: number; total_kw: number };
 
 type ScheduleComparison = {
   peak_reduction_pct?: number;
@@ -60,6 +67,8 @@ type DashboardResult = {
   solve_time_ms?: number;
   all_ready: boolean;
   source: "live" | "demo";
+  loadCurve?: LoadCurveRow[];
+  unmanagedLoadCurve?: LoadCurveRow[];
 };
 
 type CarbonSignal = {
@@ -77,6 +86,7 @@ export default function DashboardPage() {
   const [solving, setSolving] = useState(false);
   const [solved, setSolved] = useState(false);
   const [chartReady, setChartReady] = useState(false);
+  const [dataLoading, setDataLoading] = useState(true);
   const [result, setResult] = useState<DashboardResult | null>(null);
   const [carbonSignal, setCarbonSignal] = useState<CarbonSignal | null>(null);
   const [solveStep, setSolveStep] = useState("");
@@ -98,6 +108,26 @@ export default function DashboardPage() {
     if (token) fetchCarbonSignal(token).then((data) => {
       if (data) setCarbonSignal(data);
     });
+    fetchDashboardData().then((data) => {
+      const managed = data?.depot?.schedule_summary;
+      const unmanaged = data?.depot?.unmanaged_schedule_summary;
+      if (!managed || !unmanaged) return;
+      const c: ScheduleComparison = managed.comparison || {};
+      const carbonSaved =
+        c.unmanaged_carbon_kg !== undefined && c.scheduled_carbon_kg !== undefined
+          ? Math.max(0, c.unmanaged_carbon_kg - c.scheduled_carbon_kg)
+          : MOCK_DATA.kpis.carbon_saved_kg;
+      setResult({
+        peak_reduction_pct: c.peak_reduction_pct ?? MOCK_DATA.kpis.peak_reduction_pct,
+        dvvnl_monthly_saving_inr: c.dvvnl_monthly_saving_inr ?? MOCK_DATA.kpis.dvvnl_monthly_saving_inr,
+        carbon_saved_kg: carbonSaved,
+        solve_time_ms: managed.solve_time_ms,
+        all_ready: managed.all_ready_on_time,
+        source: "live",
+        loadCurve: managed.load_curve,
+        unmanagedLoadCurve: unmanaged.load_curve,
+      });
+    }).finally(() => setDataLoading(false));
   }, []);
 
   const handleRunSchedule = () => {
@@ -111,11 +141,24 @@ export default function DashboardPage() {
     ? `${result.carbon_saved_kg.toFixed(0)} kg`
     : `${MOCK_DATA.kpis.carbon_saved_kg.toFixed(0)} kg`;
   const dvvnlSaving = result?.dvvnl_monthly_saving_inr
-    ? `₹${(result.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L`
-    : `₹${(MOCK_DATA.kpis.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L`;
+    ? formatINR(result.dvvnl_monthly_saving_inr)
+    : formatINR(MOCK_DATA.kpis.dvvnl_monthly_saving_inr);
   const solveTime =
     result?.solve_time_ms ?? MOCK_DATA.kpis.solve_time_ms;
-  const readyCount = result?.all_ready === false ? "Check" : "600/600";
+  const readyCount = result?.all_ready === false ? "Check" : "40/40";
+
+  const chartData = (() => {
+    const managed = result?.loadCurve;
+    const unmanaged = result?.unmanagedLoadCurve;
+    if (!managed?.length || !unmanaged?.length) return LOAD_DATA;
+    const n = Math.min(managed.length, unmanaged.length);
+    return Array.from({ length: n }, (_, i) => ({
+      t: managed[i].t,
+      m: managed[i].total_kw,
+      u: unmanaged[i].total_kw,
+      s: 0,
+    }));
+  })();
 
   return (
     <div
@@ -216,9 +259,9 @@ export default function DashboardPage() {
 
               {[
                 { l: "Peak reduction", v: `${Number(result.peak_reduction_pct).toFixed(1)}%` },
-                { l: "DVVNL saving", v: `₹${(result.dvvnl_monthly_saving_inr / 100000).toFixed(2)}L/mo` },
+                { l: "DVVNL saving", v: `${formatINR(result.dvvnl_monthly_saving_inr)}/mo` },
                 { l: "Solve time", v: `${Number(solveTime).toFixed(0)}ms` },
-                { l: "All ready", v: result.all_ready ? "600/600 ✓" : "Check" },
+                { l: "All ready", v: result.all_ready ? "40/40 ✓" : "Check" },
               ].map(r => (
                 <div key={r.l} style={{
                   display: "flex",
@@ -353,7 +396,7 @@ export default function DashboardPage() {
                 Depot Load Profile
               </div>
               <div style={{ fontSize: 11, color: "#4A5C6A" }}>
-                600 Mixed EVs | Corporate Fleet, Gurugram | DVVNL HT-2
+                40 Mixed EVs | Corporate Fleet, Gurugram | DVVNL HT-2
               </div>
             </div>
             <div
@@ -391,13 +434,13 @@ export default function DashboardPage() {
           </svg>
 
           <div style={{ height: 320 }}>
-            {chartReady ? (
+            {chartReady && !dataLoading ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                <ComposedChart data={LOAD_DATA} margin={{ top: 8, right: 140, bottom: 4, left: 10 }}>
+                <ComposedChart data={chartData} margin={{ top: 8, right: 140, bottom: 4, left: 10 }}>
                   <CartesianGrid stroke="rgba(37,55,69,0.6)" horizontal vertical={false} />
                   <ReferenceArea
-                    y1={4000}
-                    y2={4600}
+                    y1={216}
+                    y2={260}
                     fill="rgba(231,76,60,0.07)"
                     label={{
                       value: "⚠ Overload Zone",
@@ -418,13 +461,13 @@ export default function DashboardPage() {
                     }}
                   />
                   <ReferenceLine
-                    y={4000}
+                    y={216}
                     stroke="#FF6B35"
                     strokeOpacity={0.7}
                     strokeWidth={1}
                     strokeDasharray="10 6"
                     label={{
-                      value: "4,000 kW limit",
+                      value: "216 kW limit",
                       position: "insideTopRight",
                       fill: "rgba(255,107,53,0.85)",
                       fontSize: 10,
@@ -432,13 +475,13 @@ export default function DashboardPage() {
                     }}
                   />
                   <ReferenceLine
-                    y={4500}
+                    y={240}
                     stroke="#F9CA24"
                     strokeOpacity={0.4}
                     strokeWidth={1}
                     strokeDasharray="5 5"
                     label={{
-                      value: "4,500 kW penalty",
+                      value: "240 kW DVVNL billing threshold",
                       position: "insideTopRight",
                       fill: "rgba(249,202,36,0.6)",
                       fontSize: 10,
@@ -455,7 +498,7 @@ export default function DashboardPage() {
                     tick={{ fill: "#4A5C6A", fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    domain={[0, 5000]}
+                    domain={[0, 350]}
                     tickCount={6}
                     tickFormatter={(v: number) =>
                       v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
@@ -502,6 +545,8 @@ export default function DashboardPage() {
             ) : null}
           </div>
         </div>
+
+        <MpcLivePanel />
 
         <div
           style={{

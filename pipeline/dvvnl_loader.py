@@ -21,8 +21,8 @@ class DVVNLLoader:
         "sanctioned_kva": 5000,
     }
 
-    POWER_FACTOR = 0.9
-    TRANSFORMER_LIMIT_KW = 4000.0
+    POWER_FACTOR = 0.8
+    TRANSFORMER_LIMIT_KW = 216.0
 
     def generate_depot_baseline(self, date: str | date | None = None) -> pd.DataFrame:
         target_date = pd.to_datetime(date or "2024-03-15").normalize()

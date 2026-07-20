@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Proper Circuit Wiring Diagram</title>
+<style>
+  body { 
+    font-family: sans-serif; 
+    background: #e9ecef; 
+    margin: 0; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+  }
+  .diagram { 
+    background: white; 
+    border: 1px solid #ccc; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+  }
+  text { 
+    font-family: 'Courier New', Courier, monospace; 
+    font-size: 12px; 
+    pointer-events: none; 
+  }
+</style>
+</head>
+<body>
+<svg class="diagram" width="1000" height="700" xmlns="http://www.w3.org/2000/svg">
+  <!-- Grid background like Cirkit Designer -->
+  <defs>
+    <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#f0f0f0" stroke-width="1"/>
+    </pattern>
+    <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+      <rect width="100" height="100" fill="url(#smallGrid)"/>
+      <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#d0d0d0" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#grid)" />
+
+  <!-- Wire Paths -->
+  <!-- Screen to Pi -->
+  <path d="M 300 170 L 330 170 L 330 280 L 380 280" stroke="#ffa500" stroke-width="2.5" fill="none" />
+  <path d="M 300 175 L 325 175 L 325 285 L 380 285" stroke="#32cd32" stroke-width="2.5" fill="none" />
+  <path d="M 300 180 L 320 180 L 320 290 L 380 290" stroke="#ffd700" stroke-width="2.5" fill="none" />
+  <path d="M 300 185 L 315 185 L 315 295 L 380 295" stroke="#333333" stroke-width="2.5" fill="none" />
+
+  <!-- Camera to Pi -->
+  <path d="M 230 425 L 380 425 L 380 370" stroke="#ffeb3b" stroke-width="2.5" fill="none" />
+  <path d="M 230 435 L 390 435 L 390 370" stroke="#4caf50" stroke-width="2.5" fill="none" />
+
+  <!-- Ultrasonics to Pi -->
+  <!-- U1 -->
+  <path d="M 400 145 L 400 245" stroke="#00bcd4" stroke-width="2.5" fill="none" />
+  <path d="M 410 145 L 410 245" stroke="#3f51b5" stroke-width="2.5" fill="none" />
+  <!-- U2 -->
+  <path d="M 480 145 L 480 245" stroke="#9c27b0" stroke-width="2.5" fill="none" />
+  <path d="M 490 145 L 490 245" stroke="#009688" stroke-width="2.5" fill="none" />
+  <!-- U3 -->
+  <path d="M 560 145 L 560 210 L 520 210 L 520 245" stroke="#8bc34a" stroke-width="2.5" fill="none" />
+  <path d="M 570 145 L 570 200 L 530 200 L 530 245" stroke="#ff9800" stroke-width="2.5" fill="none" />
+
+  <!-- Battery to Pi & Driver -->
+  <path d="M 670 460 L 610 460 L 610 350 L 560 350" stroke="#f44336" stroke-width="3" fill="none" /> <!-- Red -->
+  <path d="M 670 480 L 600 480 L 600 360 L 560 360" stroke="#212121" stroke-width="3" fill="none" /> <!-- Black -->
+  
+  <path d="M 670 460 L 710 460 L 710 340" stroke="#f44336" stroke-width="3" fill="none" /> <!-- Red to L298N -->
+  <path d="M 670 480 L 720 480 L 720 340" stroke="#212121" stroke-width="3" fill="none" /> <!-- Black to L298N -->
+
+  <!-- Pi to Driver (Logic/PWM) -->
+  <path d="M 560 300 L 670 300" stroke="#e91e63" stroke-width="2.5" fill="none" />
+  <path d="M 560 305 L 670 305" stroke="#3f51b5" stroke-width="2.5" fill="none" />
+  <path d="M 560 310 L 670 310" stroke="#00bcd4" stroke-width="2.5" fill="none" />
+  <path d="M 560 315 L 670 315" stroke="#673ab7" stroke-width="2.5" fill="none" />
+
+  <!-- Driver to Motors Top -->
+  <!-- Right Motor -->
+  <path d="M 740 270 L 860 270 L 860 170" stroke="#f44336" stroke-width="2.5" fill="none" />
+  <path d="M 740 280 L 870 280 L 870 170" stroke="#212121" stroke-width="2.5" fill="none" />
+  <!-- Left Motor (top) -->
+  <path d="M 740 290 L 760 290 L 760 170" stroke="#f44336" stroke-width="2.5" fill="none" />
+  <path d="M 740 300 L 770 300 L 770 170" stroke="#212121" stroke-width="2.5" fill="none" />
+
+  <!-- Driver to Motors Bottom -->
+  <!-- Motor 3 -->
+  <path d="M 670 340 L 670 510 L 460 510" stroke="#f44336" stroke-width="2.5" fill="none" />
+  <path d="M 680 340 L 680 520 L 460 520" stroke="#212121" stroke-width="2.5" fill="none" />
+  <!-- Motor 4 -->
+  <path d="M 690 340 L 690 530 L 560 530" stroke="#f44336" stroke-width="2.5" fill="none" />
+  <path d="M 700 340 L 700 540 L 560 540" stroke="#212121" stroke-width="2.5" fill="none" />
+
+
+  <!-- ==================== COMPONENTS ==================== -->
+  
+  <!-- Touch Screen Module -->
+  <g transform="translate(50, 70)">
+    <rect width="260" height="190" fill="#0d47a1" rx="5" stroke="#1565c0" stroke-width="2"/>
+    <rect x="15" y="15" width="230" height="160" fill="#212121" rx="2"/>
+    <rect x="20" y="20" width="220" height="150" fill="#424242"/>
+    <!-- Screen Pins -->
+    <rect x="250" y="100" width="10" height="35" fill="#fbc02d"/>
+    <text x="130" y="95" fill="#9e9e9e" text-anchor="middle" font-size="16" font-family="sans-serif">LCD Display</text>
+  </g>
+
+  <!-- Raspberry Pi -->
+  <g transform="translate(380, 240)">
+    <rect width="180" height="130" fill="#2e7d32" rx="8" stroke="#1b5e20" stroke-width="2"/>
+    <!-- Mounting Holes -->
+    <circle cx="15" cy="15" r="4" fill="#fdd835"/>
+    <circle cx="165" cy="15" r="4" fill="#fdd835"/>
+    <circle cx="15" cy="115" r="4" fill="#fdd835"/>
+    <circle cx="165" cy="115" r="4" fill="#fdd835"/>
+    <!-- CPU -->
+    <rect x="75" y="45" width="40" height="40" fill="#212121" rx="2"/>
+    <text x="95" y="70" fill="#757575" text-anchor="middle" font-size="9">Broadcom</text>
+    <!-- GPIO Pins -->
+    <rect x="15" y="5" width="150" height="18" fill="#111" rx="2"/>
+    <!-- Ports (USB / Ethernet) -->
+    <rect x="150" y="30" width="35" height="40" fill="#bdbdbd" rx="2"/>
+    <rect x="150" y="80" width="35" height="40" fill="#bdbdbd" rx="2"/>
+    <!-- Logo/Text -->
+    <text x="90" y="110" fill="#fff" text-anchor="middle" font-weight="bold" font-family="sans-serif">Raspberry Pi 3/4</text>
+  </g>
+
+  <!-- Ultrasonics (HC-SR04) -->
+  <g transform="translate(370, 110)">
+    <rect width="70" height="35" fill="#1976d2" rx="3" stroke="#1565c0" stroke-width="1"/>
+    <circle cx="20" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="50" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="20" cy="17.5" r="4" fill="#212121"/>
+    <circle cx="50" cy="17.5" r="4" fill="#212121"/>
+    <!-- Pins -->
+    <rect x="25" y="35" width="20" height="6" fill="#212121"/>
+  </g>
+  <g transform="translate(450, 110)">
+    <rect width="70" height="35" fill="#1976d2" rx="3" stroke="#1565c0" stroke-width="1"/>
+    <circle cx="20" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="50" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="20" cy="17.5" r="4" fill="#212121"/>
+    <circle cx="50" cy="17.5" r="4" fill="#212121"/>
+    <rect x="25" y="35" width="20" height="6" fill="#212121"/>
+  </g>
+  <g transform="translate(530, 110)">
+    <rect width="70" height="35" fill="#1976d2" rx="3" stroke="#1565c0" stroke-width="1"/>
+    <circle cx="20" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="50" cy="17.5" r="12" fill="#e0e0e0" stroke="#9e9e9e"/>
+    <circle cx="20" cy="17.5" r="4" fill="#212121"/>
+    <circle cx="50" cy="17.5" r="4" fill="#212121"/>
+    <rect x="25" y="35" width="20" height="6" fill="#212121"/>
+  </g>
+
+  <!-- Pi Camera -->
+  <g transform="translate(180, 400)">
+    <rect width="50" height="50" fill="#43a047" rx="3" stroke="#2e7d32" stroke-width="1"/>
+    <rect x="10" y="10" width="30" height="30" fill="#212121" rx="2"/>
+    <circle cx="25" cy="25" r="10" fill="#424242"/>
+    <circle cx="25" cy="25" r="4" fill="#1e88e5"/> <!-- Lens reflection -->
+    <rect x="15" y="-10" width="20" height="10" fill="#ffca28"/> <!-- Ribbon -->
+    <text x="25" y="70" fill="#424242" text-anchor="middle" font-weight="bold">Pi Cam</text>
+  </g>
+
+  <!-- L298N Motor Driver -->
+  <g transform="translate(670, 260)">
+    <rect width="80" height="80" fill="#d32f2f" rx="3" stroke="#c62828" stroke-width="2"/>
+    <!-- Heatsink -->
+    <rect x="10" y="10" width="60" height="25" fill="#b0bec5" rx="2"/> 
+    <rect x="15" y="10" width="5" height="25" fill="#90a4ae"/>
+    <rect x="30" y="10" width="5" height="25" fill="#90a4ae"/>
+    <rect x="45" y="10" width="5" height="25" fill="#90a4ae"/>
+    <rect x="60" y="10" width="5" height="25" fill="#90a4ae"/>
+    <!-- Capacitors -->
+    <circle cx="25" cy="55" r="10" fill="#212121"/>
+    <circle cx="25" cy="55" r="5" fill="#757575"/>
+    <circle cx="55" cy="55" r="10" fill="#212121"/>
+    <circle cx="55" cy="55" r="5" fill="#757575"/>
+    <!-- Terminals -->
+    <rect x="70" y="10" width="10" height="30" fill="#1976d2"/> <!-- Motor A -->
+    <rect x="0" y="60" width="30" height="10" fill="#1976d2"/> <!-- Power in -->
+    <rect x="40" y="70" width="25" height="10" fill="#212121"/> <!-- Logic pins -->
+    <text x="40" y="45" fill="#fff" font-size="10" font-weight="bold" text-anchor="middle">L298N</text>
+  </g>
+
+  <!-- Battery Pack -->
+  <g transform="translate(670, 440)">
+    <rect width="150" height="35" fill="#7b1fa2" rx="4" stroke="#4a148c" stroke-width="2"/>
+    <rect width="150" height="35" y="40" fill="#7b1fa2" rx="4" stroke="#4a148c" stroke-width="2"/>
+    <!-- Terminals -->
+    <rect width="8" height="15" x="-8" y="10" fill="#9e9e9e"/>
+    <rect width="8" height="15" x="-8" y="50" fill="#9e9e9e"/>
+    <!-- Labels -->
+    <text x="75" y="22" fill="#fff" text-anchor="middle" font-weight="bold">18650 Li-ion</text>
+    <text x="75" y="62" fill="#fff" text-anchor="middle" font-weight="bold">18650 Li-ion</text>
+  </g>
+
+  <!-- DC Motors (Top) -->
+  <g transform="translate(740, 80)">
+    <rect width="45" height="85" fill="#757575" rx="5" stroke="#616161" stroke-width="2"/>
+    <rect width="10" height="20" x="17.5" y="85" fill="#bdbdbd"/> <!-- Shaft -->
+    <rect width="45" height="15" y="-15" fill="#424242" rx="2"/> <!-- Connector -->
+    <text x="22.5" y="45" fill="#fff" text-anchor="middle" font-size="10">Motor 1</text>
+  </g>
+  <g transform="translate(840, 80)">
+    <rect width="45" height="85" fill="#757575" rx="5" stroke="#616161" stroke-width="2"/>
+    <rect width="10" height="20" x="17.5" y="85" fill="#bdbdbd"/> <!-- Shaft -->
+    <rect width="45" height="15" y="-15" fill="#424242" rx="2"/> <!-- Connector -->
+    <text x="22.5" y="45" fill="#fff" text-anchor="middle" font-size="10">Motor 2</text>
+  </g>
+
+  <!-- DC Motors (Bottom) -->
+  <g transform="translate(420, 510)">
+    <rect width="45" height="85" fill="#757575" rx="5" stroke="#616161" stroke-width="2"/>
+    <rect width="10" height="20" x="17.5" y="85" fill="#bdbdbd"/> <!-- Shaft -->
+    <rect width="45" height="15" y="-15" fill="#424242" rx="2"/> <!-- Connector -->
+    <text x="22.5" y="45" fill="#fff" text-anchor="middle" font-size="10">Motor 3</text>
+  </g>
+  <g transform="translate(520, 510)">
+    <rect width="45" height="85" fill="#757575" rx="5" stroke="#616161" stroke-width="2"/>
+    <rect width="10" height="20" x="17.5" y="85" fill="#bdbdbd"/> <!-- Shaft -->
+    <rect width="45" height="15" y="-15" fill="#424242" rx="2"/> <!-- Connector -->
+    <text x="22.5" y="45" fill="#fff" text-anchor="middle" font-size="10">Motor 4</text>
+  </g>
+
+</svg>
+</body>
+</html>

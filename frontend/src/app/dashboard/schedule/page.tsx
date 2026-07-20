@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { formatINR } from "@/lib/utils";
 import {
   Area, AreaChart, CartesianGrid, ReferenceLine,
   ResponsiveContainer, Tooltip, XAxis, YAxis, Legend,
@@ -169,7 +170,7 @@ export default function SchedulePage() {
   const cards = [
     { label: "Managed Peak", value: `${data.peak_kw_managed?.toLocaleString()} kW`, color: "#00C851" },
     { label: "Peak Reduction", value: `${data.peak_reduction_percent?.toFixed(1)}%`, color: "#00C851" },
-    { label: "Monthly Saving", value: `₹${(data.saving_inr / 100000).toFixed(2)}L`, color: "#00C851" },
+    { label: "Monthly Saving", value: formatINR(data.saving_inr), color: "#00C851" },
     { label: "Fleet Ready", value: `${data.vehicles_ready}/${data.vehicles_total}`, color: "#00C851" },
   ];
 
@@ -225,7 +226,7 @@ export default function SchedulePage() {
                   tick={{ fill: "#4A5C6A", fontSize: 10 }}
                   axisLine={false}
                   tickLine={false}
-                  domain={[0, 5000]}
+                  domain={[0, 350]}
                   tickFormatter={(v: number) => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))}
                 />
                 <Tooltip
@@ -236,10 +237,10 @@ export default function SchedulePage() {
                     fontSize: 12,
                   }}
                 />
-                <ReferenceLine y={4000} stroke="#FF6B35" strokeDasharray="10 6" strokeOpacity={0.6}
+                <ReferenceLine y={216} stroke="#FF6B35" strokeDasharray="10 6" strokeOpacity={0.6}
                   label={{ value: "Transformer Limit", position: "insideTopRight", fill: "rgba(255,107,53,0.85)", fontSize: 10 }}
                 />
-                <ReferenceLine y={2000} stroke="#00C851" strokeDasharray="6 4" strokeOpacity={0.5}
+                <ReferenceLine y={135} stroke="#00C851" strokeDasharray="6 4" strokeOpacity={0.5}
                   label={{ value: "GridPilot Target", position: "insideTopRight", fill: "rgba(0,200,81,0.7)", fontSize: 10 }}
                 />
                 <Area dataKey="unmanaged_kw" stroke="#E74C3C" fill="#E74C3C" fillOpacity={0.15} strokeWidth={2} name="Unmanaged" dot={false} />

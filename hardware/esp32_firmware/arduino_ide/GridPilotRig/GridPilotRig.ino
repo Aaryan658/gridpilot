@@ -46,12 +46,12 @@
 // ============================================================================
 
 // --- WiFi (must be the SAME network as the laptop running start_ocpp.py) ---
-const char* WIFI_SSID     = "YOUR_WIFI_SSID";
-const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* WIFI_SSID     = "LAPTOP-KAL2ADTI 6961";
+const char* WIFI_PASSWORD = "35h07W}5";
 
 // --- Laptop's LAN IP address (NOT localhost/127.0.0.1 — see the guide for
 //     how to find this with `ipconfig`). Example: "192.168.1.42" ---
-const char* LAPTOP_IP = "192.168.1.42";
+const char* LAPTOP_IP = "192.168.137.1";
 const uint16_t OCPP_PORT    = 9000; // scripts/start_ocpp.py --ocpp-port
 const uint16_t TRIGGER_PORT = 9001; // scripts/start_ocpp.py --trigger-port
 
@@ -64,7 +64,11 @@ const uint16_t TRIGGER_PORT = 9001; // scripts/start_ocpp.py --trigger-port
 //     ESP32 (RX2/TX2/D18/D19/D23) -- if you physically removed 2 relays,
 //     double-check bays 4-5 (D19/D23) are still actually populated before
 //     relying on this array as-is.
-int RELAY_PINS[5] = {16, 17, 18, 19, 23}; // RX2, TX2, D18, D19, D23
+// --- Rig now has THREE physical relays. TX2 (GPIO17) and D23 (GPIO23) are
+//     no longer used — those were old bays 2 and 5. Remaining bays 1-3 map
+//     to the old physical bays 1, 3, 4.
+const int NUM_BAYS = 3;
+int RELAY_PINS[NUM_BAYS] = {16, 18, 19}; // RX2, D18, D19
 
 // --- Per-bay indicator LEDs — re-confirmed via the latest Cirkit wiring
 //     export. Real wiring has 11 GPIO-driven LED/resistor channels: 5
@@ -79,8 +83,9 @@ int RELAY_PINS[5] = {16, 17, 18, 19, 23}; // RX2, TX2, D18, D19, D23
 //     (Three more LEDs are wired directly to relay N.O. contacts as mains-
 //     side pilot lights, not to any ESP32 GPIO -- those aren't in this list
 //     and can't be controlled from firmware.)
-int BAY_GREEN_PINS[5] = {27, 33, 13, 25, 2}; // idle indicator per bay
-int BAY_BLUE_PINS[5]  = {4, 12, 14, 26, 32}; // charging indicator per bay
+// LED pins for the 3 remaining bays (old bays 1, 3, 4 -> new bays 1-3).
+int BAY_GREEN_PINS[NUM_BAYS] = {27, 13, 25}; // idle indicator per bay
+int BAY_BLUE_PINS[NUM_BAYS]  = {4, 14, 26};  // charging indicator per bay
 
 const int SYSTEM_RED_PIN = 15; // lone red LED -- lit on OVERLOAD (see readSensorsAndUpdateDisplay)
 
@@ -94,7 +99,7 @@ const int BOOT_BUTTON_PIN = 0; // fixed — this is the ESP32's built-in BOOT bu
 //     Verify yours: with this set wrong, "OFF" and "ON" will be swapped.
 //     Test: flash, and check whether bay 1's relay clicks ON immediately at
 //     power-up (before WiFi even connects) — if so, flip this to false.
-const bool RELAY_ACTIVE_LOW = false;
+const bool RELAY_ACTIVE_LOW = true;
 
 // --- Overload thresholds (Amps) — from hardware_demo_evaluation.md §3 ---
 const float THRESHOLD_SAFE_MAX = 0.45f; // < this: SAFE (green)
@@ -104,11 +109,11 @@ const float THRESHOLD_WARN_MAX = 0.54f; // 0.45-0.54: WARNING (yellow); > this: 
 // Globals
 // ============================================================================
 
-WebSocketsClient bayWs[5];
-bool bayState[5] = {false, false, false, false, false};
-bool bayConnected[5] = {false, false, false, false, false};
+WebSocketsClient bayWs[NUM_BAYS];
+bool bayState[NUM_BAYS] = {false, false, false};
+bool bayConnected[NUM_BAYS] = {false, false, false};
 
-LiquidCrystal_I2C lcd(0x27, 16, 2); // change 0x27 to 0x3F if your LCD backpack uses that address (see guide)
+LiquidCrystal_I2C lcd(0x27, 16, 2); // matches arduino_ide/test/test.ino
 Adafruit_INA219 ina219;
 bool ina219Ready = false;
 float currentOffsetA = 0.0f;
@@ -142,7 +147,41 @@ void setBayRelay(int bay, bool on) {
 }
 
 void allRelaysOff() {
-  for (int i = 0; i < 5; i++) setBayRelay(i, false);
+  for (int i = 0; i < NUM_BAYS; i++) setBayRelay(i, false);
+}
+
+// --- Local demo-mode control ------------------------------------------------
+// The rig decides bay states itself, so the demo works even if the laptop /
+// OCPP server is unreachable. "Without GridPilot" (MODE_UNMANAGED) = all 3
+// bays charge at once — the overload moment. "With GridPilot" (MODE_MANAGED)
+// = staggered charging: exactly 1 bay on, rotating every MANAGED_ROTATE_MS
+// so every bay still gets its turn. Relays stay OFF at boot until the first
+// BOOT-button press activates a mode.
+bool localModeActive = false;
+int managedRotateIdx = 0;
+unsigned long lastManagedRotateMs = 0;
+const unsigned long MANAGED_ROTATE_MS = 5000;
+
+void applyLocalMode() {
+  if (!localModeActive) return;
+  for (int i = 0; i < NUM_BAYS; i++) {
+    bool on;
+    if (currentMode == MODE_UNMANAGED) {
+      on = true; // everyone charges at once -> overload demo
+    } else {
+      on = (i == managedRotateIdx); // one bay at a time, staggered
+    }
+    if (bayState[i] != on) setBayRelay(i, on);
+  }
+}
+
+void tickManagedRotation() {
+  if (!localModeActive || currentMode != MODE_MANAGED) return;
+  unsigned long now = millis();
+  if (now - lastManagedRotateMs < MANAGED_ROTATE_MS) return;
+  lastManagedRotateMs = now;
+  managedRotateIdx = (managedRotateIdx + 1) % NUM_BAYS;
+  applyLocalMode();
 }
 
 // ============================================================================
@@ -183,9 +222,10 @@ void handleOcppMessage(int bay, uint8_t* payload, size_t length) {
     float limitWatts = limitVar.isNull() ? 0.0f : limitVar.as<float>();
     bool shouldBeOn = limitWatts > 0.0f;
 
-    Serial.printf("[BAY %d] SetChargingProfile: limit=%.0fW -> %s\n",
+    // Relays are locally controlled now (see applyLocalMode) — the server's
+    // profile is acknowledged and logged, but no longer drives the relay.
+    Serial.printf("[BAY %d] SetChargingProfile: limit=%.0fW -> %s (info only, relays locally controlled)\n",
                   bay + 1, limitWatts, shouldBeOn ? "ON" : "OFF");
-    setBayRelay(bay, shouldBeOn);
 
     String response = "[3,\"" + uniqueId + "\",{\"status\":\"Accepted\"}]";
     bayWs[bay].sendTXT(response);
@@ -222,16 +262,14 @@ void onWsEventShared(int bay, WStype_t type, uint8_t* payload, size_t length) {
 void onWsEvent0(WStype_t type, uint8_t* payload, size_t length) { onWsEventShared(0, type, payload, length); }
 void onWsEvent1(WStype_t type, uint8_t* payload, size_t length) { onWsEventShared(1, type, payload, length); }
 void onWsEvent2(WStype_t type, uint8_t* payload, size_t length) { onWsEventShared(2, type, payload, length); }
-void onWsEvent3(WStype_t type, uint8_t* payload, size_t length) { onWsEventShared(3, type, payload, length); }
-void onWsEvent4(WStype_t type, uint8_t* payload, size_t length) { onWsEventShared(4, type, payload, length); }
 
 void connectAllBayWebsockets() {
   // Using a plain function-pointer array here (rather than the library's
   // own callback typedef, whose exact name has changed across WebSockets
   // library versions) so this compiles regardless of version.
-  void (*handlers[5])(WStype_t, uint8_t*, size_t) = {
-      onWsEvent0, onWsEvent1, onWsEvent2, onWsEvent3, onWsEvent4};
-  for (int i = 0; i < 5; i++) {
+  void (*handlers[NUM_BAYS])(WStype_t, uint8_t*, size_t) = {
+      onWsEvent0, onWsEvent1, onWsEvent2};
+  for (int i = 0; i < NUM_BAYS; i++) {
     String path = "/RIG_BAY_" + String(i + 1);
     bayWs[i].begin(LAPTOP_IP, OCPP_PORT, path, "ocpp1.6");
     bayWs[i].onEvent(handlers[i]);
@@ -273,9 +311,12 @@ void handleButton() {
   buttonFlag = false;
 
   currentMode = (currentMode == MODE_UNMANAGED) ? MODE_MANAGED : MODE_UNMANAGED;
+  localModeActive = true;
+  managedRotateIdx = 0;
+  lastManagedRotateMs = millis();
+  applyLocalMode(); // relays + blue/green LEDs switch immediately, no server needed
+  // Still notify the laptop (if reachable) so its dashboard can mirror the mode.
   postModeTrigger(currentMode == MODE_UNMANAGED ? "unmanaged" : "managed");
-  // Relay states themselves are NOT set here — they update reactively as
-  // each bay's SetChargingProfile call arrives over its own WebSocket.
 }
 
 // ============================================================================
@@ -284,7 +325,7 @@ void handleButton() {
 
 int connectedBayCount() {
   int n = 0;
-  for (int i = 0; i < 5; i++) if (bayConnected[i]) n++;
+  for (int i = 0; i < NUM_BAYS; i++) if (bayConnected[i]) n++;
   return n;
 }
 
@@ -334,14 +375,15 @@ const char* statusLabel(float amps) {
 void updateLcd(float amps) {
   lcd.setCursor(0, 0);
   char line0[17];
-  snprintf(line0, sizeof(line0), "%-8s %d/5 up",
-           currentMode == MODE_UNMANAGED ? "UNMANAGD" : "MANAGED", connectedBayCount());
+  snprintf(line0, sizeof(line0), "%-9s %d/%d up",
+           currentMode == MODE_UNMANAGED ? "NO GP" : "GRIDPILOT",
+           connectedBayCount(), NUM_BAYS);
   lcd.print(line0);
 
   lcd.setCursor(0, 1);
   char line1[17];
   if (isfinite(amps)) {
-    snprintf(line1, sizeof(line1), "%.2fA %-9s", amps, statusLabel(amps));
+    snprintf(line1, sizeof(line1), "%.3fA %-8s", amps, statusLabel(amps));
   } else {
     snprintf(line1, sizeof(line1), "%-16s", "INA219 READ ERR");
   }
@@ -356,14 +398,14 @@ unsigned long lastStatusPrintMs = 0;
 const unsigned long SERIAL_STATUS_INTERVAL_MS = 2000;
 
 void printSerialStatus(float amps, float loadVoltage) {
-  Serial.printf("[STATUS] Mode=%s Bays=%d/5 connected | ",
-                currentMode == MODE_UNMANAGED ? "UNMANAGED" : "MANAGED",
-                connectedBayCount());
-  for (int i = 0; i < 5; i++) {
+  Serial.printf("[STATUS] Mode=%s Bays=%d/%d connected | ",
+                currentMode == MODE_UNMANAGED ? "WITHOUT GRIDPILOT" : "WITH GRIDPILOT",
+                connectedBayCount(), NUM_BAYS);
+  for (int i = 0; i < NUM_BAYS; i++) {
     Serial.printf("B%d:%s ", i + 1, bayState[i] ? "ON" : "OFF");
   }
   if (isfinite(amps)) {
-    Serial.printf("| Current=%.2fA Voltage=%.2fV %s\n",
+    Serial.printf("| Current=%.3fA Voltage=%.2fV %s\n",
                   amps, loadVoltage, statusLabel(amps));
   } else {
     Serial.println("| Current=INVALID INA219_READ_ERROR");
@@ -371,34 +413,61 @@ void printSerialStatus(float amps, float loadVoltage) {
 }
 
 void readSensorsAndUpdateDisplay() {
+  // --- INA219 recovery: attempt reconnect at most every 5 s ---
   if (!ina219Ready) {
-    ina219Ready = ina219.begin();
-    if (ina219Ready) {
-      Serial.println("[INA219] Reconnected");
-      delay(100);
-      calibrateCurrentOffset();
+    static unsigned long lastReconnectMs = 0;
+    unsigned long nowMs = millis();
+    if (nowMs - lastReconnectMs >= 5000) {
+      lastReconnectMs = nowMs;
+      ina219Ready = ina219.begin();
+      if (ina219Ready) {
+        Serial.println("[INA219] Reconnected");
+        delay(100);
+        calibrateCurrentOffset();
+      } else {
+        Serial.println("[INA219] Still not found on I2C bus");
+        scanI2CBus();
+      }
     }
   }
 
-  float shunt_mV = ina219.getShuntVoltage_mV();
-  float bus_V = ina219.getBusVoltage_V();
-  float current_mA = ina219.getCurrent_mA();
-  float loadVoltage = bus_V + (shunt_mV / 1000.0f);
+  // --- Only read bus if sensor is confirmed ready ---
+  float shunt_mV = 0.0f, bus_V = 0.0f, current_mA = NAN, loadVoltage = 0.0f;
   float amps = NAN;
 
-  if (ina219Ready && isfinite(current_mA)) {
-    amps = (current_mA / 1000.0f) - currentOffsetA;
-    if (amps < 0) amps = 0;
-  } else {
-    static unsigned long lastInaErrLogMs = 0;
-    unsigned long nowMs = millis();
-    if (nowMs - lastInaErrLogMs >= 5000) {
-      lastInaErrLogMs = nowMs;
-      Serial.println("[INA219] Invalid current read; check I2C bus/address");
-      scanI2CBus();
+  if (ina219Ready) {
+    shunt_mV   = ina219.getShuntVoltage_mV();
+    bus_V      = ina219.getBusVoltage_V();
+    current_mA = ina219.getCurrent_mA();
+    loadVoltage = bus_V + (shunt_mV / 1000.0f);
+
+    if (isfinite(current_mA)) {
+      // fabsf: if the sensor is wired with reversed polarity (current
+      // entering VIN- instead of VIN+), the chip reports negative current.
+      // Magnitude is what the demo needs, so display it either way.
+      amps = fabsf((current_mA / 1000.0f) - currentOffsetA);
+    } else {
+      // Sensor present but returned garbage — could be transient I2C glitch
+      static unsigned long lastInaErrLogMs = 0;
+      unsigned long nowMs = millis();
+      if (nowMs - lastInaErrLogMs >= 5000) {
+        lastInaErrLogMs = nowMs;
+        Serial.println("[INA219] Transient bad read — will retry");
+      }
     }
   }
+  // If ina219Ready is false, amps stays NAN and the LCD shows "INA219 READ ERR"
+
   lastCurrentA = amps;
+
+  // TEMP DEBUG — raw sensor values before the offset/clamp math, printed at
+  // the same cadence as [STATUS]. shuntA = shunt_mV / 0.1 ohm is an
+  // independent Ohm's-law cross-check that bypasses the INA219's internal
+  // calibration register. Remove once the 0.00A issue is diagnosed.
+  if (ina219Ready && millis() - lastStatusPrintMs >= SERIAL_STATUS_INTERVAL_MS) {
+    Serial.printf("[DEBUG] raw=%.1fmA offset=%.4fA shunt=%.3fmV shuntA=%.3fA bus=%.2fV\n",
+                  current_mA, currentOffsetA, shunt_mV, (shunt_mV / 1000.0f) / 0.1f, bus_V);
+  }
 
   updateLcd(amps);
   digitalWrite(SYSTEM_RED_PIN,
@@ -460,12 +529,33 @@ void setup() {
   delay(300);
   Serial.println("\n=== GridPilot Rig Firmware ===");
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < NUM_BAYS; i++) {
     pinMode(RELAY_PINS[i], OUTPUT);
     pinMode(BAY_GREEN_PINS[i], OUTPUT);
     pinMode(BAY_BLUE_PINS[i], OUTPUT);
   }
   pinMode(SYSTEM_RED_PIN, OUTPUT);
+  allRelaysOff();
+
+  // --- Boot LED test: walks every bay's GREEN then BLUE (then the system
+  //     RED) one at a time, with a serial label for each. Watch the board
+  //     during boot: if a printed label lights no LED (or the wrong one),
+  //     that pin's entry in BAY_GREEN_PINS/BAY_BLUE_PINS is mapped wrong.
+  for (int i = 0; i < NUM_BAYS; i++) {
+    Serial.printf("[LEDTEST] Bay %d GREEN (GPIO%d)\n", i + 1, BAY_GREEN_PINS[i]);
+    digitalWrite(BAY_GREEN_PINS[i], HIGH);
+    delay(600);
+    digitalWrite(BAY_GREEN_PINS[i], LOW);
+    Serial.printf("[LEDTEST] Bay %d BLUE (GPIO%d)\n", i + 1, BAY_BLUE_PINS[i]);
+    digitalWrite(BAY_BLUE_PINS[i], HIGH);
+    delay(600);
+    digitalWrite(BAY_BLUE_PINS[i], LOW);
+  }
+  Serial.printf("[LEDTEST] System RED (GPIO%d)\n", SYSTEM_RED_PIN);
+  digitalWrite(SYSTEM_RED_PIN, HIGH);
+  delay(600);
+  digitalWrite(SYSTEM_RED_PIN, LOW);
+  // Restore idle LED state (greens on, blues off) after the test.
   allRelaysOff();
 
   pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
@@ -484,27 +574,30 @@ void setup() {
   ina219Ready = ina219.begin();
   if (!ina219Ready) {
     Serial.println("[INA219] Not found on I2C bus! Check wiring/address.");
+    Serial.println("[INA219] Firmware will keep retrying — rig will still connect and relay.");
     lcd.setCursor(0, 1);
-    lcd.print("INA219 ERROR!");
+    lcd.print("INA219 MISSING");
   } else {
     delay(100);
     Serial.println("[INA219] Ready");
   }
 
   connectWifi();
-  calibrateCurrentOffset();
+  // Only calibrate if sensor actually initialised — skip silently otherwise
+  if (ina219Ready) calibrateCurrentOffset();
   connectAllBayWebsockets();
 
   Serial.println("[SETUP] Done. Entering main loop.");
 }
 
 void loop() {
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < NUM_BAYS; i++) {
     bayWs[i].loop();
   }
 
   maintainWifi();
   handleButton();
+  tickManagedRotation();
 
   unsigned long now = millis();
   if (now - lastSensorMs >= SENSOR_INTERVAL_MS) {

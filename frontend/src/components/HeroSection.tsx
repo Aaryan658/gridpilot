@@ -81,23 +81,20 @@ export default function HeroSection() {
           className="flex flex-col sm:flex-row items-center
             justify-center gap-4 mb-20"
         >
-          <button
-            suppressHydrationWarning
-            onClick={() => {
-              document.getElementById("live-demo")
-                ?.scrollIntoView({ behavior: "smooth" })
-            }}
+          <a
+            href="/login"
             className="relative px-8 py-3.5 text-sm font-semibold
               rounded-full text-white overflow-hidden
-              transition-all hover:-translate-y-0.5"
+              transition-all hover:-translate-y-0.5 inline-block"
             style={{
               background: "#7C5CBF",
               boxShadow: `0 4px 20px rgba(124,92,191,0.4),
-                          0 1px 0 rgba(255,255,255,0.06) inset`
+                          0 1px 0 rgba(255,255,255,0.06) inset`,
+              textDecoration: "none"
             }}
           >
             View Live Demo ↗
-          </button>
+          </a>
           <a
             href="/GridPilot_ClimateJustice2026_FullPaper.pdf"
             target="_blank"

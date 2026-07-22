@@ -99,7 +99,7 @@ export default function HeroSection() {
             View Live Demo ↗
           </button>
           <a
-            href="https://github.com/Aaryan658/gridpilot"
+            href="/GridPilot_ClimateJustice2026_FullPaper.pdf"
             target="_blank"
             rel="noopener noreferrer"
             className="px-8 py-3.5 text-sm font-semibold

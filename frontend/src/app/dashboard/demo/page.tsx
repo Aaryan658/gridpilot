@@ -14,6 +14,8 @@ import {
   type DemoScheduleResult, type DemoVehicle, type FleetVehicle, type DemoCapacity,
 } from "@/lib/demoApi";
 import ChargerTile from "@/components/ChargerTile";
+import VppFlexPanel from "@/components/VppFlexPanel";
+import BatteryIntelPanel from "@/components/BatteryIntelPanel";
 
 type Phase = "idle" | "generating" | "setup" | "loading" | "unmanaged" | "solving" | "managed" | "done";
 type CurvePoint = { t: string; kw: number };
@@ -706,6 +708,13 @@ export default function DemoPage() {
                       <div className="text-3xl font-bold text-[#7C5CBF] font-mono">{result.comparison.scheduled_peak_kw.toFixed(0)} kW</div>
                     </div>
                   </div>
+                  <VppFlexPanel
+                    unmanagedPeakKw={result.comparison.unmanaged_peak_kw}
+                    managedPeakKw={result.comparison.scheduled_peak_kw}
+                  />
+
+                  <BatteryIntelPanel nVehicles={result.vehicles.length} />
+
                   <button
                     onClick={replay}
                     className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-white px-6 py-3 rounded-xl font-semibold transition-all"

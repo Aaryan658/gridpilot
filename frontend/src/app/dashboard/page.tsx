@@ -20,7 +20,6 @@ import { fetchCarbonSignal, fetchDashboardData, MOCK_DATA, runSchedule } from "@
 import { formatINR } from "@/lib/utils";
 import MpcLivePanel from "@/components/MpcLivePanel";
 import HardwareRigPanel from "@/components/HardwareRigPanel";
-import BatteryIntelPanel from "@/components/BatteryIntelPanel";
 
 // Fallback mock curve (used until a live schedule run returns data) — pulled
 // from an actual seeded 40-vehicle optimizer run so unmanaged (u) and
@@ -566,104 +565,6 @@ export default function DashboardPage() {
             ) : null}
           </div>
         </div>
-
-        <div
-          style={{
-            background: "#11212D",
-            border: "1px solid rgba(124,92,191,0.35)",
-            borderRadius: 16,
-            padding: 20,
-            marginBottom: 16,
-            boxShadow:
-              "0 1px 0 rgba(255,255,255,0.02) inset, 0 8px 32px rgba(0,0,0,0.4)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              marginBottom: 16,
-            }}
-          >
-            <div>
-              <div style={{ fontSize: 15, fontWeight: 600, color: "#CCD0CF", marginBottom: 2 }}>
-                Virtual Power Plant — Grid Flexibility Asset
-              </div>
-              <div style={{ fontSize: 11, color: "#4A5C6A" }}>
-                Load the optimizer can shift on demand, sellable as demand response to the DISCOM
-              </div>
-            </div>
-            <div
-              style={{
-                padding: "4px 10px",
-                borderRadius: 20,
-                background: "rgba(124,92,191,0.1)",
-                border: "1px solid rgba(124,92,191,0.35)",
-                fontSize: 10,
-                fontWeight: 600,
-                color: "#7C5CBF",
-                letterSpacing: "0.08em",
-              }}
-            >
-              LEVEL 2
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-              gap: 12,
-            }}
-          >
-            {[
-              {
-                value: `${flex.kw.toFixed(0)} kW`,
-                label: "Dispatchable flexibility",
-                sub: "unmanaged peak − GridPilot peak",
-              },
-              {
-                value: `${formatINR(flex.monthlyInr)}/mo`,
-                label: "DR revenue potential / depot",
-                sub: "20 events/mo × 2 h × ₹3/kWh incentive",
-              },
-              {
-                value: `${flex.fleetMw.toFixed(1)} MW · ${formatINR(flex.fleetInr)}/mo`,
-                label: `Aggregated across ${flex.depots} depots`,
-                sub: "market-scale virtual power plant",
-              },
-            ].map((s) => (
-              <div
-                key={s.label}
-                style={{
-                  background: "rgba(124,92,191,0.06)",
-                  border: "1px solid rgba(124,92,191,0.15)",
-                  borderRadius: 10,
-                  padding: "12px 14px",
-                }}
-              >
-                <div
-                  style={{
-                    fontSize: 20,
-                    fontWeight: 700,
-                    color: "#CCD0CF",
-                    fontVariantNumeric: "tabular-nums",
-                    marginBottom: 4,
-                  }}
-                >
-                  {s.value}
-                </div>
-                <div style={{ fontSize: 11, color: "#9BA8AB", fontWeight: 600, marginBottom: 2 }}>
-                  {s.label}
-                </div>
-                <div style={{ fontSize: 10, color: "#4A5C6A" }}>{s.sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <BatteryIntelPanel />
 
         <MpcLivePanel />
 

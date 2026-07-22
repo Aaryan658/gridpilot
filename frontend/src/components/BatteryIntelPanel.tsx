@@ -24,45 +24,62 @@ const noise = (i: number) => {
   return (x - Math.floor(x)) * 6 - 3; // [-3, +3)
 };
 
-const FLEET: Vehicle[] = Array.from({ length: 40 }, (_, i) => {
-  const model = MODELS[i % MODELS.length];
+// Deterministic fleet of size n; the two flagged degradation cases sit at
+// fixed fractional positions so any fleet size shows the same story.
+function buildFleet(n: number) {
+  const fleet: Vehicle[] = Array.from({ length: n }, (_, i) => {
+    const model = MODELS[i % MODELS.length];
+    return {
+      id: `GP-${String(i + 1).padStart(3, "0")}`,
+      model: model.name,
+      soh: Math.min(99.2, model.baseSoh + noise(i)),
+    };
+  });
+
+  const flagIdx1 = Math.min(n - 1, Math.max(0, Math.floor(n * 0.34)));
+  const flagIdx2 = Math.min(n - 1, Math.max(0, Math.floor(n * 0.68)));
+  fleet[flagIdx1] = { ...fleet[flagIdx1], soh: 78.4 };
+  if (flagIdx2 !== flagIdx1) fleet[flagIdx2] = { ...fleet[flagIdx2], soh: 82.1 };
+
+  const flaggedList = [
+    {
+      v: fleet[flagIdx1],
+      reason: "Charge acceptance down 12% over last 30 sessions — cell imbalance suspected",
+    },
+    ...(flagIdx2 !== flagIdx1
+      ? [{
+          v: fleet[flagIdx2],
+          reason: "Voltage sag under load trending up — internal resistance drift",
+        }]
+      : []),
+  ];
+
+  const certIdx = [4, 0, 1, 2].find((i) => i < n && i !== flagIdx1 && i !== flagIdx2) ?? 0;
+
   return {
-    id: `GP-${String(i + 1).padStart(3, "0")}`,
-    model: model.name,
-    soh: Math.min(99.2, model.baseSoh + noise(i)),
+    fleet,
+    flaggedList,
+    cert: fleet[certIdx],
+    avgSoh: fleet.reduce((s, v) => s + v.soh, 0) / fleet.length,
+    healthy: fleet.filter((v) => v.soh >= 90).length,
+    watch: fleet.filter((v) => v.soh >= 85 && v.soh < 90).length,
+    flagged: fleet.filter((v) => v.soh < 85).length,
+    modelAvg: MODELS.map((m) => {
+      const vs = fleet.filter((v) => v.model === m.name);
+      return {
+        name: m.name,
+        soh: vs.length ? vs.reduce((s, v) => s + v.soh, 0) / vs.length : m.baseSoh,
+      };
+    }),
   };
-});
-
-// Two vehicles with degradation signatures the anomaly detector flags.
-FLEET[13] = { ...FLEET[13], soh: 78.4 };
-FLEET[27] = { ...FLEET[27], soh: 82.1 };
-
-const FLAGGED = [
-  {
-    v: FLEET[13],
-    reason: "Charge acceptance down 12% over last 30 sessions — cell imbalance suspected",
-  },
-  {
-    v: FLEET[27],
-    reason: "Voltage sag under load trending up — internal resistance drift",
-  },
-];
-
-const avgSoh = FLEET.reduce((s, v) => s + v.soh, 0) / FLEET.length;
-const healthy = FLEET.filter((v) => v.soh >= 90).length;
-const watch = FLEET.filter((v) => v.soh >= 85 && v.soh < 90).length;
-const flagged = FLEET.filter((v) => v.soh < 85).length;
-
-const MODEL_AVG = MODELS.map((m) => {
-  const vs = FLEET.filter((v) => v.model === m.name);
-  return { name: m.name, soh: vs.reduce((s, v) => s + v.soh, 0) / vs.length };
-});
+}
 
 const sohColor = (soh: number) =>
   soh >= 90 ? "#27AE60" : soh >= 85 ? "#F9CA24" : "#E74C3C";
 
-export default function BatteryIntelPanel() {
-  const cert = FLEET[4]; // healthy Kona as the certificate example
+export default function BatteryIntelPanel({ nVehicles = 40 }: { nVehicles?: number }) {
+  const { flaggedList: FLAGGED, cert, avgSoh, healthy, watch, flagged, modelAvg: MODEL_AVG } =
+    buildFleet(Math.max(1, nVehicles));
   return (
     <div
       style={{

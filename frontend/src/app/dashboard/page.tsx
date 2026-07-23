@@ -161,24 +161,6 @@ export default function DashboardPage() {
     }));
   })();
 
-  // Level 2 (VPP): the gap between unmanaged and managed peak is load the
-  // optimizer can shift on demand — sellable as demand response flexibility.
-  // Revenue assumption: 20 DR events/mo × 2 h × ₹3/kWh curtailment incentive.
-  const flex = (() => {
-    const uPeak = Math.max(...chartData.map((r) => r.u));
-    const mPeak = Math.max(...chartData.map((r) => r.m));
-    const kw = Math.max(0, uPeak - mPeak);
-    const monthlyInr = kw * 2 * 20 * 3;
-    const depots = 25;
-    return {
-      kw,
-      monthlyInr,
-      fleetMw: (kw * depots) / 1000,
-      fleetInr: monthlyInr * depots,
-      depots,
-    };
-  })();
-
   return (
     <div
       style={{
@@ -346,7 +328,7 @@ export default function DashboardPage() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
             gap: 12,
             marginBottom: 20,
           }}
@@ -355,7 +337,6 @@ export default function DashboardPage() {
             { value: `${peakReduction}%`, label: "Peak Reduced", accent: "#4ECDC4" },
             { value: carbonSaved, label: "CO₂ Saved", accent: "#00D4AA" },
             { value: dvvnlSaving, label: "DVVNL Saving", accent: "#F9CA24" },
-            { value: `${formatINR(flex.monthlyInr)}/mo`, label: "Flex Revenue (VPP)", accent: "#7C5CBF" },
             { value: readyCount, label: "Ready by 07:00", accent: "#27AE60" },
           ].map((card, i) => (
             <motion.div
